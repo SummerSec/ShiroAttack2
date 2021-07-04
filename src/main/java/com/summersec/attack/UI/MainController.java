@@ -230,12 +230,14 @@ public class MainController {
         this.gadgetOpt.setValue("CommonsCollectionsK1");
         this.gadgetOpt.setItems(gadgets);
         ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"TomcatEcho", "SpringEcho"});
+//        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"TomcatEcho", "SpringEcho", "NoEcho", "ReverseEcho"});
         this.echoOpt.setPromptText("TomcatEcho");
         this.echoOpt.setValue("TomcatEcho");
         this.echoOpt.setItems(echoes);
         this.shellPassText.setText("pass1024");
         this.shellPathText.setText("/favicondemo.ico");
-        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Servlet]", "冰蝎[Servlet]", "蚁剑[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]"});
+        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Filter]", "蚁剑[Filter]", "冰蝎[Filter]", "NeoreGeorg[Filter]", "reGeorg[Filter]", "哥斯拉[Servlet]", "蚁剑[Servlet]", "冰蝎[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]"});
+//        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Servlet]", "冰蝎[Servlet]", "蚁剑[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]"});
         this.memShellOpt.setPromptText("哥斯拉[Servlet]");
         this.memShellOpt.setValue("哥斯拉[Servlet]");
         this.memShellOpt.setItems(memShells);

