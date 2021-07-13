@@ -1,7 +1,5 @@
 package com.summersec.attack.deser.util;
 
-
-
 import org.apache.commons.io.FileUtils;
 
 import java.io.ByteArrayOutputStream;

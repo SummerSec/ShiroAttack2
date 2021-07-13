@@ -225,14 +225,14 @@ public class MainController {
         this.methodOpt.setValue("GET");
         this.methodOpt.setItems(methods);
 //        ObservableList<String> gadgets = FXCollections.observableArrayList(new String[]{ "CommonsBeanutils1", "CommonsCollections2", "CommonsCollections3", "CommonsCollectionsK1", "CommonsCollectionsK2", "CommonsBeanutilsString", "CommonsBeanutilsAttrCompare", "CommonsBeanutilsPropertySource"});
-        ObservableList<String> gadgets = FXCollections.observableArrayList(new String[]{  "CommonsCollections2", "CommonsCollections3", "CommonsCollectionsK1", "CommonsCollectionsK2", "CommonsBeanutilsString", "CommonsBeanutilsAttrCompare", "CommonsBeanutilsPropertySource", "CommonsBeanutilsObjectToStringComparator"});
+        ObservableList<String> gadgets = FXCollections.observableArrayList(new String[]{ "CommonsBeanutils1" ,"CommonsBeanutils1_183" ,"CommonsCollections2", "CommonsCollections3", "CommonsCollectionsK1", "CommonsCollectionsK2", "CommonsBeanutilsString", "CommonsBeanutilsAttrCompare", "CommonsBeanutilsPropertySource", "CommonsBeanutilsObjectToStringComparator"});
         this.gadgetOpt.setPromptText("CommonsCollectionsK1");
         this.gadgetOpt.setValue("CommonsCollectionsK1");
         this.gadgetOpt.setItems(gadgets);
-        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"TomcatEcho", "SpringEcho"});
+        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"AllEcho","TomcatEcho", "SpringEcho"});
 //        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"TomcatEcho", "SpringEcho", "NoEcho", "ReverseEcho"});
-        this.echoOpt.setPromptText("TomcatEcho");
-        this.echoOpt.setValue("TomcatEcho");
+        this.echoOpt.setPromptText("AllEcho");
+        this.echoOpt.setValue("AllEcho");
         this.echoOpt.setItems(echoes);
         this.shellPassText.setText("pass1024");
         this.shellPathText.setText("/favicondemo.ico");
