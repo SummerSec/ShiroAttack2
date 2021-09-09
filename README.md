@@ -4,7 +4,7 @@
 
 * javafx
 * 处理没有第三方依赖的情况
-* CommonsBeanutils1.9.2版本暂时不支持
+* 支持多版本CommonsBeanutils的gadget
 * 支持内存马
 * 采用直接回显执行命令
 * 添加了更多的CommonsBeanutils版本gadget
@@ -14,7 +14,7 @@
 
 ## TODO
 
-* 支持CommonsBeanutils1.9.2版本
+* 减少payload体积
 
 
 
