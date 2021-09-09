@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -222,7 +223,17 @@ public class AttackService {
                 this.mainController.logTextArea.appendText(Utils.log("存在shiro框架！"));
                 flag = true;
             } else {
-                this.mainController.logTextArea.appendText(Utils.log("未发现shiro框架！"));
+                HashMap<String, String> header1 = new HashMap();
+                header1.put("Cookie", this.shiroKeyWord + "=" + AttackService.getRandomString(10));
+                String result1 = this.headerHttpRequest(header1);
+                flag = result1.contains("=deleteMe");
+                if(flag){
+                    this.mainController.logTextArea.appendText(Utils.log("存在shiro框架！"));
+                    flag = true;
+                }else {
+                    this.mainController.logTextArea.appendText(Utils.log("未发现shiro框架！"));
+
+                }
             }
         } catch (Exception var4) {
             if (var4.getMessage() != null) {
@@ -231,6 +242,17 @@ public class AttackService {
         }
 
         return flag;
+    }
+
+    public static String getRandomString(int length){
+        String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random= new SecureRandom();
+        StringBuffer sb=new StringBuffer();
+        for(int i=0;i<length;i++){
+            int number=random.nextInt(62);
+            sb.append(str.charAt(number));
+        }
+        return sb.toString();
     }
 
     public void keyTestTask(final List<String> shiroKeys) {
