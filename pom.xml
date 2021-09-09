@@ -6,7 +6,7 @@
 
     <groupId>org.example</groupId>
     <artifactId>shiro_attack</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>4.0-SNAPSHOT</version>
     <build>
         <plugins>
             <plugin>
@@ -63,7 +63,7 @@
 <!--        <dependency>-->
 <!--            <groupId>commons-beanutils</groupId>-->
 <!--            <artifactId>commons-beanutils</artifactId>-->
-<!--            <version>1.9.2</version>-->
+<!--            <version>1.9.4</version>-->
 <!--        </dependency>-->
 
         <dependency>
@@ -100,7 +100,7 @@
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
-            <version>3.15.0-GA</version>
+            <version>3.19.0-GA</version>
         </dependency>
 
 

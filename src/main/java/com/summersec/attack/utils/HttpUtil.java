@@ -33,6 +33,7 @@ public class HttpUtil {
     private static final int Timeout = 5000;
     private static final String DefalutEncoding = "UTF-8";
     public static HostnameVerifier allHostsValid = new HostnameVerifier() {
+        @Override
         public boolean verify(String hostname, SSLSession session) {
             return true;
         }

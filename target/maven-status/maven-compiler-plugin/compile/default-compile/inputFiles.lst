@@ -1,65 +1,70 @@
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\UI\MainController.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\core\AttackService.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\AntSwordServlet.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\GadgetsK.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\annotation\PayloadTest.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\JavaVersion.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\Console.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\BehinderFilter.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\NoEcho.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollectionsK2.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\BehinderServlet.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\reGeorgServlet.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutils1.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgetsasm.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\SpringEcho.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\NeoreGeorgServlet.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\ReverseEcho.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsObjectToStringComparator.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\EchoPayload.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\entity\ControllersFactory.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollections2.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\HttpUtil.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\AesUtil.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\annotation\Authors.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgetsplugin.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\core\demo.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\GodzillaTomServlet.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollectionsK1.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\HttpUtil_bak.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\GodzillaServlet.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\NeoreGeorgFilter.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\ObjectPayload.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsPropertySource.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Reflections.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsAttrCompare.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\plugins\InjectMemTool.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\ClassFiles.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\plugins\servlet\MemBytes.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\MyCert.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\entity\RequestInfo.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\AntSwordFilter.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\AllEcho.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgets.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\SuidClassLoader.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgets_orgin.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\MessageUtil.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\GodzillaFilter.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\annotation\Dependencies.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\ConvertUtil.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\CommonUtil.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\plugins\keytest\KeyEcho.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\Utils.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Strings.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\test.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutils1_183.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\UI\Main.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollections3.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\TomcatEcho.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\URLDNS.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\DynamicDependencies.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\frame\FramePayload.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsString.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\reGeorgFilter.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\CommonUtils.java
-E:\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\frame\Shiro.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\GodzillaFilter.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\HttpUtil_bak.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\frame\Shiro.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\annotation\Dependencies.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\SuidClassLoader.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Strings.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\GodzillaTomServlet.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\reGeorgFilter.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\ClassFiles.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\MyCert.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\entity\ControllersFactory.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\core\AttackService.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsAttrCompare.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\AntSwordServlet.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\CommonUtils.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\NeoreGeorgServlet.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\DynamicDependencies.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\BehinderServlet.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\frame\FramePayload.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\annotation\PayloadTest.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\plugins\keytest\KeyEcho.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\plugins\servlet\MemBytes.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\NoEcho.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollections2.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\AllEcho.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\Console.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\JavaVersion.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsPropertySource.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\HttpUtil.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\StandardExecutorClassLoader.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\GadgetsK.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollectionsK1.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\EchoPayload.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutils1.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgets.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\ReverseEcho.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgets_orgin.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\ConvertUtil.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\core\demo.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\ObjectPayload.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\AesUtil.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsObjectToStringComparator.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\test.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Reflections.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsPropertySource_192.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\URLDNS.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\Utils.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutils1_192.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\utils\MessageUtil.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsAttrCompare_192.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollectionsK2.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\NeoreGeorgFilter.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\reGeorgServlet.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\entity\RequestInfo.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgetsplugin.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\BehinderFilter.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\UI\Main.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\SpringEcho.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\annotation\Authors.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\Gadgetsasm.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\echo\TomcatEcho.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsString_192.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsString.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\util\CommonUtil.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\UI\MainController.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\AntSwordFilter.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsBeanutilsObjectToStringComparator_192.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\x\GodzillaServlet.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\payloads\CommonsCollections3.java
+E:\myself\OneDrive - Colegio Público Torre Malmuerta\Soures\shiro_attack2.0\shiro_attack2\src\main\java\com\summersec\attack\deser\plugins\InjectMemTool.java

