@@ -245,6 +245,11 @@
             <version>1.0.0</version>
             <!--            <scope>provided</scope>-->
         </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.7.13</version>
+        </dependency>
 
 
     </dependencies>

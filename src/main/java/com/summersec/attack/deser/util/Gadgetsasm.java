@@ -80,12 +80,12 @@ public class Gadgetsasm
 
 
 
-        File file = new File("D:\\tools\\temp\\temp.class");
-
-        OutputStream os = new FileOutputStream(file);
-
-
-        os.write(payload);
+//        File file = new File("D:\\tools\\temp\\temp.class");
+//
+//        OutputStream os = new FileOutputStream(file);
+//
+//
+//        os.write(payload);
 
 
         Field bcField = TemplatesImpl.class.getDeclaredField("_bytecodes");

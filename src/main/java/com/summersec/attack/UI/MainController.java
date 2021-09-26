@@ -98,7 +98,7 @@ public class MainController {
         String memShellType = (String)this.memShellOpt.getValue();
         String shellPass = this.shellPassText.getText();
         String shellPath = this.shellPathText.getText();
-        if (AttackService.gadget != null && AttackService.realShiroKey != null) {
+        if (AttackService.gadget != null ) {
             this.attackService.injectMem(memShellType, shellPass, shellPath);
         } else {
             this.InjOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
@@ -216,7 +216,7 @@ public class MainController {
 
     public void initContext() {
         this.shiroKeyWord.setText("rememberMe");
-        this.httpTimeout.setText("5");
+        this.httpTimeout.setText("10");
     }
 
     public void initComBoBox() {
