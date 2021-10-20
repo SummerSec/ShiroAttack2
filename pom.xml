@@ -6,7 +6,7 @@
 
     <groupId>org.example</groupId>
     <artifactId>shiro_attack</artifactId>
-    <version>4.0-SNAPSHOT</version>
+    <version>4.1-SNAPSHOT</version>
     <build>
         <plugins>
             <plugin>
@@ -60,11 +60,11 @@
             <version>3.12.0</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>commons-beanutils</groupId>-->
-<!--            <artifactId>commons-beanutils</artifactId>-->
-<!--            <version>1.9.4</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>commons-beanutils</groupId>-->
+        <!--            <artifactId>commons-beanutils</artifactId>-->
+        <!--            <version>1.9.4</version>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>commons-collections</groupId>
@@ -244,6 +244,11 @@
             <artifactId>com.liferay.dynamic.data.lists.api</artifactId>
             <version>1.0.0</version>
             <!--            <scope>provided</scope>-->
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.7.13</version>
         </dependency>
 
 

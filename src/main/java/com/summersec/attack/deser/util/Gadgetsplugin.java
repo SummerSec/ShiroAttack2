@@ -25,7 +25,7 @@ public class Gadgetsplugin
 
 
 
-        Reflections.setFieldValue(templates, "_name", "Pwnr");
+        Reflections.setFieldValue(templates, "_name", "Doge");
         return templates;
     }
 }

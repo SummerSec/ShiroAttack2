@@ -7,6 +7,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 public class StandardExecutorClassLoader extends URLClassLoader {
+
     private final static String baseDir = System.getProperty("user.dir") + File.separator + "lib" + File.separator;
 
     public StandardExecutorClassLoader(String version) {
@@ -19,7 +20,7 @@ public class StandardExecutorClassLoader extends URLClassLoader {
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         // 测试时可打印看一下
-        System.out.println("Class loader: " + name);
+//        System.out.println("Class loader: " + name);
         return super.loadClass(name);
     }
 

