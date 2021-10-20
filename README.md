@@ -11,16 +11,13 @@
 * 支持修改rememberMe关键词
 * 支持直接爆破利用gadget和key
 * 支持代理
-
-## TODO
-
-* 减少payload体积
+* 添加修改shirokey功能
 
 
 
 ## 使用方法
 
-直接使用shiro_attack-3.0-SNAPSHOT-all.jar第三版
+直接使用shiro_attack-{version}-SNAPSHOT-all.jar第三版
 
 ![image-20210713150738617](https://gitee.com/samny/images/raw/master/summersec//38u07er38ec/38u07er38ec.png)
 
