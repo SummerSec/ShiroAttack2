@@ -26,6 +26,7 @@ public class CommonsBeanutilsAttrCompare implements ObjectPayload<Queue<Object>>
         attrNS1.setValues(coreDocument,"1","1","1");
 
 
+
         BeanComparator beanComparator = new BeanComparator(null, new AttrCompare());
 
         PriorityQueue<Object> queue = new PriorityQueue<Object>(2, beanComparator);

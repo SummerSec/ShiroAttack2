@@ -16,7 +16,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="shiroExploit" options="-bootclasspath D:/java/jre/lib/rt.jar;D:/java/jre/lib/jce.jar" />
+      <module name="shiroExploit" options="-bootclasspath F:/jdk1.8.0_291/jre/lib/rt.jar;F:/dk1.8.0_291/jre/lib/jce.jar" />
       <module name="shiro_attack" options="-bootclasspath D:/java/jre/lib/rt.jar;D:/java/jre/lib/jce.jar" />
       <module name="shiro_attack2" options="-bootclasspath D:/java/jre/lib/rt.jar;D:/java/jre/lib/jce.jar" />
     </option>

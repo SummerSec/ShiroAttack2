@@ -17,7 +17,7 @@
                     <target>8</target>
                     <encoding>UTF-8</encoding>
                     <compilerArguments>
-                        <bootclasspath>D:/java/jre/lib/rt.jar;D:/java/jre/lib/jce.jar</bootclasspath>
+                        <bootclasspath>F:/jdk1.8.0_291/jre/lib/rt.jar;F:/dk1.8.0_291/jre/lib/jce.jar</bootclasspath>
                     </compilerArguments>
                 </configuration>
             </plugin>
