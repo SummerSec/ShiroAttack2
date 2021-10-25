@@ -57,6 +57,7 @@ com\summersec\attack\deser\echo\SpringEcho.class
 com\summersec\attack\utils\HttpUtil$1.class
 com\summersec\attack\utils\ConvertUtil.class
 com\summersec\attack\deser\util\GadgetsK$Foo.class
+com\summersec\x\BastionFilter.class
 com\summersec\attack\deser\frame\FramePayload.class
 com\summersec\attack\utils\HttpUtil.class
 com\summersec\attack\deser\util\Gadgets.class
