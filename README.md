@@ -1,5 +1,9 @@
 # shiro550反序列化漏洞利用工具
 
+## 前言
+
+
+
 ## 工具特点
 
 * javafx
@@ -20,7 +24,7 @@
 
 直接使用shiro_attack-{version}-SNAPSHOT-all.jar第三版
 
-
+![image-20211130114603322](https://gitee.com/samny/images/raw/master/summersec//3u46er3ec/3u46er3ec.png)
 
 在jar的当前目录下创建一个data文件夹，里面创建一个shiro_keys.txt文件，文件内容是shiro_key。lib目前是CommonsBeanutils依赖的版本。
 
