@@ -99,7 +99,7 @@ public class MainController {
         String shellPass = this.shellPassText.getText();
         String shellPath = this.shellPathText.getText();
         if (AttackService.gadget != null ) {
-            this.attackService.injectMem(memShellType, shellPass, shellPath);
+        this.attackService.injectMem(memShellType, shellPass, shellPath);
         } else {
             this.InjOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
         }
@@ -108,6 +108,7 @@ public class MainController {
 
     @FXML
     void executeCmdBtn(ActionEvent event) {
+//        String rememberMe = this.GadgetPayload(gadgetOpt, echoOpt, spcShiroKey);
         if (AttackService.attackRememberMe != null) {
             String command = this.exCommandText.getText();
             if (!command.equals("")) {
@@ -127,7 +128,6 @@ public class MainController {
         if (this.attackService == null) {
             this.initAttack();
         }
-
         if (!spcShiroKey.equals("")) {
             boolean flag = this.attackService.gadgetCrack((String)this.gadgetOpt.getValue(), (String)this.echoOpt.getValue(), spcShiroKey);
             if (!flag) {
@@ -238,7 +238,7 @@ public class MainController {
         this.echoOpt.setItems(echoes);
         this.shellPassText.setText("pass1024");
         this.shellPathText.setText("/favicondemo.ico");
-        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Filter]", "蚁剑[Filter]", "冰蝎[Filter]", "NeoreGeorg[Filter]", "reGeorg[Filter]", "哥斯拉[Servlet]", "蚁剑[Servlet]", "冰蝎[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]", "ChangeShiroKey[Filter]", "ChangeShiroKey[Filter2]", "BastionFilter"});
+        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Filter]", "蚁剑[Filter]", "冰蝎[Filter]", "NeoreGeorg[Filter]", "reGeorg[Filter]", "哥斯拉[Servlet]", "蚁剑[Servlet]", "冰蝎[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]", "ChangeShiroKey[Filter]", "ChangeShiroKey[Filter2]", "BastionFilter", "BastionEncryFilter"});
 //        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Servlet]", "冰蝎[Servlet]", "蚁剑[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]"});
         this.memShellOpt.setPromptText("冰蝎[Filter]");
         this.memShellOpt.setValue("冰蝎[Filter]");
