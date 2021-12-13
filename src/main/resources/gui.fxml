@@ -328,8 +328,8 @@
                   <Insets left="3.0" top="3.0" />
                </padding>
             </Label>
-<!--             <Label fx:id="proxyStatusLabel1" layoutX="10.0" layoutY="10.0" prefHeight="20.0" prefWidth="950.0" text="BY   SummerSec">-->
-             <Label fx:id="proxyStatusLabel1" layoutX="10.0" layoutY="10.0" prefHeight="20.0" prefWidth="950.0" text="BY   水滴实验室">
+             <Label fx:id="proxyStatusLabel1" layoutX="10.0" layoutY="10.0" prefHeight="20.0" prefWidth="950.0" text="BY   SummerSec">
+<!--             <Label fx:id="proxyStatusLabel1" layoutX="10.0" layoutY="10.0" prefHeight="20.0" prefWidth="950.0" text="BY   水滴实验室">-->
                <padding>
                   <Insets left="3.0" top="3.0" />
                </padding>
