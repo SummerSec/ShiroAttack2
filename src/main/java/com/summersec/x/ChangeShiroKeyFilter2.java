@@ -85,7 +85,7 @@ public class ChangeShiroKeyFilter2 extends ClassLoader implements Filter {
         }catch (Exception e){
             return e.getMessage();
         }
-        return "Success";
+        return "change key ok";
     }
     public boolean equals(Object obj) {
         this.parseObj(obj);

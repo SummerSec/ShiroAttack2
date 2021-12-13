@@ -159,13 +159,6 @@ public class BastionEncryFilter implements Filter {
         return c;
     }
 
-    public static byte[] shiroencry(byte[] data,byte[] key){
-
-        AesCipherService aesCipherService=new AesCipherService();
-        ByteSource byteSource= aesCipherService.encrypt(data,key);
-        return byteSource.getBytes();
-    }
-
     public static byte[] shirodecry(byte[] data,byte[] key){
 
         AesCipherService aesCipherService=new AesCipherService();

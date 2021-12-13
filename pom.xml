@@ -6,9 +6,59 @@
 
     <groupId>org.example</groupId>
     <artifactId>shiro_attack</artifactId>
-    <version>4.3-SNAPSHOT</version>
+    <version>4.5-SNAPSHOT</version>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>copy-and-filter-allatori-config</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/allatori</directory>
+                                    <includes>
+                                        <include>allatori.xml</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>run-allatori</id>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>exec</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+                <configuration>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>-Xms2048m</argument>
+                        <argument>-Xmx2048m</argument>
+                        <argument>-jar</argument>
+                        <argument>${basedir}/libs/allatori.jar</argument>
+                        <argument>${basedir}/target/allatori.xml</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -100,7 +150,7 @@
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
-            <version>3.19.0-GA</version>
+            <version>3.27.0-GA</version>
         </dependency>
 
 

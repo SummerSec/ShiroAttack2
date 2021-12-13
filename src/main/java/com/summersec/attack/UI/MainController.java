@@ -1,5 +1,6 @@
 package com.summersec.attack.UI;
 
+import com.summersec.attack.Encrypt.KeyGenerator;
 import com.summersec.attack.core.AttackService;
 import com.summersec.attack.entity.ControllersFactory;
 import com.summersec.attack.utils.Utils;
@@ -89,6 +90,10 @@ public class MainController {
     private Button injectShellBtn;
     @FXML
     public TextArea InjOutputArea;
+    @FXML
+    public TextArea keytxt;
+    @FXML
+    public Button keygen;
 
     public MainController() {
     }
@@ -230,8 +235,8 @@ public class MainController {
         this.gadgetOpt.setPromptText("CommonsBeanutilsString");
         this.gadgetOpt.setValue("CommonsBeanutilsString");
         this.gadgetOpt.setItems(gadgets);
-//        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"AllEcho","TomcatEcho", "SpringEcho"});
-        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"TomcatEcho", "SpringEcho"});
+        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"AllEcho","TomcatEcho", "SpringEcho"});
+//        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"TomcatEcho", "SpringEcho"});
 //        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"TomcatEcho", "SpringEcho", "NoEcho", "ReverseEcho"});
         this.echoOpt.setPromptText("TomcatEcho");
         this.echoOpt.setValue("TomcatEcho");
@@ -380,5 +385,13 @@ public class MainController {
             inputDialog.getDialogPane().setContent(proxyGridPane);
             inputDialog.showAndWait();
         });
+    }
+
+    @FXML
+    void Keytxt(ActionEvent actionEvent) {
+        KeyGenerator keyGenerator = new KeyGenerator();
+        String key = keyGenerator.getKey();
+        this.keytxt.appendText(key);
+        this.keytxt.appendText("\n");
     }
 }
