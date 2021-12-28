@@ -15,18 +15,8 @@ import java.security.NoSuchAlgorithmException;
  **/
 public class KeyGenerator {
     public static void main(String[] args) {
-//        javax.crypto.KeyGenerator keygen = null;
-//        try {
-//            keygen = javax.crypto.KeyGenerator.getInstance("AES");
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        }
-//        SecretKey deskey = keygen.generateKey();
-////        System.out.println(Base64.encodeToString(deskey.getEncoded()));
-//        System.out.println(Base64.encodeToString(new byte[]{101, -88, 60, -121, -55, 13, -27, -8, -27, -32, 18, -11, 106, 7, 15, -11}));
-        KeyGenerator keyGenerator = new KeyGenerator();
+      KeyGenerator keyGenerator = new KeyGenerator();
         System.out.println(keyGenerator.getKey());
-//      keyGenerator.getKey();
 
     }
 
