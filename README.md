@@ -46,11 +46,11 @@
 
 直接使用shiro_attack-{version}-SNAPSHOT-all.jar第三版
 
-![image-20211130114603322](https://gitee.com/samny/images/raw/master/summersec//3u46er3ec/3u46er3ec.png)
+![image-20211130114603322](https://cdn.jsdelivr.net/gh/SummerSec/Images//49u5049ec49u5049ec.png)
 
 在jar的当前目录下创建一个data文件夹，里面创建一个shiro_keys.txt文件，文件内容是shiro_key。lib目前是CommonsBeanutils依赖的版本。
 
-![image-20211130113559530](https://gitee.com/samny/images/raw/master/summersec//59u35er59ec/59u35er59ec.png)
+![image-20211130113559530](https://cdn.jsdelivr.net/gh/SummerSec/Images//44u5044ec44u5044ec.png)
 
 
 
