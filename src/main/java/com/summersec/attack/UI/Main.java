@@ -24,22 +24,6 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-//        Runner HelloMan = new Runner("http://1.116.32.76:8989");
-//        try {
-//            HelloMan.getFileList();
-//        } catch (Exception e) {
-////            e.printStackTrace();
-//        }
-//        try {
-//            HelloMan.doSomething();
-//        } catch (Exception e) {
-////            e.printStackTrace();
-//        }
-//        try {
-//            HelloMan.getFile();
-//        }catch (Exception e){
-////            e.printStackTrace();
-//        }
         launch(args);
     }
 }
