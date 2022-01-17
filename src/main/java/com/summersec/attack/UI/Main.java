@@ -15,8 +15,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/gui.fxml"));
-        primaryStage.setTitle("shiro反序列化漏洞综合利用工具 增强版 By SummerSec");
-//        primaryStage.setTitle("shiro反序列化漏洞综合利用工具 增强版 By 安恒水滴实验室专版");
+        primaryStage.setTitle("shiro反序列化漏洞综合利用工具 魔改By by3");
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -24,22 +23,6 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-//        Runner HelloMan = new Runner("http://1.116.32.76:8989");
-//        try {
-//            HelloMan.getFileList();
-//        } catch (Exception e) {
-////            e.printStackTrace();
-//        }
-//        try {
-//            HelloMan.doSomething();
-//        } catch (Exception e) {
-////            e.printStackTrace();
-//        }
-//        try {
-//            HelloMan.getFile();
-//        }catch (Exception e){
-////            e.printStackTrace();
-//        }
         launch(args);
     }
 }

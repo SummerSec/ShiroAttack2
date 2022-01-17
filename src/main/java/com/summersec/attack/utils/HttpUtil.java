@@ -63,6 +63,7 @@ public class HttpUtil {
                     sslContext.init((KeyManager[])null, tm, new SecureRandom());
                     SSLSocketFactory ssf = sslContext.getSocketFactory();
                     hsc = (HttpsURLConnection)url.openConnection();
+                    hsc.setInstanceFollowRedirects(false);
                     hsc.setSSLSocketFactory(ssf);
                     hsc.setHostnameVerifier(allHostsValid);
                     httpUrlConn = hsc;
@@ -80,7 +81,7 @@ public class HttpUtil {
                     ((URLConnection)httpUrlConn).setRequestProperty("Content-Type", contentType);
                 }
 
-                ((URLConnection)httpUrlConn).setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)");
+                ((URLConnection)httpUrlConn).setRequestProperty("User-Agent", UserAgentUtil.getRandomUserAgent());
                 ((URLConnection)httpUrlConn).setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
                 ((URLConnection)httpUrlConn).setRequestProperty("Accept-Encoding", "gzip, deflate");
                 ((URLConnection)httpUrlConn).setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
@@ -189,8 +190,10 @@ public class HttpUtil {
                     Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
                     if (proxy != null) {
                         hsc = (HttpsURLConnection)url.openConnection(proxy);
+                        hsc.setInstanceFollowRedirects(false);
                     } else {
                         hsc = (HttpsURLConnection)url.openConnection();
+                        hsc.setInstanceFollowRedirects(false);
                     }
 
                     hsc.setSSLSocketFactory(ssf);
@@ -200,8 +203,10 @@ public class HttpUtil {
                     Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
                     if (proxy != null) {
                         hc = (HttpURLConnection)url.openConnection(proxy);
+                        hc.setInstanceFollowRedirects(false);
                     } else {
                         hc = (HttpURLConnection)url.openConnection();
+                        hc.setInstanceFollowRedirects(false);
                     }
 
                     hc.setRequestMethod(requestMethod);
@@ -215,11 +220,12 @@ public class HttpUtil {
                     ((URLConnection)httpUrlConn).setRequestProperty("Content-Type", contentType);
                 }
 
-                ((URLConnection)httpUrlConn).setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)");
+                ((URLConnection)httpUrlConn).setRequestProperty("User-Agent",UserAgentUtil.getRandomUserAgent());
                 ((URLConnection)httpUrlConn).setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
                 ((URLConnection)httpUrlConn).setRequestProperty("Accept-Encoding", "gzip, deflate");
                 ((URLConnection)httpUrlConn).setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
                 ((URLConnection)httpUrlConn).setRequestProperty("Connection", "close");
+
                 if (headers != null) {
                     Iterator var28 = headers.keySet().iterator();
 
@@ -302,11 +308,13 @@ public class HttpUtil {
                 sslContext.init((KeyManager[])null, tm, new SecureRandom());
                 SSLSocketFactory ssf = sslContext.getSocketFactory();
                 hsc = (HttpsURLConnection)url.openConnection();
+                hsc.setInstanceFollowRedirects(false);
                 hsc.setSSLSocketFactory(ssf);
                 hsc.setHostnameVerifier(allHostsValid);
                 httpUrlConn = hsc;
             } else {
                 hc = (HttpURLConnection)url.openConnection();
+                hc.setInstanceFollowRedirects(false);
                 hc.setRequestMethod(requestMethod);
                 httpUrlConn = hc;
             }
@@ -316,7 +324,7 @@ public class HttpUtil {
                 ((URLConnection)httpUrlConn).setRequestProperty("Content-Type", contentType);
             }
 
-            ((URLConnection)httpUrlConn).setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)");
+            ((URLConnection)httpUrlConn).setRequestProperty("User-Agent", UserAgentUtil.getRandomUserAgent());
             ((URLConnection)httpUrlConn).setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
             ((URLConnection)httpUrlConn).setRequestProperty("Accept-Encoding", "gzip, deflate");
             ((URLConnection)httpUrlConn).setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
@@ -398,8 +406,10 @@ public class HttpUtil {
                 Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
                 if (proxy != null) {
                     hsc = (HttpsURLConnection)url.openConnection(proxy);
+                    hsc.setInstanceFollowRedirects(false);
                 } else {
                     hsc = (HttpsURLConnection)url.openConnection();
+                    hsc.setInstanceFollowRedirects(false);
                 }
 
                 hsc.setSSLSocketFactory(ssf);
@@ -409,8 +419,10 @@ public class HttpUtil {
                 Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
                 if (proxy != null) {
                     hc = (HttpURLConnection)url.openConnection(proxy);
+                    hc.setInstanceFollowRedirects(false);
                 } else {
                     hc = (HttpURLConnection)url.openConnection();
+                    hc.setInstanceFollowRedirects(false);
                 }
 
                 hc.setRequestMethod(requestMethod);
@@ -422,7 +434,7 @@ public class HttpUtil {
                 ((URLConnection)httpUrlConn).setRequestProperty("Content-Type", contentType);
             }
 
-            ((URLConnection)httpUrlConn).setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)");
+            ((URLConnection)httpUrlConn).setRequestProperty("User-Agent", UserAgentUtil.getRandomUserAgent());
             ((URLConnection)httpUrlConn).setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
             ((URLConnection)httpUrlConn).setRequestProperty("Accept-Encoding", "gzip, deflate");
             ((URLConnection)httpUrlConn).setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");

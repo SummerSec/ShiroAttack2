@@ -104,7 +104,7 @@ public class MainController {
         String shellPass = this.shellPassText.getText();
         String shellPath = this.shellPathText.getText();
         if (AttackService.gadget != null ) {
-        this.attackService.injectMem(memShellType, shellPass, shellPath);
+            this.attackService.injectMem(memShellType, shellPass, shellPath);
         } else {
             this.InjOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
         }
