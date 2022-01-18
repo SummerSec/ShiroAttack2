@@ -28,7 +28,7 @@
 
 ![image-20211130113559530](https://cdn.jsdelivr.net/gh/SummerSec/Images//44u5044ec44u5044ec.png)
 
-特殊shiro漏洞打法：
+特殊shiro漏洞打法（有时间再写）：
 
 * 关于内存马模块的使用方法，请参考内存马模块的使用方法。
    [MemShell](./memshell.md)

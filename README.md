@@ -19,7 +19,7 @@
 
 ## 前言
 
-关于该工具更新内容介绍后续会更新到博客下面**https://summersec.github.io/BlogParpers**
+关于该工具更新内容介绍后续会更新到博客下面**https://shiro.sumsec.me/**
 
 ## 工具特点
 
