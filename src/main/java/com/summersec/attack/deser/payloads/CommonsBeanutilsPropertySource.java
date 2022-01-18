@@ -24,20 +24,13 @@ public class CommonsBeanutilsPropertySource implements ObjectPayload<Queue<Objec
             }
 
         };
-        PropertySource propertySource2 = new PropertySource() {
 
-            @Override
-            public int getPriority() {
-                return 0;
-            }
-
-        };
         BeanComparator beanComparator = new BeanComparator(null, new PropertySource.Comparator());
 
         PriorityQueue<Object> queue = new PriorityQueue<Object>(2, beanComparator);
 
         queue.add(propertySource1);
-        queue.add(propertySource2);
+        queue.add(propertySource1);
 
 
         Reflections.setFieldValue(queue, "queue", new Object[] { template, template });

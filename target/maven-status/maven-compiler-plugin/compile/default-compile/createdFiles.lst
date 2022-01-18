@@ -15,7 +15,6 @@ com\summersec\attack\deser\echo\EchoPayload$Utils.class
 com\summersec\attack\deser\util\JavaVersion.class
 com\summersec\attack\deser\util\Gadgets_orgin$Foo.class
 com\summersec\attack\deser\util\ClassFiles.class
-com\summersec\attack\deser\payloads\CommonsBeanutilsPropertySource$2.class
 com\summersec\attack\deser\echo\TomcatEcho.class
 com\summersec\attack\deser\payloads\CommonsCollectionsK1.class
 com\summersec\attack\deser\util\Reflections.class
@@ -32,7 +31,6 @@ com\summersec\attack\deser\payloads\test.class
 com\summersec\attack\deser\payloads\annotation\PayloadTest.class
 com\summersec\attack\deser\payloads\CommonsBeanutilsString.class
 com\summersec\attack\deser\util\CommonUtils.class
-com\summersec\attack\deser\payloads\CommonsBeanutilsPropertySource_192$2.class
 com\summersec\attack\deser\payloads\annotation\Authors$Utils.class
 com\summersec\attack\utils\AesUtil.class
 com\summersec\attack\deser\plugins\keytest\KeyEcho.class

@@ -10,38 +10,14 @@
   <a href="https://github.com/SummerSec/ShiroAttack2"><img alt="Stars" src="https://img.shields.io/github/stars/SummerSec/ShiroAttack2.svg?style=social&label=Stars"></a>
      <a href="https://github.com/SummerSec"><img alt="Follower" src="https://img.shields.io/github/followers/SummerSec.svg?style=social&label=Follow"></a>
      <a href="https://github.com/SummerSec"><img alt="Visitor" src="https://visitor-badge.laobi.icu/badge?page_id=SummerSec.ShiroAttack2"></a>
+    <a href="https://shiro.sumsec.me/"><img alt="ShiroDocs" src="https://img.shields.io/badge/ShiroDocs-green"></a>
 	<a href="https://twitter.com/SecSummers"><img alt="SecSummers" src="https://img.shields.io/twitter/follow/SecSummers.svg"></a>
 	<a xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://visitor-badge.laobi.icu"><rect fill="rgba(0,0,0,0)" height="20" width="49.6"/></a>
 	<a xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://visitor-badge.laobi.icu"><rect fill="rgba(0,0,0,0)" height="20" width="17.0" x="49.6"/></a>
 	</p>
 
 
-
-## 前言
-
-关于该工具更新内容介绍后续会更新到博客下面**https://summersec.github.io/BlogParpers**
-
-## 工具特点
-
-* javafx
-* 处理没有第三方依赖的情况
-* 支持多版本CommonsBeanutils的gadget
-* 支持内存马
-* 采用直接回显执行命令
-* 添加了更多的CommonsBeanutils版本gadget
-* 支持修改rememberMe关键词
-* 支持直接爆破利用gadget和key
-* 支持代理
-* 添加修改shirokey功能（使用内存马的方式）**可能导致业务异常**
-* 支持内存马小马
-* 添加DFS算法回显（AllECHO） 
-
-## FAQ 常见问题见
-
-[FAQ](https://shiro.sumsec.me/)
-
-
-
+---
 ## 使用方法
 
 直接使用shiro_attack-{version}-SNAPSHOT-all.jar第三版
@@ -52,10 +28,23 @@
 
 ![image-20211130113559530](https://cdn.jsdelivr.net/gh/SummerSec/Images//44u5044ec44u5044ec.png)
 
+特殊shiro漏洞打法：
+
+* 关于内存马模块的使用方法，请参考内存马模块的使用方法。
+   [MemShell](./memshell.md)
+* 关于有key无链漏洞的使用方法，请参考无key漏洞的使用方法。
+   [NoGadget](./NoGadget.md)
+* 关于bypass waf方法，请参考bypass waf方法。
+   [BypassWaf](./BypassWaf.md)
+
+
+## FAQ 常见问题见
+
+[FAQ](./docs/FAQ.md)
+
 
 
 ---
-
 ## :b:免责声明
 
 该工具仅用于安全自查检测
@@ -69,4 +58,3 @@
 ----
 
 ![as](https://starchart.cc/SummerSec/ShiroAttack2.svg)
-
