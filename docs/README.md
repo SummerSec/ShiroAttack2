@@ -40,7 +40,7 @@
 
 ## FAQ 常见问题见
 
-[FAQ](./docs/FAQ.md)
+[FAQ](./FAQ.md)
 
 
 

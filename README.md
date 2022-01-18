@@ -38,7 +38,7 @@
 
 ## FAQ 常见问题见
 
-[FAQ](https://shiro.sumsec.me/)
+[FAQ](./docs/FAQ.md)
 
 
 
