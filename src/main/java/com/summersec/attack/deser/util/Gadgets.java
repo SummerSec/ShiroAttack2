@@ -66,12 +66,6 @@ public class Gadgets {
         CtClass superClass = pool.get(abstTranslet.getName());
         clazz.setSuperclass(superClass);
         byte[] classBytes = clazz.toBytecode();
-//        File file = new File("cat.class");
-//        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-//          fileOutputStream.write(classBytes);
-//        }catch (Exception e){
-//            System.out.println(e.getMessage());
-//        }
         Field bcField = TemplatesImpl.class.getDeclaredField("_bytecodes");
         bcField.setAccessible(true);
         bcField.set(templates, new byte[][]{classBytes});

