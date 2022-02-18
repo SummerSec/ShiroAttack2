@@ -39,10 +39,11 @@ public class StandardExecutorClassLoader extends URLClassLoader {
         // 加载对应版本目录下的 Jar 包
         tryLoadJarInDir(jarPath);
         // 加载对应版本目录下的 lib 目录下的 Jar 包
-        tryLoadJarInDir(jarPath + File.separator + "lib");
+//        tryLoadJarInDir(jarPath + File.separator + "lib");
     }
 
     private void tryLoadJarInDir(String dirPath) {
+        System.out.println("Try load jar in dir: " + dirPath);
         File dir = new File(dirPath);
         // 自动加载目录下的jar包
         if (dir.exists() && dir.isDirectory()) {

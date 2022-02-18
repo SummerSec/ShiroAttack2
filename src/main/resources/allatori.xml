@@ -1,0 +1,34 @@
+<!--allatori配置文件-->
+<config>
+<!--    <!\-\- 输入和输出jar配置，out指向的是加密后的jar &ndash;&gt;-->
+    <input>
+<!--        <jar in="shiro_attack-4.3-SNAPSHOT.jar" out="obf-shiro_attack-4.3-SNAPSHOT.jar"/>-->
+        <jar in="shiro_attack-4.4-SNAPSHOT-all.jar" out="obf-shiro_attack-4.4-SNAPSHOT-all.jar"/>
+    </input>
+<!--    <!\-\- 加水印 &ndash;&gt;-->
+    <watermark key="shiro_attack" value="developer: SummerSec"/>
+<!--    <!\-\- 需要保留原来类名的配置 &ndash;&gt;-->
+    <keep-names>
+        <class access="protected+">
+            <field access="protected+"/>
+            <method access="protected+"/>
+        </class>
+        <class template="class com.xxx.xxx.*"/>
+
+    </keep-names>
+
+    <property name="log-file" value="log.xml"/>
+    <ignore-classes>
+        <class template="class \*springframework\*"/>
+        <class template="class \*shardingjdbc\*"/>
+        <class template="class \*jni\*"/>
+        <class template="class \*alibaba\*"/>
+        <class template="class \*persistence\*"/>
+        <class template="class \*apache\*"/>
+        <class template="class \*mybatis\*"/>
+<!--        <!\-\- 排除包下的类，可单个到具体,注意此处一定要排除掉springboot项目的启动类 &ndash;&gt;-->
+        <class template="class com.apache.*"/>
+        <class template="class org.apache.http.entity.StringEntity"/>
+        <class template="class org.apache.cxf.*"/>
+    </ignore-classes>
+</config>
