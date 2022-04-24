@@ -6,7 +6,7 @@
 
     <groupId>org.example</groupId>
     <artifactId>shiro_attack</artifactId>
-    <version>4.5.2-SNAPSHOT</version>
+    <version>4.5.3-SNAPSHOT</version>
     <build>
         <plugins>
             <plugin>
@@ -110,11 +110,11 @@
             <version>3.12.0</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>commons-beanutils</groupId>-->
-<!--            <artifactId>commons-beanutils</artifactId>-->
-<!--            <version>1.9.2</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.2</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-collections</groupId>

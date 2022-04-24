@@ -1,5 +1,7 @@
 package com.summersec.attack.Encrypt;
 
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.symmetric.AES;
 import org.apache.shiro.codec.Base64;
 
 import javax.crypto.Cipher;
@@ -10,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 public class GcmEncrypt implements EncryptInterface {
     @Override

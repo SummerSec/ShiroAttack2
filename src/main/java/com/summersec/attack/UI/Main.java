@@ -15,7 +15,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/gui.fxml"));
-        primaryStage.setTitle("shiro反序列化漏洞综合利用工具 增强版 SummerSec & by3");
+        primaryStage.setTitle("shiro反序列化漏洞综合利用工具 增强版 SummerSec");
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.show();

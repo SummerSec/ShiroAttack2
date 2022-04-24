@@ -13,17 +13,14 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.ServletRegistration.Dynamic;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.catalina.Wrapper;
+import org.apache.catalina.connector.RequestFacade;
+import org.apache.catalina.connector.ResponseFacade;
 import org.apache.catalina.core.ApplicationContext;
 import org.apache.catalina.core.ApplicationContextFacade;
 import org.apache.catalina.core.ApplicationServletRegistration;
@@ -151,9 +148,40 @@ public final class BehinderServlet extends ClassLoader implements Servlet {
 
     public void service(ServletRequest req, ServletResponse resp) throws ServletException, IOException {
         HttpSession session = ((HttpServletRequest)req).getSession();
+        Object lastRequest = req;
+        Object lastResponse = resp;
+        // 解决包装类RequestWrapper的问题
+        // 详细描述见 https://github.com/rebeyond/Behinder/issues/187
+        if (!(lastRequest instanceof RequestFacade)) {
+            Method getRequest = null;
+            try {
+                getRequest = ServletRequestWrapper.class.getMethod("getRequest");
+                lastRequest = getRequest.invoke(request);
+                while (true) {
+                    if (lastRequest instanceof RequestFacade) break;
+                    lastRequest = getRequest.invoke(lastRequest);
+                }
+            } catch (Exception e) {
+//                e.printStackTrace();
+            }
+        }
+        // 解决包装类ResponseWrapper的问题
+        try {
+            if (!(lastResponse instanceof ResponseFacade)) {
+                Method getResponse = ServletResponseWrapper.class.getMethod("getResponse");
+                lastResponse = getResponse.invoke(response);
+                while (true) {
+                    if (lastResponse instanceof ResponseFacade) break;
+                    lastResponse = getResponse.invoke(lastResponse);
+                }
+            }
+        }catch (Exception e) {
+
+        }
+
         Map obj = new HashMap();
-        obj.put("request", req);
-        obj.put("response", resp);
+        obj.put("request", lastRequest);
+        obj.put("response", lastResponse);
         obj.put("session", session);
 
         try {

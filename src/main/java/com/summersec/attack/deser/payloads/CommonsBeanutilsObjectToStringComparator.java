@@ -12,7 +12,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 // Apache Commons Lang
-@Dependencies({"commons-beanutils:commons-beanutils:1.8.3"})
+@Dependencies({"commons-beanutils:commons-beanutils:1.9.2"})
 @Authors({"水滴"})
 public class CommonsBeanutilsObjectToStringComparator  implements ObjectPayload<Queue<Object>>{
 

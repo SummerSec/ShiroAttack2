@@ -3,6 +3,7 @@ package com.summersec.attack.Encrypt;
 import org.apache.shiro.codec.Base64;
 import org.apache.shiro.crypto.AesCipherService;
 import org.apache.shiro.util.ByteSource;
+import org.apache.shiro.util.SimpleByteSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,8 +31,8 @@ public class CbcEncrypt implements EncryptInterface {
 
         byte[] keyDecode = Base64.decode(key);
         AesCipherService cipherService = new AesCipherService();
-        ByteSource byteSource = cipherService.encrypt(objectBytes, keyDecode);
-        byte[] value = byteSource.getBytes();
-        return new String(Base64.encode(value));
+        SimpleByteSource byteSource = (SimpleByteSource) cipherService.encrypt(objectBytes, keyDecode);
+        return byteSource.toBase64();
+
     }
 }

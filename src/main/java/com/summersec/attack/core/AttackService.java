@@ -202,7 +202,7 @@ public class AttackService {
             Object chainObject = gadgetPayload.getObject(template);
             rememberMe = shiro.sendpayload(chainObject, this.shiroKeyWord, spcShiroKey);
         } catch (Exception var9) {
-//            var9.printStackTrace();
+            var9.printStackTrace();
             this.mainController.logTextArea.appendText(Utils.log(var9.getMessage()));
         }
 
