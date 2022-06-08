@@ -11,8 +11,7 @@ import cn.hutool.crypto.symmetric.AES;
  **/
 public class SecureUtil1 {
     public static void main(String[] args) {
-//        AES aes = SecureUtil.aes("123456");
-//        aes.encrypt("123456");
+
 
 
     }
