@@ -50,15 +50,19 @@ public class AttackService {
     public static String gadget = null;
     public static String realShiroKey = null;
     public static Map<String, String> globalHeader = null;
+    public static String postData = null;
     private final MainController mainController;
     public int flagCount = 0;
 
-    public AttackService(String method, String url, String shiroKeyWord, String timeout) {
+    public AttackService(String method, String url, String shiroKeyWord, String timeout, Map<String, String> globalHeader, String postData) {
         this.mainController = (MainController)ControllersFactory.controllers.get(MainController.class.getSimpleName());
         this.url = url;
         this.method = method;
         this.timeout = Integer.parseInt(timeout) * 1000;
         this.shiroKeyWord = shiroKeyWord;
+        this.globalHeader = globalHeader;
+        this.postData = postData;
+
     }
 
     public HashMap<String, String> getCombineHeaders(HashMap<String, String> header) {
@@ -78,15 +82,20 @@ public class AttackService {
         HashMap combineHeaders = this.getCombineHeaders(header);
         Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
         try {
-            result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
-            if (result.contains("Host")){
+/*            result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
+            return result;*/
+/*            if (result.contains("Host")){
                 return result;
-            }
+            }*/
             if (this.method.equals("GET")) {
-                result = HttpUtil.getHeaderByHttpRequest(this.url, "UTF-8", combineHeaders, this.timeout);
+                result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
 
             } else {
-                result = HttpUtil.postHeaderByHttpRequest(this.url, "UTF-8", "", combineHeaders, this.timeout);
+//                result = HttpUtil.postHeaderByHttpRequest(this.url, "UTF-8", this.postData, combineHeaders, this.timeout);
+//                result = bodyHttpRequest(combineHeaders, this.postData);
+                result = HttpUtil.postHttpReuest(this.url, this.postData, "UTF-8", combineHeaders, "application/x-www-form-urlencoded", this.timeout);
+                System.out.println(result);
+
             }
         } catch (Exception var5) {
             this.mainController.logTextArea.appendText(Utils.log(var5.getMessage()));

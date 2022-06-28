@@ -51,6 +51,25 @@
             <Font size="14.0" />
          </font>
         </TitledPane>
+      <TitledPane animated="false" text="复杂请求" textAlignment="CENTER">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <content>
+            <HBox prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <Label prefHeight="24.0" prefWidth="55.0" text="请求头" textAlignment="JUSTIFY">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="globalHeader" prefHeight="25.0" prefWidth="215.0" promptText="Abc: 123" />
+                  <Label prefHeight="25.0" prefWidth="72.0" text="POST数据" />
+                  <TextField fx:id="post_data" prefHeight="42.0" prefWidth="248.0" promptText="a=123" />
+               </children>
+            </HBox>
+         </content>
+        </TitledPane>
         <TitledPane animated="false" text="密钥探测">
             <content>
                 <HBox prefHeight="100.0" prefWidth="988.0" spacing="8.0">
