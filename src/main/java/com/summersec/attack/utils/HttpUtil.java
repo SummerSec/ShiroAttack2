@@ -246,7 +246,9 @@ public class HttpUtil {
                 }
 
                 inputStream = ((URLConnection)httpUrlConn).getInputStream();
-                result = readString(inputStream, encoding);
+//                result = readString(inputStream, encoding);
+                Map<String, List<String>> inputStreamHeaders = ((URLConnection)httpUrlConn).getHeaderFields();
+                result = inputStreamHeaders.toString()+readString(inputStream, encoding);
                 String var30 = result;
                 return var30;
             } catch (IOException var23) {
