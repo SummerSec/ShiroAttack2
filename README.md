@@ -1,4 +1,4 @@
-# shiro550反序列化漏洞利用工具
+# 
 
 <h1 align="center" >ShiroAttack2</h1>
 <h3 align="center" >一款针对Shiro550漏洞进行快速漏洞利用</h3>
@@ -35,6 +35,7 @@
 * 添加修改shirokey功能（使用内存马的方式）**可能导致业务异常**
 * 支持内存马小马
 * 添加DFS算法回显（AllECHO） 
+* 支持自定义请求头，格式：abc:123&&&test:123
 
 ## FAQ 常见问题见
 
