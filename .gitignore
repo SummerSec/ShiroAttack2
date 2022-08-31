@@ -1,5 +1,5 @@
 .idea/**
 lib
-target
+target/**
 out
 src/test/java/**
