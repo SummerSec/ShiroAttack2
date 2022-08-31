@@ -216,9 +216,16 @@ public class MainController {
         //自定义请求头
         Map<String, String> myheader= new HashMap<>() ;
         if(!this.globalHeader.getText().equals("")) {
-            String header[] = this.globalHeader.getText().split(":",2);
+            String headers[] = this.globalHeader.getText().split("&&&");
 //        myheader(this.globalHeader.getText() -> this.globalHeader.getText().split(":"))
-            myheader.put(header[0], header[1]);
+            for (int i = 0; i < headers.length; i++ ) {
+                String header[] = headers[i].split(":", 2);
+                if (header[0].toLowerCase().equals("cookie")) {
+                    myheader.put("Cookie", header[1]);
+                } else {
+                    myheader.put(header[0], header[1]);
+                }
+            }
         }
 //        this.globalHeader = myheader
         String postData = (String)this.post_data.getText();

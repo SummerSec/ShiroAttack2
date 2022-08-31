@@ -21,11 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,13 +59,20 @@ public class AttackService {
 
     public HashMap<String, String> getCombineHeaders(HashMap<String, String> header) {
         HashMap<String, String> combineHeaders = new HashMap();
-        if (globalHeader != null) {
-            combineHeaders.putAll(header);
-            combineHeaders.putAll(globalHeader);
+        Set<String> keySet = globalHeader.keySet();
+        if (keySet.size() != 0) {
+            for (String key : keySet) {
+                if (key.equals("Cookie")) {
+                    header.replace("Cookie", globalHeader.get(key) + "; " + header.get(key));
+                    combineHeaders.putAll(header);
+                } else {
+                    combineHeaders.putAll(header);
+                    combineHeaders.put(key, globalHeader.get(key));
+                }
+            }
         } else {
             combineHeaders = header;
         }
-
         return combineHeaders;
     }
 
