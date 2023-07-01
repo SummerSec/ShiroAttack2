@@ -103,6 +103,8 @@ public class TomcatEcho implements EchoPayload {
                 "        }\n" +
                 "    }",clazz));
 
+        // 兼容低版本jdk
+        clazz.getClassFile().setMajorVersion(50);
         return clazz;
     }
 }

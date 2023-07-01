@@ -40,6 +40,9 @@ public class SpringEcho implements EchoPayload {
                 "                e.getStackTrace();\n" +
                 "            }\n" +
                 "        }", clazz));
+
+        // 兼容低版本jdk
+        clazz.getClassFile().setMajorVersion(50);
         return clazz;
     }
 }

