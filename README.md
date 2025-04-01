@@ -1,4 +1,4 @@
-# 
+
 
 <h1 align="center" >ShiroAttack2</h1>
 <h3 align="center" >一款针对Shiro550漏洞进行快速漏洞利用</h3>
@@ -19,43 +19,44 @@
 
 ## 前言
 
-关于该工具更新内容介绍后续会更新到博客下面**https://shiro.sumsec.me/**
+本仓库在原工具基础上增加功能，详细 readme 见原仓库 https://github.com/SummerSec/ShiroAttack2。
 
-## 工具特点
+## 增加功能
 
-* javafx
-* 处理没有第三方依赖的情况
-* 支持多版本CommonsBeanutils的gadget
-* 支持内存马
-* 采用直接回显执行命令
-* 添加了更多的CommonsBeanutils版本gadget
-* 支持修改rememberMe关键词
-* 支持直接爆破利用gadget和key
-* 支持代理
-* 添加修改shirokey功能（使用内存马的方式）**可能导致业务异常**
-* 支持内存马小马
-* 添加DFS算法回显（AllECHO） 
-* 支持自定义请求头，格式：abc:123&&&test:123
-
-## FAQ 常见问题见
-
-[FAQ](./docs/FAQ.md)
+* Tomcat 内存马
+  * 冰蝎[Valve]
+  * 冰蝎[Listener]
+  * 哥斯拉[Valve]
+  * 哥斯拉[Listener]
+  * Suo5[Servlet]
+  * Suo5[Filter]
+  * Suo5[Valve]
+  * Suo5[Listener]
 
 
+## 内存马连接常见问题
+
+Q：内存马返回注入成功，但根据给出的路径无法连接。
+
+A：log 中打印的连接地址不准确，需要根据实际情况判断 web 根目录位置。
+
+
+
+Q：Suo5 内存马连接方法。
+
+A：根据 log 中给出的请求头，使用 suo5 连接即可，注入的 suo5 内存马无密码，仅需添加请求头即可连接。
+
+
+
+Q：设置了 **path** 或 **连接密码** 但不生效。
+
+A：部分内存马连接与设置的 path 无关；suo5 内存马连接与设置的连接密码无关。
 
 ## 使用方法
 
-直接使用shiro_attack-{version}-SNAPSHOT-all.jar第三版
-
-![image-20211130114603322](https://img.sumsec.me//49u5049ec49u5049ec.png)
-
-在jar的当前目录下创建一个data文件夹，里面创建一个shiro_keys.txt文件，文件内容是shiro_key。lib目前是CommonsBeanutils依赖的版本。
-
-![image-20211130113559530](https://img.sumsec.me//44u5044ec44u5044ec.png)
+release 中有打包好的 4.7.1 版本，直接使用即可。
 
 
-
----
 
 ## :b:免责声明
 
@@ -67,7 +68,7 @@
 
 该工具只授权于企业内部进行问题排查，请勿用于非法用途，请遵守网络安全法，否则后果作者概不负责
 
-----
 
-![as](https://starchart.cc/SummerSec/ShiroAttack2.svg)
+
+
 
