@@ -3,3 +3,4 @@ lib
 target/**
 out
 src/test/java/**
+tools/

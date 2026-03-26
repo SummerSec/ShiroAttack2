@@ -110,10 +110,14 @@
             <version>3.12.0</version>
         </dependency>
 
+        <!-- commons-beanutils 编译期使用本地 1.8.3 JAR，运行时两个版本通过 StandardExecutorClassLoader 动态加载 -->
+        <!-- 参见 issue #50: 引入 Maven 中心库的 1.9.2 会导致 CommonsBeanutilsString 链失效 -->
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.9.2</version>
+            <version>1.8.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/1.8.3/commons-beanutils-1.8.3.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -304,6 +308,16 @@
             <groupId>javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>3.12.0.GA</version>
+        </dependency>
+        <dependency>
+            <groupId>jeg</groupId>
+            <artifactId>jeg-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>jmg</groupId>
+            <artifactId>jmg-sdk</artifactId>
+            <version>1.0.9</version>
         </dependency>
 
     </dependencies>

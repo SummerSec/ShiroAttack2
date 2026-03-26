@@ -1,0 +1,126 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Oracle JDK 8u121：与本地开发环境一致，兼容性最佳（推荐）
+          - jdk_name: oracle-8u121
+            use_oracle: true
+          # Azul Zulu 8 + JavaFX：开源替代，行为可能与 Oracle 存在细微差异
+          - jdk_name: zulu-8-jfx
+            distribution: zulu
+            java_version: '8'
+            java_package: jdk+fx
+          # BellSoft Liberica 8 Full：开源替代，行为可能与 Oracle 存在细微差异
+          - jdk_name: liberica-8-full
+            distribution: liberica
+            java_version: '8'
+            java_package: jdk+fx
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Oracle JDK 8u121 需提前上传到本仓库 jdk-assets Release
+      - name: Install Oracle JDK 8u121
+        if: matrix.use_oracle == true
+        run: |
+          wget -q \
+            "https://github.com/SummerSec/ShiroAttack2/releases/download/jdk-assets/jdk-8u121-linux-x64.tar.gz" \
+            -O /tmp/jdk8u121.tar.gz
+          sudo mkdir -p /opt/jdk
+          sudo tar -xzf /tmp/jdk8u121.tar.gz -C /opt/jdk
+          echo "JAVA_HOME=/opt/jdk/jdk1.8.0_121" >> $GITHUB_ENV
+          echo "/opt/jdk/jdk1.8.0_121/bin" >> $GITHUB_PATH
+
+      - name: Set up JDK (${{ matrix.jdk_name }})
+        if: matrix.use_oracle != true
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java_version }}
+          distribution: ${{ matrix.distribution }}
+          java-package: ${{ matrix.java_package }}
+
+      - name: Verify Java version
+        run: java -version
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ matrix.jdk_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-${{ matrix.jdk_name }}
+
+      - name: Build fat JAR
+        run: |
+          mvn clean package -DskipTests \
+            -Dmaven.compiler.bootclasspath=$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/jre/lib/jce.jar
+
+      - name: Rename JAR with JDK info
+        id: rename
+        run: |
+          cd target
+          JAR=$(ls *-all.jar | head -1)
+          BASE="${JAR%-all.jar}"
+          NAMED="${BASE}-${{ matrix.jdk_name }}.jar"
+          cp "$JAR" "$NAMED"
+          echo "jar_name=$NAMED" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-${{ matrix.jdk_name }}
+          path: target/${{ steps.rename.outputs.jar_name }}
+          retention-days: 1
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all JAR artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get tag name
+        id: tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.TAG }}
+          name: ShiroAttack2 ${{ steps.tag.outputs.TAG }}
+          body: |
+            ## ShiroAttack2 ${{ steps.tag.outputs.TAG }}
+
+            > **注意：不同 JDK 厂商构建的版本存在兼容性差异，运行效果可能不同。**
+            > 推荐优先使用 Oracle JDK 8u121 构建版本（与本地开发环境一致）。
+
+            提供多个 JDK 厂商构建版本，按需下载：
+
+            | 文件名后缀 | 构建 JDK | 说明 |
+            |-----------|----------|------|
+            | `*-oracle-8u121.jar` | Oracle JDK 8u121 | **推荐**，与开发环境一致，兼容性最佳 |
+            | `*-zulu-8-jfx.jar` | Azul Zulu JDK 8 + JavaFX | 开源替代，行为可能存在细微差异 |
+            | `*-liberica-8-full.jar` | BellSoft Liberica JDK 8 Full | 开源替代，行为可能存在细微差异 |
+
+            ### 运行方法
+            ```bash
+            java -jar shiro_attack-<version>-<jdk>.jar
+            ```
+            > 所有版本均需本机安装 Java 8（含 JavaFX）运行时
+          files: artifacts/**/*.jar
+          draft: false
+          prerelease: false

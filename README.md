@@ -37,6 +37,29 @@
 * 添加DFS算法回显（AllECHO） 
 * 支持自定义请求头，格式：abc:123&&&test:123
 
+## 新功能（jEG / jMG 模块）
+
+当前版本新增了两个第三方生成器模块，并保持原有检测和攻击链路兼容：
+
+* Echo Generator 模块（基于 `java-echo-generator` / `jeg-core`）
+* Memshell Generator 模块（基于 `java-memshell-generator` / `jmg-sdk`）
+* UI 新增两个独立功能区：`Echo Generator`、`Memshell Generator`
+* 原有链路保持不变：`checkIsShiro -> keysCrack -> gadget/echo -> Shiro 加密发送`
+* 默认兼容策略为 `Legacy`，第三方生成失败时自动回退 Legacy 逻辑
+
+### 依赖安装（本地 Maven 仓库）
+
+在项目构建前，请先安装以下第三方 Jar 到本地 Maven：
+
+```bash
+mvn install:install-file -Dfile=jEG-Core-1.0.0.jar -DgroupId=jeg -DartifactId=jeg-core -Dversion=1.0.0 -Dpackaging=jar
+mvn install:install-file -Dfile=jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg-sdk -Dversion=1.0.9 -Dpackaging=jar
+```
+
+更多接入细节可查看：
+
+* [THIRD_PARTY_GENERATORS](./docs/THIRD_PARTY_GENERATORS.md)
+
 ## FAQ 常见问题见
 
 [FAQ](./docs/FAQ.md)

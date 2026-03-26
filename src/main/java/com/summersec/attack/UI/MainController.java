@@ -3,6 +3,8 @@ package com.summersec.attack.UI;
 import com.summersec.attack.Encrypt.KeyGenerator;
 import com.summersec.attack.core.AttackService;
 import com.summersec.attack.entity.ControllersFactory;
+import com.summersec.attack.integration.generator.model.EchoGenerateResult;
+import com.summersec.attack.integration.generator.model.MemshellGenerateResult;
 import com.summersec.attack.utils.Utils;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
@@ -98,6 +100,34 @@ public class MainController {
     public TextArea keytxt;
     @FXML
     public Button keygen;
+    @FXML
+    private ComboBox<String> echoSourceOpt;
+    @FXML
+    private ComboBox<String> jegServerOpt;
+    @FXML
+    private ComboBox<String> jegModelOpt;
+    @FXML
+    private ComboBox<String> jegFormatOpt;
+    @FXML
+    private Button genEchoBtn;
+    @FXML
+    private TextArea echoGeneratorOutput;
+    @FXML
+    private ComboBox<String> memshellSourceOpt;
+    @FXML
+    private ComboBox<String> jmgToolOpt;
+    @FXML
+    private ComboBox<String> jmgServerOpt;
+    @FXML
+    private ComboBox<String> jmgShellOpt;
+    @FXML
+    private ComboBox<String> jmgFormatOpt;
+    @FXML
+    private ComboBox<String> jmgGadgetOpt;
+    @FXML
+    private Button genMemshellBtn;
+    @FXML
+    private TextArea memshellGeneratorOutput;
 
     public MainController() {
     }
@@ -287,6 +317,30 @@ public class MainController {
             }
         });
         this.shellPathText.setText("/favicondemo.ico");
+
+        ObservableList<String> generatorSources = FXCollections.observableArrayList(new String[]{"Legacy", "jEG", "jMG"});
+        this.echoSourceOpt.setItems(generatorSources);
+        this.echoSourceOpt.setValue("Legacy");
+        this.memshellSourceOpt.setItems(generatorSources);
+        this.memshellSourceOpt.setValue("Legacy");
+
+        this.jegServerOpt.setItems(FXCollections.observableArrayList(new String[]{"SERVER_TOMCAT", "SERVER_SPRING"}));
+        this.jegServerOpt.setValue("SERVER_TOMCAT");
+        this.jegModelOpt.setItems(FXCollections.observableArrayList(new String[]{"MODEL_CMD"}));
+        this.jegModelOpt.setValue("MODEL_CMD");
+        this.jegFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64"}));
+        this.jegFormatOpt.setValue("FORMAT_BASE64");
+
+        this.jmgToolOpt.setItems(FXCollections.observableArrayList(new String[]{"TOOL_GODZILLA", "TOOL_BEHINDER", "TOOL_ANTSWORD"}));
+        this.jmgToolOpt.setValue("TOOL_GODZILLA");
+        this.jmgServerOpt.setItems(FXCollections.observableArrayList(new String[]{"SERVER_TOMCAT", "SERVER_SPRING"}));
+        this.jmgServerOpt.setValue("SERVER_TOMCAT");
+        this.jmgShellOpt.setItems(FXCollections.observableArrayList(new String[]{"SHELL_LISTENER", "SHELL_FILTER", "SHELL_SERVLET"}));
+        this.jmgShellOpt.setValue("SHELL_LISTENER");
+        this.jmgFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64"}));
+        this.jmgFormatOpt.setValue("FORMAT_BASE64");
+        this.jmgGadgetOpt.setItems(FXCollections.observableArrayList(new String[]{"GADGET_NONE"}));
+        this.jmgGadgetOpt.setValue("GADGET_NONE");
     }
 
     private void initToolbar() {
@@ -415,5 +469,65 @@ public class MainController {
         String key = keyGenerator.getKey();
         this.keytxt.appendText(key);
         this.keytxt.appendText("\n");
+    }
+
+    @FXML
+    void genEchoBtn(ActionEvent actionEvent) {
+        if (this.attackService == null) {
+            this.initAttack();
+        }
+        String source = this.echoSourceOpt.getValue();
+        String key = this.shiroKey.getText();
+        EchoGenerateResult result = this.attackService.generateEchoWithThirdParty(
+            source,
+            this.jegServerOpt.getValue(),
+            this.jegModelOpt.getValue(),
+            this.jegFormatOpt.getValue(),
+            this.gadgetOpt.getValue(),
+            this.echoOpt.getValue(),
+            key
+        );
+        this.echoGeneratorOutput.appendText("[" + result.getSource() + "] " + (result.isSuccess() ? "success" : "failed") + "\n");
+        if (result.getRequestHeaderName() != null && !result.getRequestHeaderName().isEmpty()) {
+            this.echoGeneratorOutput.appendText("header: " + result.getRequestHeaderName() + "\n");
+        }
+        if (result.getPayload() != null) {
+            this.echoGeneratorOutput.appendText(result.getPayload() + "\n");
+        }
+        if (result.getMessage() != null) {
+            this.echoGeneratorOutput.appendText("message: " + result.getMessage() + "\n");
+        }
+        this.echoGeneratorOutput.appendText("-------------------------------------------------\n");
+    }
+
+    @FXML
+    void genMemshellBtn(ActionEvent actionEvent) {
+        if (this.attackService == null) {
+            this.initAttack();
+        }
+        String source = this.memshellSourceOpt.getValue();
+        MemshellGenerateResult result = this.attackService.generateMemshellWithThirdParty(
+            source,
+            this.jmgToolOpt.getValue(),
+            this.jmgServerOpt.getValue(),
+            this.jmgShellOpt.getValue(),
+            this.jmgFormatOpt.getValue(),
+            this.jmgGadgetOpt.getValue(),
+            this.memShellOpt.getValue()
+        );
+        this.memshellGeneratorOutput.appendText("[" + result.getSource() + "] " + (result.isSuccess() ? "success" : "failed") + "\n");
+        if (result.getPayload() != null) {
+            this.memshellGeneratorOutput.appendText(result.getPayload() + "\n");
+        }
+        if (result.getBasicInfo() != null && !result.getBasicInfo().isEmpty()) {
+            this.memshellGeneratorOutput.appendText(result.getBasicInfo() + "\n");
+        }
+        if (result.getDebugInfo() != null && !result.getDebugInfo().isEmpty()) {
+            this.memshellGeneratorOutput.appendText(result.getDebugInfo() + "\n");
+        }
+        if (result.getMessage() != null) {
+            this.memshellGeneratorOutput.appendText("message: " + result.getMessage() + "\n");
+        }
+        this.memshellGeneratorOutput.appendText("-------------------------------------------------\n");
     }
 }
