@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build:
@@ -74,11 +75,26 @@ jobs:
           cp "$JAR" "$NAMED"
           echo "jar_name=$NAMED" >> $GITHUB_OUTPUT
 
+      - name: Package release bundle
+        id: bundle
+        run: |
+          mkdir -p release-bundle/lib release-bundle/data
+          cp target/${{ steps.rename.outputs.jar_name }} release-bundle/
+          if [ -d lib ]; then cp -r lib/. release-bundle/lib/; fi
+          if [ -d data ]; then cp -r data/. release-bundle/data/; fi
+          BUNDLE_NAME="${{ steps.rename.outputs.jar_name%.jar }}-bundle.zip"
+          cd release-bundle
+          zip -r ../$BUNDLE_NAME .
+          cd ..
+          echo "bundle_name=$BUNDLE_NAME" >> $GITHUB_OUTPUT
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: jar-${{ matrix.jdk_name }}
-          path: target/${{ steps.rename.outputs.jar_name }}
+          path: |
+            target/${{ steps.rename.outputs.jar_name }}
+            ${{ steps.bundle.outputs.bundle_name }}
           retention-days: 1
 
   release:
@@ -147,6 +163,8 @@ jobs:
             java -jar shiro_attack-<version>-<jdk>.jar
             ```
             > 所有版本均需本机安装 Java 8（含 JavaFX）运行时
-          files: artifacts/**/*.jar
+          files: |
+            artifacts/**/*.jar
+            artifacts/**/*.zip
           draft: false
           prerelease: false
