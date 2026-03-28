@@ -12,10 +12,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - jdk_name: oracle-8u121
-            use_oracle: true
           - jdk_name: zulu-8-jfx
-            use_oracle: false
             distribution: zulu
             java_version: '8'
             java_package: jdk+fx
@@ -24,20 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Oracle JDK 8u121 需提前上传到本仓库 jdk-assets Release
-      - name: Install Oracle JDK 8u121
-        if: matrix.use_oracle == true
-        run: |
-          curl -L --retry 3 --fail \
-            "https://github.com/SummerSec/ShiroAttack2/releases/download/jdk-assets/jdk-8u121-linux-x64.tar.gz" \
-            -o /tmp/jdk8u121.tar.gz
-          sudo mkdir -p /opt/jdk
-          sudo tar -xzf /tmp/jdk8u121.tar.gz -C /opt/jdk
-          echo "JAVA_HOME=/opt/jdk/jdk1.8.0_121" >> $GITHUB_ENV
-          echo "/opt/jdk/jdk1.8.0_121/bin" >> $GITHUB_PATH
-
-      - name: Set up local-matching JDK (${{ matrix.jdk_name }})
-        if: matrix.use_oracle != true
+      - name: Set up JDK (${{ matrix.jdk_name }})
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java_version }}
@@ -148,16 +132,13 @@ jobs:
 
             ---
 
-            > 本版本同时提供两种 JDK 构建：
-            > - **Oracle JDK 8u121**：与项目原始开发环境一致，兼容性最佳
-            > - **Azul Zulu 8 + JavaFX**：与当前本地开发环境更接近的开源构建版本
+            > 本版本 Release 使用 **Azul Zulu 8 + JavaFX** 构建。
+            > 与当前本地开发环境保持一致，便于复现和排查。
 
             ### 下载说明
 
             | 文件名 | 说明 |
             |--------|------|
-            | `*-oracle-8u121.jar` | Oracle JDK 8u121 单文件运行版本 |
-            | `*-oracle-8u121-bundle.zip` | Oracle JDK 8u121 完整压缩包，包含 jar、`lib/`、`data/` |
             | `*-zulu-8-jfx.jar` | Azul Zulu 8 + JavaFX 单文件运行版本 |
             | `*-zulu-8-jfx-bundle.zip` | Azul Zulu 8 + JavaFX 完整压缩包，包含 jar、`lib/`、`data/` |
 
