@@ -82,7 +82,9 @@ jobs:
           cp target/${{ steps.rename.outputs.jar_name }} release-bundle/
           if [ -d lib ]; then cp -r lib/. release-bundle/lib/; fi
           if [ -d data ]; then cp -r data/. release-bundle/data/; fi
-          BUNDLE_NAME="${{ steps.rename.outputs.jar_name%.jar }}-bundle.zip"
+          JAR_NAME="${{ steps.rename.outputs.jar_name }}"
+          BASE_NAME="${JAR_NAME%.jar}"
+          BUNDLE_NAME="${BASE_NAME}-bundle.zip"
           cd release-bundle
           zip -r ../$BUNDLE_NAME .
           cd ..
