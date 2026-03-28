@@ -147,7 +147,7 @@ jobs:
             java -jar shiro_attack-<version>-<jdk>.jar
             ```
             > 推荐优先下载 `bundle.zip`，解压后直接运行
-            > 若需自行构建，请确保仓库内 `tools/jEG-core-1.0.0.jar` 与 `tools/jmg-sdk-1.0.9.jar` 可用
+            > 若需自行构建，请确保仓库内 `libs/jEG-core-1.0.0.jar` 与 `libs/jmg-sdk-1.0.9.jar` 可用
           files: |
             artifacts/**/*.jar
             artifacts/**/*.zip
