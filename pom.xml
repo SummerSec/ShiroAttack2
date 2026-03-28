@@ -315,11 +315,15 @@
             <groupId>jeg</groupId>
             <artifactId>jeg-core</artifactId>
             <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/tools/jEG-core-1.0.0.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>jmg</groupId>
             <artifactId>jmg-sdk</artifactId>
             <version>1.0.9</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/tools/jmg-sdk-1.0.9.jar</systemPath>
         </dependency>
 
     </dependencies>
