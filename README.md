@@ -100,23 +100,49 @@ mvn install:install-file -Dfile=jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg
 
 ## 使用方法
 
-直接使用 `shiro_attack-{version}-SNAPSHOT-all.jar`（fat JAR，含所有依赖）。
+当前 Release 默认同时提供两类产物：
+
+- `shiro_attack-<version>-<jdk>.jar`：单文件可执行版本
+- `shiro_attack-<version>-<jdk>-bundle.zip`：包含运行所需目录的完整压缩包
+
+推荐优先下载 `bundle.zip`，解压后直接运行，目录结构更完整。
 
 **目录结构准备：**
 
-```
+```text
 ./
-├── shiro_attack-{version}-SNAPSHOT-all.jar
+├── shiro_attack-{version}-{jdk}.jar
 ├── data/
 │   └── shiro_keys.txt   # Shiro Key 字典，每行一个 Base64 Key
-└── lib/                 # CommonsBeanutils 各版本 JAR（可选）
+└── lib/                 # CommonsBeanutils 各版本 JAR
 ```
 
-![image-20211130114603322](https://img.sumsec.me//49u5049ec49u5049ec.png)
-
-在 JAR 的当前目录下创建 `data` 文件夹，其中创建 `shiro_keys.txt` 文件，文件内容为 Shiro Key（每行一个 Base64 编码的 Key）。`lib` 目录存放 CommonsBeanutils 各版本依赖。
-
 ![image-20211130113559530](./docs/readme.png)
+
+如果你下载的是 `bundle.zip`：
+
+- 解压后即可获得 `jar + data + lib` 的完整目录结构
+- 默认更适合直接运行与分发
+
+如果你下载的是单独 `jar`：
+
+- 仍需自行准备 `data/shiro_keys.txt`
+- `lib/` 目录中需包含 CommonsBeanutils 相关依赖
+
+运行方式：
+
+```bash
+java -jar shiro_attack-<version>-<jdk>.jar
+```
+
+其中：
+
+- `data/shiro_keys.txt`：Shiro Key 字典，每行一个 Base64 编码的 Key
+- `lib/`：CommonsBeanutils 各版本依赖
+
+GitHub Release 由 Actions 自动构建并上传 jar 与 zip 产物；如果你发布了新 tag（如 `v5.0.0-r1`），可直接在 Release 页面下载对应文件。
+
+![image-20211130113559530](https://img.sumsec.me//44u5044ec44u5044ec.png)
 
 详细使用说明见 [docs/USAGE.md](./docs/USAGE.md)
 
