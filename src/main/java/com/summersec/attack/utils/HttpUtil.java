@@ -678,4 +678,58 @@ public class HttpUtil {
     public static boolean downloadFile(String downURL, String path) throws Exception {
         return downloadFile(downURL, new File(path));
     }
+
+    /**
+     * 使用给定代理发起 GET 探测，不读写 {@link com.summersec.attack.UI.MainController#currentProxy}。
+     * 代理账号密码由调用方事先通过 {@link java.net.Authenticator#setDefault} 配置（与主程序 HTTP 一致）。
+     */
+    public static String testProxyConnection(Proxy proxy, String testUrl, int timeoutMs) throws Exception {
+        if (proxy == null) {
+            throw new IllegalArgumentException("代理未配置");
+        }
+        if (testUrl == null || testUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("测试 URL 为空");
+        }
+        String trimmed = testUrl.trim();
+        URL url = new URL(trimmed);
+        HttpURLConnection hc = null;
+        HttpsURLConnection hsc = null;
+        try {
+            if (trimmed.toLowerCase().startsWith("https")) {
+                SSLContext sslContext = SSLContext.getInstance("SSL");
+                TrustManager[] tm = new TrustManager[]{new MyCert()};
+                sslContext.init((KeyManager[]) null, tm, new SecureRandom());
+                SSLSocketFactory ssf = sslContext.getSocketFactory();
+                hsc = (HttpsURLConnection) url.openConnection(proxy);
+                hsc.setSSLSocketFactory(ssf);
+                hsc.setHostnameVerifier(allHostsValid);
+                hsc.setInstanceFollowRedirects(false);
+                hsc.setConnectTimeout(timeoutMs);
+                hsc.setReadTimeout(timeoutMs);
+                hsc.setRequestMethod("GET");
+                hsc.setRequestProperty("Connection", "close");
+                hsc.setRequestProperty("User-Agent", "ShiroAttack2-ProxyTest/1.0");
+                hsc.connect();
+                int code = hsc.getResponseCode();
+                return "连接成功，HTTP 状态码: " + code;
+            }
+            hc = (HttpURLConnection) url.openConnection(proxy);
+            hc.setInstanceFollowRedirects(false);
+            hc.setConnectTimeout(timeoutMs);
+            hc.setReadTimeout(timeoutMs);
+            hc.setRequestMethod("GET");
+            hc.setRequestProperty("Connection", "close");
+            hc.setRequestProperty("User-Agent", "ShiroAttack2-ProxyTest/1.0");
+            hc.connect();
+            int code = hc.getResponseCode();
+            return "连接成功，HTTP 状态码: " + code;
+        } finally {
+            if (hc != null) {
+                hc.disconnect();
+            }
+            if (hsc != null) {
+                hsc.disconnect();
+            }
+        }
+    }
 }

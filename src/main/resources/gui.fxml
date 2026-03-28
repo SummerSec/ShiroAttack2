@@ -5,66 +5,87 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="820.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.summersec.attack.UI.MainController">
+<BorderPane prefHeight="820.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.summersec.attack.UI.MainController">
     <top>
         <VBox spacing="6.0">
             <children>
                 <MenuBar>
                     <menus>
-                        <Menu mnemonicParsing="false" text="设置">
+                        <Menu fx:id="settingsMenu" mnemonicParsing="false" text="设置">
                             <items>
                                 <MenuItem fx:id="proxySetupBtn" mnemonicParsing="false" text="代理" />
                             </items>
                         </Menu>
+                        <Menu fx:id="languageMenu" mnemonicParsing="false" text="Language">
+                            <items>
+                                <RadioMenuItem fx:id="langZhMenuItem" mnemonicParsing="false" onAction="#switchToChinese" selected="true" text="中文" />
+                                <RadioMenuItem fx:id="langEnMenuItem" mnemonicParsing="false" onAction="#switchToEnglish" text="English" />
+                            </items>
+                        </Menu>
                     </menus>
                 </MenuBar>
-                <TitledPane text="目标与请求配置">
+                <TitledPane fx:id="requestConfigPane" text="目标与请求配置">
                     <content>
                         <VBox spacing="8.0">
                             <children>
                                 <HBox spacing="8.0">
                                     <children>
                                         <ComboBox fx:id="methodOpt" prefWidth="100.0" />
-                                        <TextField fx:id="targetAddress" prefWidth="640.0" promptText="http://target/path" />
-                                        <Label text="超时/s" />
+                                        <TextField fx:id="targetAddress" prefWidth="640.0" promptText="http://target/path" text="http://127.0.0.1:8080/" />
+                                        <Label fx:id="timeoutLabel" text="超时/s" />
                                         <TextField fx:id="httpTimeout" prefWidth="90.0" />
                                     </children>
                                 </HBox>
-                                <HBox spacing="8.0">
+                                <GridPane hgap="8.0" vgap="8.0">
                                     <children>
-                                        <Label text="Header" />
-                                        <TextField fx:id="globalHeader" prefWidth="520.0" promptText="K1:V1&&&K2:V2" />
-                                        <Label text="POST" />
-                                        <TextField fx:id="post_data" prefWidth="380.0" promptText="a=1&amp;b=2" />
+                                        <Label fx:id="headerLabel" text="Header" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextArea fx:id="globalHeader" prefColumnCount="60" prefRowCount="3" promptText="一行一个 Header，例如&#10;Cookie: rememberMe=xxx&#10;User-Agent: Mozilla/5.0" wrapText="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                        <Label fx:id="postBodyLabel" text="POST Body" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextArea fx:id="post_data" prefColumnCount="60" prefRowCount="4" promptText="直接填写原始 POST Body，默认原样覆盖发送" wrapText="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                     </children>
-                                </HBox>
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="90.0" prefWidth="90.0" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                </GridPane>
                             </children>
                         </VBox>
                     </content>
                 </TitledPane>
-                <TitledPane text="检测与攻击基础参数">
+                <TitledPane fx:id="baseAttackPane" text="检测与攻击基础参数">
                     <content>
-                        <VBox spacing="8.0">
+                        <VBox spacing="10.0">
                             <children>
-                                <HBox spacing="8.0">
+                                <GridPane hgap="10.0" vgap="10.0">
                                     <children>
-                                        <Label text="Cookie关键字" />
-                                        <TextField fx:id="shiroKeyWord" prefWidth="110.0" />
-                                        <Label text="指定Key" />
-                                        <TextField fx:id="shiroKey" prefWidth="320.0" />
-                                        <CheckBox fx:id="aesGcmOpt" mnemonicParsing="false" text="AES GCM" />
-                                        <Button fx:id="crackSpcKeyBtn" mnemonicParsing="false" onAction="#crackSpcKeyBtn" text="检测当前密钥" />
-                                        <Button fx:id="crackKeyBtn" mnemonicParsing="false" onAction="#crackKeyBtn" text="爆破密钥" />
+                                        <Label fx:id="cookieKeywordLabel" text="Cookie关键字" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextField fx:id="shiroKeyWord" prefWidth="130.0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                        <Label fx:id="specifiedKeyLabel" text="指定Key" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                                        <TextField fx:id="shiroKey" prefWidth="320.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                                        <CheckBox fx:id="aesGcmOpt" mnemonicParsing="false" text="AES GCM" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+                                        <Button fx:id="crackSpcKeyBtn" mnemonicParsing="false" onAction="#crackSpcKeyBtn" prefWidth="120.0" text="检测当前密钥" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+                                        <Button fx:id="crackKeyBtn" mnemonicParsing="false" onAction="#crackKeyBtn" prefWidth="110.0" text="爆破密钥" GridPane.columnIndex="6" GridPane.rowIndex="0" />
+
+                                        <Label fx:id="gadgetLabel" text="利用链" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <ComboBox fx:id="gadgetOpt" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="2" />
+                                        <Label fx:id="echoLabel" text="回显" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                                        <ComboBox fx:id="echoOpt" prefWidth="220.0" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+                                        <Button fx:id="crackSpcGadgetBtn" mnemonicParsing="false" onAction="#crackSpcGadgetBtn" prefWidth="120.0" text="检测当前利用链" GridPane.columnIndex="5" GridPane.rowIndex="1" />
+                                        <Button fx:id="crackGadgetBtn" mnemonicParsing="false" onAction="#crackGadgetBtn" prefWidth="140.0" text="爆破利用链及回显" GridPane.columnIndex="6" GridPane.rowIndex="1" />
+                                    </children>
+                                </GridPane>
+                                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                    <children>
+                                        <Label fx:id="keyCrackProgressLabel" text="Key 爆破状态：待开始" />
+                                        <ProgressBar fx:id="keyCrackProgressBar" prefWidth="260.0" progress="0.0" />
+                                        <Button fx:id="cancelKeyCrackBtn" mnemonicParsing="false" onAction="#cancelKeyCrackBtn" text="停止爆破Key" />
                                     </children>
                                 </HBox>
-                                <HBox spacing="8.0">
+                                <HBox alignment="CENTER_LEFT" spacing="8.0">
                                     <children>
-                                        <Label text="利用链" />
-                                        <ComboBox fx:id="gadgetOpt" prefWidth="270.0" />
-                                        <Label text="回显" />
-                                        <ComboBox fx:id="echoOpt" prefWidth="220.0" />
-                                        <Button fx:id="crackSpcGadgetBtn" mnemonicParsing="false" onAction="#crackSpcGadgetBtn" text="检测当前利用链" />
-                                        <Button fx:id="crackGadgetBtn" mnemonicParsing="false" onAction="#crackGadgetBtn" text="爆破利用链及回显" />
+                                        <Label fx:id="crackProgressLabel" text="利用链爆破状态：待开始" />
+                                        <ProgressBar fx:id="crackProgressBar" prefWidth="260.0" progress="0.0" />
+                                        <Button fx:id="cancelCrackBtn" mnemonicParsing="false" onAction="#cancelCrackBtn" text="停止" />
                                     </children>
                                 </HBox>
                             </children>
@@ -78,25 +99,25 @@
         </VBox>
     </top>
     <center>
-        <TabPane tabClosingPolicy="UNAVAILABLE">
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
             <tabs>
-                <Tab text="检测日志">
+                <Tab fx:id="logTab" text="检测日志">
                     <content>
-                        <TextArea fx:id="logTextArea" />
+                        <TextArea fx:id="logTextArea" wrapText="false" />
                     </content>
                 </Tab>
-                <Tab text="命令执行">
+                <Tab fx:id="execTab" text="命令执行">
                     <content>
                         <VBox spacing="10.0">
                             <children>
                                 <HBox spacing="10.0">
                                     <children>
-                                        <Label text="输入命令" />
+                                        <Label fx:id="commandInputLabel" text="输入命令" />
                                         <TextField fx:id="exCommandText" prefWidth="820.0" />
                                         <Button fx:id="executeCmdBtn" mnemonicParsing="false" onAction="#executeCmdBtn" text="执行" />
                                     </children>
                                 </HBox>
-                                <TextArea fx:id="execOutputArea" />
+                                <TextArea fx:id="execOutputArea" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
                             </children>
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -104,22 +125,22 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab text="内存马注入">
+                <Tab fx:id="injectTab" text="内存马注入">
                     <content>
                         <VBox spacing="10.0">
                             <children>
                                 <HBox spacing="10.0">
                                     <children>
-                                        <Label text="类型" />
+                                        <Label fx:id="memshellTypeLabel" text="类型" />
                                         <ComboBox fx:id="memShellOpt" prefWidth="190.0" />
-                                        <Label text="路径" />
+                                        <Label fx:id="memshellPathLabel" text="路径" />
                                         <TextField fx:id="shellPathText" prefWidth="360.0" />
-                                        <Label text="密码" />
+                                        <Label fx:id="memshellPasswordLabel" text="密码" />
                                         <TextField fx:id="shellPassText" prefWidth="140.0" />
                                         <Button fx:id="injectShellBtn" mnemonicParsing="false" onAction="#injectShellBtn" text="执行注入" />
                                     </children>
                                 </HBox>
-                                <TextArea fx:id="InjOutputArea" />
+                                <TextArea fx:id="InjOutputArea" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
                             </children>
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -127,7 +148,30 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab text="Echo Generator">
+                <Tab fx:id="changeKeyTab" text="修改 Shiro Key">
+                    <content>
+                        <VBox spacing="10.0">
+                            <children>
+                                <Label fx:id="changeKeyHintLabel" text="先完成密钥和利用链检测，再执行本页。" wrapText="true" />
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <Label fx:id="changeKeyMethodLabel" text="方式" />
+                                        <ComboBox fx:id="changeKeyVariantOpt" prefWidth="270.0" />
+                                        <Label fx:id="changeKeyTargetLabel" text="目标 Key" />
+                                        <ComboBox fx:id="changeKeyNewKeyCombo" editable="true" prefWidth="360.0" promptText="rememberMe AES Key（Base64）" />
+                                        <Button fx:id="clearChangeKeyHistoryBtn" mnemonicParsing="false" onAction="#clearChangeKeyHistoryBtn" text="清空历史" />
+                                        <Button fx:id="injectChangeKeyBtn" mnemonicParsing="false" onAction="#injectChangeKeyBtn" text="执行" />
+                                    </children>
+                                </HBox>
+                                <TextArea fx:id="changeKeyOutputArea" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
+                            </children>
+                            <padding>
+                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="echoGenTab" text="回显生成">
                     <content>
                         <VBox spacing="10.0">
                             <children>
@@ -135,16 +179,16 @@
                                     <children>
                                         <Label text="来源" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                                         <ComboBox fx:id="echoSourceOpt" prefWidth="180.0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                                        <Label text="Server" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                                        <Label text="服务端类型" GridPane.columnIndex="2" GridPane.rowIndex="0" />
                                         <ComboBox fx:id="jegServerOpt" prefWidth="180.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-                                        <Label text="Model" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <Label text="模型" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                                         <ComboBox fx:id="jegModelOpt" prefWidth="180.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                        <Label text="Format" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                                        <Label text="格式" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                                         <ComboBox fx:id="jegFormatOpt" prefWidth="180.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
                                         <Button fx:id="genEchoBtn" mnemonicParsing="false" onAction="#genEchoBtn" text="生成/回退生成" GridPane.columnIndex="4" GridPane.rowIndex="0" GridPane.rowSpan="2" />
                                     </children>
                                 </GridPane>
-                                <TextArea fx:id="echoGeneratorOutput" />
+                                <TextArea fx:id="echoGeneratorOutput" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
                             </children>
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -152,7 +196,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab text="Memshell Generator">
+                <Tab fx:id="memGenTab" text="内存马生成">
                     <content>
                         <VBox spacing="10.0">
                             <children>
@@ -160,20 +204,20 @@
                                     <children>
                                         <Label text="来源" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                                         <ComboBox fx:id="memshellSourceOpt" prefWidth="180.0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                                        <Label text="Tool" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                                        <Label text="工具" GridPane.columnIndex="2" GridPane.rowIndex="0" />
                                         <ComboBox fx:id="jmgToolOpt" prefWidth="180.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-                                        <Label text="Server" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <Label text="服务端类型" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                                         <ComboBox fx:id="jmgServerOpt" prefWidth="180.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                        <Label text="Shell" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                                        <Label text="马类型" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                                         <ComboBox fx:id="jmgShellOpt" prefWidth="180.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                                        <Label text="Format" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <Label text="格式" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                                         <ComboBox fx:id="jmgFormatOpt" prefWidth="180.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                                         <Label text="Gadget" GridPane.columnIndex="2" GridPane.rowIndex="2" />
                                         <ComboBox fx:id="jmgGadgetOpt" prefWidth="180.0" GridPane.columnIndex="3" GridPane.rowIndex="2" />
                                         <Button fx:id="genMemshellBtn" mnemonicParsing="false" onAction="#genMemshellBtn" text="生成/回退生成" GridPane.columnIndex="4" GridPane.rowIndex="0" GridPane.rowSpan="3" />
                                     </children>
                                 </GridPane>
-                                <TextArea fx:id="memshellGeneratorOutput" />
+                                <TextArea fx:id="memshellGeneratorOutput" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
                             </children>
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -181,12 +225,12 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab text="key生成">
+                <Tab fx:id="keyGenTab" text="Key 生成">
                     <content>
                         <VBox spacing="8.0">
                             <children>
-                                <Button fx:id="keygen" mnemonicParsing="false" onAction="#Keytxt" text="生成key" />
-                                <TextArea fx:id="keytxt" />
+                                <Button fx:id="keygen" mnemonicParsing="false" onAction="#Keytxt" text="生成 Key" />
+                                <TextArea fx:id="keytxt" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
                             </children>
                             <padding>
                                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -198,10 +242,11 @@
         </TabPane>
     </center>
     <bottom>
-        <HBox>
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
             <children>
-                <Label fx:id="proxyStatusLabel" prefWidth="800.0" />
-                <Label text="BY SummerSec" />
+                <Label fx:id="proxyStatusLabel" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                <Label fx:id="footerByLabel" minWidth="110.0" text="BY SummerSec" />
+                <Hyperlink fx:id="githubLink" minWidth="300.0" onAction="#openGithubLink" text="GitHub: github.com/SummerSec/ShiroAttack2" />
             </children>
             <padding>
                 <Insets bottom="5.0" left="8.0" right="8.0" top="5.0" />

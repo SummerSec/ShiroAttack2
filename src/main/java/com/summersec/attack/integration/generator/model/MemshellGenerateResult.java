@@ -7,6 +7,13 @@ public class MemshellGenerateResult {
     private String basicInfo;
     private String debugInfo;
     private String message;
+    private String serverType;
+    private String toolType;
+    private String shellType;
+    private String formatType;
+    private String gadgetType;
+    private String fallbackSource;
+    private String fallbackMessage;
 
     public static MemshellGenerateResult ok(String source, String payload, String basicInfo, String debugInfo) {
         MemshellGenerateResult result = new MemshellGenerateResult();
@@ -24,6 +31,23 @@ public class MemshellGenerateResult {
         result.source = source;
         result.message = message;
         return result;
+    }
+
+    public static MemshellGenerateResult okWithFallback(String source, String payload, String basicInfo, String debugInfo,
+                                                         String fallbackSource, String fallbackMessage) {
+        MemshellGenerateResult result = ok(source, payload, basicInfo, debugInfo);
+        result.fallbackSource = fallbackSource;
+        result.fallbackMessage = fallbackMessage;
+        return result;
+    }
+
+    public MemshellGenerateResult withSelection(String toolType, String serverType, String shellType, String formatType, String gadgetType) {
+        this.toolType = toolType;
+        this.serverType = serverType;
+        this.shellType = shellType;
+        this.formatType = formatType;
+        this.gadgetType = gadgetType;
+        return this;
     }
 
     public boolean isSuccess() {
@@ -48,5 +72,33 @@ public class MemshellGenerateResult {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getFallbackSource() {
+        return fallbackSource;
+    }
+
+    public String getFallbackMessage() {
+        return fallbackMessage;
+    }
+
+    public String getServerType() {
+        return serverType;
+    }
+
+    public String getToolType() {
+        return toolType;
+    }
+
+    public String getShellType() {
+        return shellType;
+    }
+
+    public String getFormatType() {
+        return formatType;
+    }
+
+    public String getGadgetType() {
+        return gadgetType;
     }
 }

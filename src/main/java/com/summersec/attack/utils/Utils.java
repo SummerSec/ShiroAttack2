@@ -1,11 +1,6 @@
 package com.summersec.attack.utils;
 
 import java.net.URL;
-import org.mozilla.universalchardet.UniversalDetector;
-
-
-
-import java.net.URL;
 import org.mozilla.universalchardet.CharsetListener;
 import org.mozilla.universalchardet.UniversalDetector;
 
@@ -14,10 +9,15 @@ public class Utils {
     }
 
     public static String log(String info) {
-        return trimN(info) + "\n";
+        String normalized = trimN(info);
+        AppLogger.info(normalized);
+        return normalized + "\n";
     }
 
     private static String trimN(String str) {
+        if (str == null) {
+            return "null";
+        }
         int len = str.length();
         int st = 0;
 

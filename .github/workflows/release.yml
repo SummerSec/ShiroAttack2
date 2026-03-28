@@ -97,6 +97,26 @@ jobs:
         id: tag
         run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          PREV_TAG=$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:'- %s (%h)' | head -20)
+          else
+            CHANGELOG=$(git log "${PREV_TAG}..${CURRENT_TAG}" --pretty=format:'- %s (%h)')
+          fi
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG='- 本次更新暂无 commit 记录'
+          fi
+          # 写入多行输出
+          {
+            echo 'CHANGELOG<<EOF'
+            echo "$CHANGELOG"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -105,10 +125,16 @@ jobs:
           body: |
             ## ShiroAttack2 ${{ steps.tag.outputs.TAG }}
 
+            ### 更新内容
+
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ---
+
             > **注意：不同 JDK 厂商构建的版本存在兼容性差异，运行效果可能不同。**
             > 推荐优先使用 Oracle JDK 8u121 构建版本（与本地开发环境一致）。
 
-            提供多个 JDK 厂商构建版本，按需下载：
+            ### 下载说明
 
             | 文件名后缀 | 构建 JDK | 说明 |
             |-----------|----------|------|

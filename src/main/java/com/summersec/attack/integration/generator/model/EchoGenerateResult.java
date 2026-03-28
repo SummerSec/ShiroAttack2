@@ -6,6 +6,9 @@ public class EchoGenerateResult {
     private String payload;
     private String requestHeaderName;
     private String message;
+    private String serverType;
+    private String modelType;
+    private String formatType;
 
     public static EchoGenerateResult ok(String source, String payload, String requestHeaderName) {
         EchoGenerateResult result = new EchoGenerateResult();
@@ -22,6 +25,13 @@ public class EchoGenerateResult {
         result.source = source;
         result.message = message;
         return result;
+    }
+
+    public EchoGenerateResult withSelection(String serverType, String modelType, String formatType) {
+        this.serverType = serverType;
+        this.modelType = modelType;
+        this.formatType = formatType;
+        return this;
     }
 
     public boolean isSuccess() {
@@ -42,5 +52,17 @@ public class EchoGenerateResult {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getServerType() {
+        return serverType;
+    }
+
+    public String getModelType() {
+        return modelType;
+    }
+
+    public String getFormatType() {
+        return formatType;
     }
 }

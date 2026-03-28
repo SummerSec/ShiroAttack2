@@ -3,4 +3,8 @@ lib
 target/**
 out
 src/test/java/**
-tools/
+tools/**
+vulhub_shiro/
+.vscode/
+data/
+logs

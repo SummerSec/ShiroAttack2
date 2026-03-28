@@ -10,6 +10,8 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
     public EchoGenerateResult generate(EchoGenerateRequest request) {
         try {
             Class<?> constantsClass = resolveClass(
+                "jeg.core.config.jEGConstants",
+                "jeg.common.config.Constants",
                 "jeg.common.Constants",
                 "jeg.core.config.Constants"
             );
@@ -26,14 +28,20 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
             invokeSetter(configClass, config, "setServerType", constantsClass, valueOrDefault(request.getServerType(), "SERVER_TOMCAT"));
             invokeSetter(configClass, config, "setModelType", constantsClass, valueOrDefault(request.getModelType(), "MODEL_CMD"));
             invokeSetter(configClass, config, "setFormatType", constantsClass, valueOrDefault(request.getFormatType(), "FORMAT_BASE64"));
+            applyOptionalTextConfig(configClass, config, request);
             configClass.getMethod("build").invoke(config);
 
             Object generator = generatorClass.getConstructor(configClass).newInstance(config);
-            String payload = String.valueOf(generatorClass.getMethod("getPayload").invoke(generator));
-            String headerName = String.valueOf(configClass.getMethod("getReqHeaderName").invoke(config));
+            String payload = extractPayload(generatorClass, generator);
+            String headerName = extractHeaderName(configClass, config, request.getRequestHeaderName());
             return EchoGenerateResult.ok("jEG", payload, headerName);
         } catch (Exception e) {
-            return EchoGenerateResult.fail("jEG", e.getMessage());
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            String message = cause.getMessage();
+            if (message == null || message.trim().isEmpty()) {
+                message = cause.toString();
+            }
+            return EchoGenerateResult.fail("jEG", message);
         }
     }
 
@@ -53,7 +61,77 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
 
     private static void invokeSetter(Class<?> configClass, Object config, String methodName, Class<?> constantsClass, String fieldName) throws Exception {
         Method setter = configClass.getMethod(methodName, String.class);
-        String constantValue = String.valueOf(constantsClass.getField(fieldName).get(null));
+        String resolved = resolveConstantFieldName(fieldName);
+        String constantValue = String.valueOf(constantsClass.getField(resolved).get(null));
         setter.invoke(config, constantValue);
+    }
+
+    private static void applyOptionalTextConfig(Class<?> configClass, Object config, EchoGenerateRequest request) {
+        invokeOptionalSetter(configClass, config, "setReqHeaderName", valueOrDefault(request.getRequestHeaderName(), "User-Agent"));
+        invokeOptionalSetter(configClass, config, "setReqHeaderValue", valueOrDefault(request.getRequestHeaderValue(), "Mozilla/5.0"));
+        invokeOptionalSetter(configClass, config, "setHeaderName", valueOrDefault(request.getRequestHeaderName(), "User-Agent"));
+        invokeOptionalSetter(configClass, config, "setHeaderValue", valueOrDefault(request.getRequestHeaderValue(), "Mozilla/5.0"));
+    }
+
+    private static void invokeOptionalSetter(Class<?> configClass, Object config, String methodName, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return;
+        }
+        try {
+            Method method = configClass.getMethod(methodName, String.class);
+            method.invoke(config, value);
+            return;
+        } catch (Exception ignored) {
+        }
+        try {
+            Method method = configClass.getMethod(methodName, Object.class);
+            method.invoke(config, value);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static String extractPayload(Class<?> generatorClass, Object generator) throws Exception {
+        Exception lastError = null;
+        String[] methodNames = new String[]{"getPayload", "getPayloadString", "formatPayload", "toString"};
+        for (String methodName : methodNames) {
+            try {
+                return String.valueOf(generatorClass.getMethod(methodName).invoke(generator));
+            } catch (NoSuchMethodException e) {
+                lastError = e;
+            }
+        }
+        try {
+            java.lang.reflect.Field field = generatorClass.getDeclaredField("payload");
+            field.setAccessible(true);
+            return String.valueOf(field.get(generator));
+        } catch (NoSuchFieldException e) {
+            lastError = e;
+        }
+        if (lastError != null) {
+            throw lastError;
+        }
+        throw new NoSuchMethodException("无法从 jEG 生成器中提取 payload");
+    }
+
+    private static String extractHeaderName(Class<?> configClass, Object config, String fallback) {
+        String[] methodNames = new String[]{"getReqHeaderName", "getHeaderName"};
+        for (String methodName : methodNames) {
+            try {
+                Object value = configClass.getMethod(methodName).invoke(config);
+                if (value != null && !String.valueOf(value).trim().isEmpty()) {
+                    return String.valueOf(value);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return valueOrDefault(fallback, "User-Agent");
+    }
+
+    /** UI 曾使用 SERVER_SPRING；jEG 中实际字段为 SERVER_SPRING_MVC（值为 SpringMVC）。 */
+    private static String resolveConstantFieldName(String fieldName) {
+        if ("SERVER_SPRING".equals(fieldName)) {
+            return "SERVER_SPRING_MVC";
+        }
+        return fieldName;
     }
 }

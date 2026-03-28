@@ -21,31 +21,60 @@
 
 关于该工具更新内容介绍后续会更新到博客下面**https://shiro.sumsec.me/**
 
+> 语言切换 / Language：**[中文](./README.md)** | [English](./README_EN.md)
+
+完整使用说明：[docs/USAGE.md](./docs/USAGE.md)
+
 ## 工具特点
 
-* javafx
+* JavaFX GUI，开箱即用
 * 处理没有第三方依赖的情况
-* 支持多版本CommonsBeanutils的gadget
-* 支持内存马
-* 采用直接回显执行命令
-* 添加了更多的CommonsBeanutils版本gadget
-* 支持修改rememberMe关键词
-* 支持直接爆破利用gadget和key
-* 支持代理
-* 添加修改shirokey功能（使用内存马的方式）**可能导致业务异常**
-* 支持内存马小马
-* 添加DFS算法回显（AllECHO） 
-* 支持自定义请求头，格式：abc:123&&&test:123
+* 支持多版本 CommonsBeanutils gadget（1.8.3 / 1.9.2 / AttrCompare）
+* 支持内存马注入（Filter / Servlet 型，支持哥斯拉、蚁剑、冰蝎、NeoreGeorg、reGeorg）
+* 采用直接回显执行命令（Tomcat / Spring / DFS-AllEcho）
+* 支持修改 rememberMe 关键词
+* 支持直接爆破利用 gadget 和 key
+* 支持代理（HTTP/HTTPS，支持认证）
+* 支持修改 Shiro Key（内存马方式，**可能导致业务异常**）
+* 添加 DFS 算法回显（AllEcho）
+* 支持自定义请求头，格式：`abc:123&&&test:123`
+* 支持 POST 型 Shiro 探测与利用
+* Key 生成器（随机生成 AES Key）
 
-## 新功能（jEG / jMG 模块）
+## 最新功能
 
-当前版本新增了两个第三方生成器模块，并保持原有检测和攻击链路兼容：
+### 修改 Shiro Key（增强版）
 
-* Echo Generator 模块（基于 `java-echo-generator` / `jeg-core`）
-* Memshell Generator 模块（基于 `java-memshell-generator` / `jmg-sdk`）
-* UI 新增两个独立功能区：`Echo Generator`、`Memshell Generator`
-* 原有链路保持不变：`checkIsShiro -> keysCrack -> gadget/echo -> Shiro 加密发送`
-* 默认兼容策略为 `Legacy`，第三方生成失败时自动回退 Legacy 逻辑
+通过内存马方式动态替换目标服务器的 Shiro rememberMe AES Key，注入后自动验证新旧 Key 状态：
+
+| 变体 | 说明 |
+|------|------|
+| filterConfigs -> shiroFilterFactoryBean | 标准 Spring 注入路径（推荐首选） |
+| getFilterRegistration -> shiroFilterFactoryBean | 备选注入路径 |
+| filterConfigs -> 常见 Shiro 名依次匹配 | 自动匹配常见 Shiro Filter 名称 |
+| getFilterRegistration -> 常见 Shiro 名依次匹配 | 同上，备选路径 |
+| filterConfigs -> 包含 shiro 的名称扫描 | 模糊扫描包含 shiro 字符串的 Filter |
+| **高风险**: 全候选 rememberMeManager 扫描 | 多节点/多 rememberMeManager 场景 |
+
+支持历史 Key 记录（最多保存 30 条），注入后自动验证新 Key 可用性与旧 Key 失效状态。
+
+### Echo Generator（jEG 模块）
+
+基于 [java-echo-generator](https://github.com/c0ny1/java-echo-generator)（`jeg-core`）的回显 Payload 生成器：
+
+* 选择来源：`Legacy`（原有链路）或 `jEG`（第三方生成器）
+* 支持服务端类型、执行模型、输出格式自由组合
+* 生成失败时自动回退到 Legacy 逻辑
+
+### Memshell Generator（jMG 模块）
+
+基于 [java-memshell-generator](https://github.com/pen4uin/java-memshell-generator)（`jmg-sdk`）的内存马生成器：
+
+* 选择来源：`Legacy`（原有链路）或 `jMG`（第三方生成器）
+* 支持工具：哥斯拉、蚁剑、冰蝎、NeoreGeorg、reGeorg
+* 支持服务端：Tomcat、Spring MVC
+* 支持 Shell 类型：Filter、Servlet、Interceptor、HandlerMethod、TomcatValve
+* 生成失败时自动回退到 Legacy 逻辑
 
 ### 依赖安装（本地 Maven 仓库）
 
@@ -56,25 +85,40 @@ mvn install:install-file -Dfile=jEG-Core-1.0.0.jar -DgroupId=jeg -DartifactId=je
 mvn install:install-file -Dfile=jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg-sdk -Dversion=1.0.9 -Dpackaging=jar
 ```
 
-更多接入细节可查看：
+更多接入细节：[docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md)
 
-* [THIRD_PARTY_GENERATORS](./docs/THIRD_PARTY_GENERATORS.md)
+## 文档
 
-## FAQ 常见问题见
-
-[FAQ](./docs/FAQ.md)
-
-
+| 文档 | 说明 |
+|------|------|
+| [docs/USAGE.md](./docs/USAGE.md) | 完整功能使用说明 |
+| [docs/FAQ.md](./docs/FAQ.md) | 常见问题 |
+| [docs/memshell.md](./docs/memshell.md) | 内存马说明 |
+| [docs/BypassWaf.md](./docs/BypassWaf.md) | WAF 绕过 |
+| [docs/NoGadget.md](./docs/NoGadget.md) | 无 Gadget 场景 |
+| [docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md) | jEG/jMG 集成说明 |
 
 ## 使用方法
 
-直接使用shiro_attack-{version}-SNAPSHOT-all.jar第三版
+直接使用 `shiro_attack-{version}-SNAPSHOT-all.jar`（fat JAR，含所有依赖）。
+
+**目录结构准备：**
+
+```
+./
+├── shiro_attack-{version}-SNAPSHOT-all.jar
+├── data/
+│   └── shiro_keys.txt   # Shiro Key 字典，每行一个 Base64 Key
+└── lib/                 # CommonsBeanutils 各版本 JAR（可选）
+```
 
 ![image-20211130114603322](https://img.sumsec.me//49u5049ec49u5049ec.png)
 
-在jar的当前目录下创建一个data文件夹，里面创建一个shiro_keys.txt文件，文件内容是shiro_key。lib目前是CommonsBeanutils依赖的版本。
+在 JAR 的当前目录下创建 `data` 文件夹，其中创建 `shiro_keys.txt` 文件，文件内容为 Shiro Key（每行一个 Base64 编码的 Key）。`lib` 目录存放 CommonsBeanutils 各版本依赖。
 
-![image-20211130113559530](https://img.sumsec.me//44u5044ec44u5044ec.png)
+![image-20211130113559530](./docs/readme.png)
+
+详细使用说明见 [docs/USAGE.md](./docs/USAGE.md)
 
 
 
