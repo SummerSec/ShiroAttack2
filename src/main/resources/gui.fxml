@@ -188,6 +188,20 @@
                                         <Button fx:id="genEchoBtn" mnemonicParsing="false" onAction="#genEchoBtn" text="生成/回退生成" GridPane.columnIndex="4" GridPane.rowIndex="0" GridPane.rowSpan="2" />
                                     </children>
                                 </GridPane>
+                                <VBox spacing="6.0">
+                                    <children>
+                                        <Label fx:id="jegCmdLabel" text="命令 (MODEL_CMD)" />
+                                        <TextField fx:id="jegCmdInput" prefWidth="420.0" promptText="例如：whoami" />
+                                        <Label fx:id="jegCodeLabel" text="代码 (MODEL_CODE)" />
+                                        <TextArea fx:id="jegCodeInput" prefHeight="120.0" wrapText="true" VBox.vgrow="NEVER" />
+                                    </children>
+                                </VBox>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <Label fx:id="echoShiroHintLabel" maxWidth="1.7976931348623157E308" wrapText="true" HBox.hgrow="ALWAYS" />
+                                        <Button fx:id="sendEchoShiroExploitBtn" mnemonicParsing="false" onAction="#sendEchoShiroExploitBtn" text="Shiro 利用" />
+                                    </children>
+                                </HBox>
                                 <TextArea fx:id="echoGeneratorOutput" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
                             </children>
                             <padding>
@@ -217,6 +231,12 @@
                                         <Button fx:id="genMemshellBtn" mnemonicParsing="false" onAction="#genMemshellBtn" text="生成/回退生成" GridPane.columnIndex="4" GridPane.rowIndex="0" GridPane.rowSpan="3" />
                                     </children>
                                 </GridPane>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <Label fx:id="memshellShiroChainHintLabel" maxWidth="1.7976931348623157E308" wrapText="true" HBox.hgrow="ALWAYS" />
+                                        <Button fx:id="sendMemshellShiroInjectBtn" mnemonicParsing="false" onAction="#sendMemshellShiroInjectBtn" text="Shiro 注入" />
+                                    </children>
+                                </HBox>
                                 <TextArea fx:id="memshellGeneratorOutput" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />
                             </children>
                             <padding>

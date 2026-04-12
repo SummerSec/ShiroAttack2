@@ -66,11 +66,33 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
         setter.invoke(config, constantValue);
     }
 
+    /**
+     * jEG 1.0.0：MODEL_CMD（常量值 Command）把「命令」写入 setReqHeaderName（模板内生成 getReqHeaderName() 返回该串）；
+     * MODEL_CODE（常量值 Code）把「代码」写入 setReqParamName。
+     * 不可再把 User-Agent 填进 setReqHeaderName，否则会当作命令嵌入字节码。
+     */
     private static void applyOptionalTextConfig(Class<?> configClass, Object config, EchoGenerateRequest request) {
-        invokeOptionalSetter(configClass, config, "setReqHeaderName", valueOrDefault(request.getRequestHeaderName(), "User-Agent"));
-        invokeOptionalSetter(configClass, config, "setReqHeaderValue", valueOrDefault(request.getRequestHeaderValue(), "Mozilla/5.0"));
-        invokeOptionalSetter(configClass, config, "setHeaderName", valueOrDefault(request.getRequestHeaderName(), "User-Agent"));
-        invokeOptionalSetter(configClass, config, "setHeaderValue", valueOrDefault(request.getRequestHeaderValue(), "Mozilla/5.0"));
+        String modelField = valueOrDefault(request.getModelType(), "MODEL_CMD");
+        boolean isCmd = modelField.contains("CMD");
+        boolean isCode = modelField.contains("CODE") && !isCmd;
+
+        if (isCmd) {
+            String cmd = request.getJegCmdText();
+            if (cmd != null && !cmd.trim().isEmpty()) {
+                invokeOptionalSetter(configClass, config, "setReqHeaderName", cmd.trim());
+            }
+        } else if (isCode) {
+            String code = request.getJegCodeText();
+            if (code != null && !code.trim().isEmpty()) {
+                invokeOptionalSetter(configClass, config, "setReqParamName", code.trim());
+            }
+        }
+
+        if (request.getRequestHeaderName() != null && !request.getRequestHeaderName().trim().isEmpty()) {
+            invokeOptionalSetter(configClass, config, "setReqHeaderValue", valueOrDefault(request.getRequestHeaderValue(), ""));
+        }
+        invokeOptionalSetter(configClass, config, "setHeaderName", request.getRequestHeaderName());
+        invokeOptionalSetter(configClass, config, "setHeaderValue", request.getRequestHeaderValue());
     }
 
     private static void invokeOptionalSetter(Class<?> configClass, Object config, String methodName, String value) {
@@ -114,7 +136,7 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
     }
 
     private static String extractHeaderName(Class<?> configClass, Object config, String fallback) {
-        String[] methodNames = new String[]{"getReqHeaderName", "getHeaderName"};
+        String[] methodNames = new String[]{"getRespHeaderName", "getReqHeaderName", "getHeaderName"};
         for (String methodName : methodNames) {
             try {
                 Object value = configClass.getMethod(methodName).invoke(config);

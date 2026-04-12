@@ -6,6 +6,10 @@ public class EchoGenerateRequest {
     private String formatType;
     private String requestHeaderName;
     private String requestHeaderValue;
+    /** jEG MODEL_CMD：嵌入模板的命令（写入 jEGConfig.setReqHeaderName） */
+    private String jegCmdText;
+    /** jEG MODEL_CODE：嵌入模板的代码（写入 jEGConfig.setReqParamName） */
+    private String jegCodeText;
 
     public String getServerType() {
         return serverType;
@@ -45,5 +49,21 @@ public class EchoGenerateRequest {
 
     public void setRequestHeaderValue(String requestHeaderValue) {
         this.requestHeaderValue = requestHeaderValue;
+    }
+
+    public String getJegCmdText() {
+        return jegCmdText;
+    }
+
+    public void setJegCmdText(String jegCmdText) {
+        this.jegCmdText = jegCmdText;
+    }
+
+    public String getJegCodeText() {
+        return jegCodeText;
+    }
+
+    public void setJegCodeText(String jegCodeText) {
+        this.jegCodeText = jegCodeText;
     }
 }

