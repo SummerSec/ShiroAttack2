@@ -98,56 +98,65 @@ jobs:
         id: tag
         run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Generate changelog
-        id: changelog
+      - name: Assemble release body
         run: |
-          CURRENT_TAG=${GITHUB_REF#refs/tags/}
-          PREV_TAG=$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -1)
+          set -e
+          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
+          PREV_TAG="$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -1 || true)"
           if [ -z "$PREV_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:'- %s (%h)' | head -20)
+            CHANGELOG="$(git log --pretty=format:'- %s (%h)' | head -20)"
           else
-            CHANGELOG=$(git log "${PREV_TAG}..${CURRENT_TAG}" --pretty=format:'- %s (%h)')
+            CHANGELOG="$(git log "${PREV_TAG}..${CURRENT_TAG}" --pretty=format:'- %s (%h)' 2>/dev/null || true)"
           fi
           if [ -z "$CHANGELOG" ]; then
             CHANGELOG='- 本次更新暂无 commit 记录'
           fi
-          # 写入多行输出
+          OUT="$GITHUB_WORKSPACE/release-body.md"
           {
-            echo 'CHANGELOG<<EOF'
+            echo "## ShiroAttack2 ${CURRENT_TAG}"
+            echo ""
+            if [ -f "docs/releases/${CURRENT_TAG}.md" ]; then
+              echo "### 版本说明"
+              echo ""
+              cat "docs/releases/${CURRENT_TAG}.md"
+              echo ""
+              echo "---"
+              echo ""
+            fi
+            echo "### 更新内容（commits）"
+            echo ""
             echo "$CHANGELOG"
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
+            echo ""
+            echo "---"
+            echo ""
+            echo "> 本版本 Release 使用 **Azul Zulu 8 + JavaFX** 构建。"
+            echo "> 与当前本地开发环境保持一致，便于复现和排查。"
+            echo ""
+            echo "### 下载说明"
+            echo ""
+            echo "| 文件名 | 说明 |"
+            echo "|--------|------|"
+            echo "| \`*-zulu-8-jfx.jar\` | Azul Zulu 8 + JavaFX 单文件运行版本 |"
+            echo "| \`*-zulu-8-jfx-bundle.zip\` | Azul Zulu 8 + JavaFX 完整压缩包，包含 jar、\`lib/\`、\`data/\` |"
+            echo ""
+            echo "### 运行方法"
+            echo ""
+            echo '```bash'
+            echo "java -jar shiro_attack-<version>-<jdk>.jar"
+            echo '```'
+            echo ""
+            echo "> 推荐优先下载 \`bundle.zip\`，解压后直接运行。"
+            echo "> 若需自行构建，请确保仓库内 \`libs/jEG-core-1.0.0.jar\` 与 \`libs/jmg-sdk-1.0.9.jar\` 可用。"
+          } > "$OUT"
+          echo "---- release-body.md (preview) ----"
+          head -n 40 "$OUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.TAG }}
           name: ShiroAttack2 ${{ steps.tag.outputs.TAG }}
-          body: |
-            ## ShiroAttack2 ${{ steps.tag.outputs.TAG }}
-
-            ### 更新内容
-
-            ${{ steps.changelog.outputs.CHANGELOG }}
-
-            ---
-
-            > 本版本 Release 使用 **Azul Zulu 8 + JavaFX** 构建。
-            > 与当前本地开发环境保持一致，便于复现和排查。
-
-            ### 下载说明
-
-            | 文件名 | 说明 |
-            |--------|------|
-            | `*-zulu-8-jfx.jar` | Azul Zulu 8 + JavaFX 单文件运行版本 |
-            | `*-zulu-8-jfx-bundle.zip` | Azul Zulu 8 + JavaFX 完整压缩包，包含 jar、`lib/`、`data/` |
-
-            ### 运行方法
-            ```bash
-            java -jar shiro_attack-<version>-<jdk>.jar
-            ```
-            > 推荐优先下载 `bundle.zip`，解压后直接运行
-            > 若需自行构建，请确保仓库内 `libs/jEG-core-1.0.0.jar` 与 `libs/jmg-sdk-1.0.9.jar` 可用
+          body_path: release-body.md
           files: |
             artifacts/**/*.jar
             artifacts/**/*.zip

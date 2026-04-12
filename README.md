@@ -140,7 +140,7 @@ java -jar shiro_attack-<version>-<jdk>.jar
 - `data/shiro_keys.txt`：Shiro Key 字典，每行一个 Base64 编码的 Key
 - `lib/`：CommonsBeanutils 各版本依赖
 
-GitHub Release 由 Actions 自动构建并上传 jar 与 zip 产物；如果你发布了新 tag（如 `v5.0.0-r1`），可直接在 Release 页面下载对应文件。
+GitHub Release 由 Actions 自动构建并上传 jar 与 zip 产物；推送 tag（如 `5.0.1`）后会自动生成 Release。**版本说明**可维护在 [`docs/releases/`](./docs/releases/) 下与 tag 同名的 `*.md` 文件中，并会出现在对应 GitHub Release 正文顶部。
 
 ![image-20211130113559530](https://img.sumsec.me//44u5044ec44u5044ec.png)
 
