@@ -28,7 +28,13 @@ public class Main extends Application {
         primaryStage.setTitle("shiro反序列化漏洞综合利用工具 增强版 SummerSec");
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
-        primaryStage.getIcons().add(buildAppIcon());
+        try {
+            primaryStage.getIcons().add(buildAppIcon());
+        } catch (Exception | Error e) {
+            // macOS Apple Silicon + 部分 JDK 构建中 AWT native library 加载会失败
+            // 忽略图标设置错误，不影响主功能
+            System.err.println("[WARN] 无法加载应用图标: " + e.getMessage());
+        }
         primaryStage.setMinWidth(1180.0D);
         primaryStage.setMinHeight(860.0D);
         primaryStage.show();
