@@ -232,7 +232,11 @@ public class HttpUtil {
                     while(var28.hasNext()) {
                         key = (String)var28.next();
                         String val = (String)headers.get(key);
-                        ((URLConnection)httpUrlConn).addRequestProperty(key, val);
+                        if ("Content-Type".equalsIgnoreCase(key)) {
+                            ((URLConnection)httpUrlConn).setRequestProperty(key, val);
+                        } else {
+                            ((URLConnection)httpUrlConn).addRequestProperty(key, val);
+                        }
                     }
                 }
 
@@ -447,7 +451,11 @@ public class HttpUtil {
                 while(var27.hasNext()) {
                     String key = (String)var27.next();
                     String val = (String)headers.get(key);
-                    ((URLConnection)httpUrlConn).addRequestProperty(key, val);
+                    if ("Content-Type".equalsIgnoreCase(key)) {
+                        ((URLConnection)httpUrlConn).setRequestProperty(key, val);
+                    } else {
+                        ((URLConnection)httpUrlConn).addRequestProperty(key, val);
+                    }
                 }
             }
 
