@@ -1,7 +1,8 @@
-# ShiroAttack2 5.x：发生了什么
+# AI 时代 ShiroAttack2 5.x：修改了什么
 
 5.0 到 5.1.0 这几个版本之间，ShiroAttack2 加了不少东西。这篇文章把主要变化串一遍，顺便聊聊背后的设计决策和踩过的坑。
 
+![ShiroAttack2 5.x 进化](images/08.png)
 ---
 
 ## Shiro-550 为什么还在
@@ -19,6 +20,8 @@
 ## 攻击的六个阶段
 
 ```
+
+![攻击六阶段流程](images/01.png)
 探测 ── 发 rememberMe=yes，看有没有 Set-Cookie: rememberMe=deleteMe
          Shiro 1.x 遇到非法 Cookie 一定会回 deleteMe，这个跟 Key 没关系
 
@@ -40,6 +43,7 @@ Key 替换 ── 用内存马机制改掉 Shiro 的 AES Key
            旧 Key 失效，只有新 Key 能用
            六条注入路径适配不同部署环境
 ```
+
 
 下面挑几个有意思的点细说。
 
@@ -84,10 +88,13 @@ Comparator cmp = (Comparator) ct.toClass(new JavassistClassLoader()).newInstance
 结果：所有打 1.8.3 目标的 `_183` 链全部 `InvalidClassException`。Tomcat 日志里能清楚看到：
 
 ```
+
+![serialVersionUID 对比](images/02.png)
 InvalidClassException: org.apache.commons.beanutils.BeanComparator
   stream classdesc serialVersionUID = -2044202215314119608  ← 工具生成（1.9.2）
   local class serialVersionUID = -3490850999041592962       ← 目标 JAR（1.8.3）
 ```
+
 
 Key 爆破不受影响，因为用的是 `SimplePrincipalCollection`，不涉及 BeanComparator。所以用户看到的景象是：Key 找到了，Gadget 全挂。很容易让人怀疑是回显链的问题。
 
@@ -132,6 +139,7 @@ public BeanComparator() {
 ```
 
 大多数目标只有 commons-beanutils，没有 commons-collections。这个排序让探测在多数场景下前几次请求就能命中。
+![Comparator 依赖关系](images/07.png)
 
 ---
 
@@ -184,6 +192,7 @@ ControllersFactory.controllers.put("MainController", mc);
 ```
 
 AttackService 一行没改。它根本不知道自己在被 CLI 用。
+![ConsoleTextArea 架构](images/03.png)
 
 输出层用了一个 `OutputSink` 接口，分 `info/success/warn/error/raw` 五个级别。`raw()` 不裹任何格式，命令结果直接透传到 stdout。这意味着用 `tail -1` 就能拿到命令输出，不用从日志行里抠。
 
@@ -270,6 +279,7 @@ AttackService.aesGcmCipherType = matchType;
 ```
 
 爆破命中 GCM Key 后，AES 模式跟着切过去，Gadget 测试直接用正确模式。
+![AES CBC vs GCM](images/05.png)
 
 ---
 
@@ -293,6 +303,7 @@ public EchoGenerateResult generateEcho(String source, EchoGenerateRequest req) {
 ```
 
 jEG 和 jMG 按自己的节奏发版，ShiroAttack2 只用更新 `libs/` 下两个 JAR。jMG 现在能生成的 Shell 类型从 2 种扩到了 5 种（Filter / Servlet / Interceptor / HandlerMethod / TomcatValve），适配 Tomcat 和 Spring MVC 两个服务端。
+![jEG jMG 适配器架构](images/04.png)
 
 注入协议跟 Legacy 走同一套：
 
@@ -311,6 +322,7 @@ user=<Base64(字节码)>&p=<密码>&path=<路径>
 改目标 Shiro Key 本质上是注入一个 Filter，这个 Filter 能找到 `CookieRememberMeManager` 然后把 `cipherKey` 改掉。不同部署环境找这个引用的路径不一样。
 
 标准 Spring 环境走 `ApplicationContext → shiroFilterFactoryBean → filterConfigs → RememberMeManager`。Bean 名对不上就降级到扫描 FilterChain 里名字含 "shiro" 的。再不行就模糊匹配类名和配置里含 `rememberMeManager` 字段的。最后一条路是遍历所有 Filter，有多少改多少——标记为高风险，因为集群里可能存在多个 RememberMeManager 实例。
+![Key 替换六条路径](images/06.png)
 
 注入完之后，工具自动拿新 Key 和旧 Key 各验证一次，确认新 Key 能用、旧 Key 失效。
 
