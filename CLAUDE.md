@@ -9,6 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 mvn clean package -DskipTests
 
 # 生成产物路径
+
+# 运行 CLI（命令行模式，无需 GUI）
+java -cp target/shiro_attack-5.1.0-all.jar com.summersec.attack.CLI.MainCLI <command> [options]
+
+# CLI 可用命令: detect | crack | exec | gui
+# 详见 docs/skills/cli-skill.md
 target/shiro_attack-4.5.6-SNAPSHOT-all.jar
 
 # 运行（需要 JavaFX 运行时，Java 8）
