@@ -83,7 +83,7 @@ public class MainController {
     @FXML
     private MenuItem proxySetupBtn;
     @FXML
-    private MenuItem downloadKeyDictBtn;
+    private Button downloadKeyDictBtn;
     @FXML
     private RadioMenuItem langZhMenuItem;
     @FXML
