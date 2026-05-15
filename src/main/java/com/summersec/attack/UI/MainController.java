@@ -391,7 +391,7 @@ public class MainController {
         if (this.settingsMenu != null) this.settingsMenu.setText(zh ? "设置" : "Settings");
         if (this.languageMenu != null) this.languageMenu.setText(zh ? "语言" : "Language");
         if (this.proxySetupBtn != null) this.proxySetupBtn.setText(zh ? "代理" : "Proxy");
-        if (this.downloadKeyDictBtn != null) this.downloadKeyDictBtn.setText(zh ? "下载最新 Key 字典" : "Download Key Dictionary");
+        if (this.downloadKeyDictBtn != null) this.downloadKeyDictBtn.setText(zh ? "下载 Key 字典" : "Download Key Dict");
         if (this.requestConfigPane != null) this.requestConfigPane.setText(zh ? "目标与请求配置" : "Target & Request");
         if (this.baseAttackPane != null) this.baseAttackPane.setText(zh ? "检测与攻击基础参数" : "Detection & Attack Basics");
         if (this.timeoutLabel != null) this.timeoutLabel.setText(zh ? "超时/s" : "Timeout/s");
