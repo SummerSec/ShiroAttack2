@@ -5,23 +5,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run
 
 ```bash
+# 前置步骤：安装本地 JAR 到 Maven（仅首次需要）
+mvn install:install-file -Dfile=libs/jEG-Core-1.0.0.jar -DgroupId=jeg -DartifactId=jeg-core -Dversion=1.0.0 -Dpackaging=jar
+mvn install:install-file -Dfile=libs/jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg-sdk -Dversion=1.0.9 -Dpackaging=jar
+
 # 打包为可执行 fat JAR（含所有依赖）
 mvn clean package -DskipTests
 
-# 生成产物路径
+# 产物路径: target/shiro_attack-5.1.0-all.jar
 
 # 运行 CLI（命令行模式，无需 GUI）
 java -cp target/shiro_attack-5.1.0-all.jar com.summersec.attack.CLI.MainCLI <command> [options]
 
-# CLI 可用命令: detect | crack | exec | gui
-# 详见 docs/skills/cli-skill.md
-target/shiro_attack-4.5.6-SNAPSHOT-all.jar
+# CLI 可用命令: detect | crack | exec | memshell | changekey | gui
+# 详见 .claude/skills/shiro-attack-cli/SKILL.md
 
 # 运行（需要 JavaFX 运行时，Java 8）
-java -jar target/shiro_attack-4.5.6-SNAPSHOT-all.jar
+java -jar target/shiro_attack-5.1.0-all.jar
 ```
 
-本项目无测试套件，无 CI/CD 配置。
+本项目无测试套件；仅有 GitHub Release CI（推送 tag 触发）。
 
 ## 架构概述
 
