@@ -14,6 +14,7 @@
                         <Menu fx:id="settingsMenu" mnemonicParsing="false" text="设置">
                             <items>
                                 <MenuItem fx:id="proxySetupBtn" mnemonicParsing="false" text="代理" />
+                                <MenuItem fx:id="downloadKeyDictBtn" mnemonicParsing="false" onAction="#downloadKeyDict" text="下载最新 Key 字典" />
                             </items>
                         </Menu>
                         <Menu fx:id="languageMenu" mnemonicParsing="false" text="Language">

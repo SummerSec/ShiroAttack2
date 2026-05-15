@@ -15,6 +15,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.Proxy.Type;
 import java.awt.Desktop;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +82,8 @@ public class MainController {
     private Menu languageMenu;
     @FXML
     private MenuItem proxySetupBtn;
+    @FXML
+    private MenuItem downloadKeyDictBtn;
     @FXML
     private RadioMenuItem langZhMenuItem;
     @FXML
@@ -347,11 +350,48 @@ public class MainController {
         this.applyLanguage();
     }
 
+    @FXML
+    void downloadKeyDict(ActionEvent event) {
+        String cwd = System.getProperty("user.dir");
+        String dataDir = cwd + File.separator + "data";
+        File dir = new File(dataDir);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File target = new File(dir, "shiro_keys.txt");
+        try {
+            URL url = new URL("https://raw.githubusercontent.com/SummerSec/ShiroAttack2/master/data/shiro_keys.txt");
+            java.io.InputStream in = url.openStream();
+            java.io.FileOutputStream out = new java.io.FileOutputStream(target);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                out.write(buf, 0, n);
+            }
+            out.close();
+            in.close();
+            AppLogger.info("Key 字典下载成功: " + target.getAbsolutePath() + " (" + target.length() + " bytes)");
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle( this.languageMode == LanguageMode.ZH ? "下载成功" : "Download Success");
+            alert.setHeaderText(null);
+            alert.setContentText((this.languageMode == LanguageMode.ZH ? "Key 字典已保存到 " : "Key dictionary saved to ") + target.getAbsolutePath());
+            alert.showAndWait();
+        } catch (Exception e) {
+            AppLogger.error("Key 字典下载失败: " + e.getMessage());
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle( this.languageMode == LanguageMode.ZH ? "下载失败" : "Download Failed");
+            alert.setHeaderText(null);
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
     private void applyLanguage() {
         boolean zh = this.languageMode == LanguageMode.ZH;
         if (this.settingsMenu != null) this.settingsMenu.setText(zh ? "设置" : "Settings");
         if (this.languageMenu != null) this.languageMenu.setText(zh ? "语言" : "Language");
         if (this.proxySetupBtn != null) this.proxySetupBtn.setText(zh ? "代理" : "Proxy");
+        if (this.downloadKeyDictBtn != null) this.downloadKeyDictBtn.setText(zh ? "下载最新 Key 字典" : "Download Key Dictionary");
         if (this.requestConfigPane != null) this.requestConfigPane.setText(zh ? "目标与请求配置" : "Target & Request");
         if (this.baseAttackPane != null) this.baseAttackPane.setText(zh ? "检测与攻击基础参数" : "Detection & Attack Basics");
         if (this.timeoutLabel != null) this.timeoutLabel.setText(zh ? "超时/s" : "Timeout/s");
