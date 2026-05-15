@@ -62,17 +62,18 @@
                                         <TextField fx:id="shiroKeyWord" prefWidth="130.0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                                         <Label fx:id="specifiedKeyLabel" text="指定Key" GridPane.columnIndex="2" GridPane.rowIndex="0" />
                                         <TextField fx:id="shiroKey" prefWidth="320.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-                                        <Button fx:id="downloadKeyDictBtn" mnemonicParsing="false" onAction="#downloadKeyDict" prefWidth="150.0" text="下载最新 Key 字典" GridPane.columnIndex="4" GridPane.rowIndex="0" />
-                                        <CheckBox fx:id="aesGcmOpt" mnemonicParsing="false" text="AES GCM" GridPane.columnIndex="5" GridPane.rowIndex="0" />
-                                        <Button fx:id="crackSpcKeyBtn" mnemonicParsing="false" onAction="#crackSpcKeyBtn" prefWidth="120.0" text="检测当前密钥" GridPane.columnIndex="6" GridPane.rowIndex="0" />
-                                        <Button fx:id="crackKeyBtn" mnemonicParsing="false" onAction="#crackKeyBtn" prefWidth="110.0" text="爆破密钥" GridPane.columnIndex="7" GridPane.rowIndex="0" />
+                                        <CheckBox fx:id="aesGcmOpt" mnemonicParsing="false" text="AES GCM" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+                                        <Button fx:id="crackSpcKeyBtn" mnemonicParsing="false" onAction="#crackSpcKeyBtn" prefWidth="120.0" text="检测当前密钥" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+                                        <Button fx:id="crackKeyBtn" mnemonicParsing="false" onAction="#crackKeyBtn" prefWidth="110.0" text="爆破密钥" GridPane.columnIndex="6" GridPane.rowIndex="0" />
 
                                         <Label fx:id="gadgetLabel" text="利用链" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                                         <ComboBox fx:id="gadgetOpt" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="2" />
                                         <Label fx:id="echoLabel" text="回显" GridPane.columnIndex="3" GridPane.rowIndex="1" />
                                         <ComboBox fx:id="echoOpt" prefWidth="220.0" GridPane.columnIndex="4" GridPane.rowIndex="1" />
-                                        <Button fx:id="crackSpcGadgetBtn" mnemonicParsing="false" onAction="#crackSpcGadgetBtn" prefWidth="120.0" text="检测当前利用链" GridPane.columnIndex="6" GridPane.rowIndex="1" />
-                                        <Button fx:id="crackGadgetBtn" mnemonicParsing="false" onAction="#crackGadgetBtn" prefWidth="140.0" text="爆破利用链及回显" GridPane.columnIndex="7" GridPane.rowIndex="1" />
+                                        <Button fx:id="crackSpcGadgetBtn" mnemonicParsing="false" onAction="#crackSpcGadgetBtn" prefWidth="120.0" text="检测当前利用链" GridPane.columnIndex="5" GridPane.rowIndex="1" />
+                                        <Button fx:id="crackGadgetBtn" mnemonicParsing="false" onAction="#crackGadgetBtn" prefWidth="140.0" text="爆破利用链及回显" GridPane.columnIndex="6" GridPane.rowIndex="1" />
+
+                                        <Button fx:id="downloadKeyDictBtn" mnemonicParsing="false" onAction="#downloadKeyDict" prefWidth="220.0" text="下载 Key 字典" GridPane.columnIndex="4" GridPane.rowIndex="2" />
                                     </children>
                                 </GridPane>
                                 <HBox alignment="CENTER_LEFT" spacing="8.0">
