@@ -37,12 +37,10 @@ public class Shiro implements FramePayload {
         if (aesGcmType == 1) {
             ShiroGCM shiroGCM = new ShiroGCM();
             String byteSource = shiroGCM.encrypt(key, serpayload);
-            System.out.println(shiroKeyWord + "=" + byteSource);
             return shiroKeyWord + "=" + byteSource;
         } else {
             CbcEncrypt cbcEncrypt = new CbcEncrypt();
             String byteSource = cbcEncrypt.encrypt(key, serpayload);
-            System.out.println(shiroKeyWord + "=" + byteSource);
             return shiroKeyWord + "=" + byteSource;
         }
     }
