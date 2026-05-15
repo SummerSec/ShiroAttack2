@@ -265,6 +265,12 @@ GCM 模式的目标（Shiro >= 1.2.5）把上面命令里的 `--cbc` 换成 `--g
 
 需要被脚本或 AI 调的话加 `--json`。行首是 `{` 就按 JSON 解析日志元数据，否则是命令输出。
 
+### shiro-attack-cli Skill
+
+仓库里附带了一个 `.claude/skills/shiro-attack-cli/SKILL.md` 文件，是给 Claude Code / OpenCode 这类 AI 编程助手用的技能描述。Skill 文件把 CLI 的五个命令（detect / crack / exec / memshell / changekey）的参数、AES 模式选择、JSON 输出格式、常见错误排查全部结构化写了出来。AI Agent 加载这个 skill 后，可以直接根据用户描述（比如"测一下这个站是不是 Shiro"）自动拼出正确的 CLI 命令并执行，不需要记忆参数细节。
+
+Skill 文件和代码放在同一仓库，版本同步。CLI 加了新命令或改了参数格式时，skill 也会跟着更新。这是把 ShiroAttack2 变成 AI 工具箱的一层胶水。
+
 
 ---
 
