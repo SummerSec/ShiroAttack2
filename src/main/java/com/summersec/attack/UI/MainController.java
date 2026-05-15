@@ -1334,6 +1334,8 @@ public class MainController {
                                 Platform.runLater(() -> {
                                     MainController.this.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey + (matchType == 1 ? " (GCM)" : " (CBC)")));
                                     MainController.this.shiroKey.setText(foundKey);
+                                    MainController.this.aesGcmOpt.setSelected(matchType == 1);
+                                    AttackService.aesGcmCipherType = matchType;
                                 });
                                 updateProgress(i + 1, total);
                                 updateMessage("命中: " + shirokey + (cipherType == 1 ? " (GCM)" : " (CBC)"));
