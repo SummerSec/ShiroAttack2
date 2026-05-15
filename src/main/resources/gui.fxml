@@ -62,8 +62,8 @@
                                         <TextField fx:id="shiroKeyWord" prefWidth="130.0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                                         <Label fx:id="specifiedKeyLabel" text="指定Key" GridPane.columnIndex="2" GridPane.rowIndex="0" />
                                         <TextField fx:id="shiroKey" prefWidth="320.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-                                        <CheckBox fx:id="aesGcmOpt" mnemonicParsing="false" text="AES GCM" GridPane.columnIndex="4" GridPane.rowIndex="0" />
-                                        <Button fx:id="downloadKeyDictBtn" mnemonicParsing="false" onAction="#downloadKeyDict" prefWidth="150.0" text="下载最新 Key 字典" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+                                        <Button fx:id="downloadKeyDictBtn" mnemonicParsing="false" onAction="#downloadKeyDict" prefWidth="150.0" text="下载最新 Key 字典" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+                                        <CheckBox fx:id="aesGcmOpt" mnemonicParsing="false" text="AES GCM" GridPane.columnIndex="5" GridPane.rowIndex="0" />
                                         <Button fx:id="crackSpcKeyBtn" mnemonicParsing="false" onAction="#crackSpcKeyBtn" prefWidth="120.0" text="检测当前密钥" GridPane.columnIndex="6" GridPane.rowIndex="0" />
                                         <Button fx:id="crackKeyBtn" mnemonicParsing="false" onAction="#crackKeyBtn" prefWidth="110.0" text="爆破密钥" GridPane.columnIndex="7" GridPane.rowIndex="0" />
 

