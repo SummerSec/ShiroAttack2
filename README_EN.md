@@ -1,7 +1,7 @@
 #
 
 <h1 align="center">ShiroAttack2</h1>
-<h3 align="center">A fast exploitation tool for the Shiro-550 (Apache Shiro rememberMe deserialization) vulnerability</h3>
+<h3 align="center">A fast exploitation tool for Shiro-550 (Apache Shiro rememberMe deserialization)</h3>
 <p align="center">
   <a href="https://github.com/SummerSec/ShiroAttack2"><img alt="ShiroAttack2" src="https://img.shields.io/badge/ShiroAttack2-green"></a>
   <a href="https://github.com/SummerSec/ShiroAttack2"><img alt="Forks" src="https://img.shields.io/github/forks/SummerSec/ShiroAttack2"></a>
@@ -11,81 +11,108 @@
   <a href="https://twitter.com/SecSummers"><img alt="SecSummers" src="https://img.shields.io/twitter/follow/SecSummers.svg"></a>
 </p>
 
----
-
 > Language / 语言切换：[中文](./README.md) | **[English](./README_EN.md)**
 
 Full usage guide: [docs/USAGE.md](./docs/USAGE.md)
 
-![image-20211130113559530](./docs/readme.png)
+![ShiroAttack2 5.x](docs/readme.png)
 
-## Introduction
+---
 
-ShiroAttack2 is a JavaFX GUI tool for detecting and exploiting **Apache Shiro rememberMe AES deserialization vulnerabilities (CVE-2016-4437 / Shiro-550)**.
+## Why Shiro-550 Still Works
 
-Update notes are published at **https://shiro.sumsec.me/**
+CVE-2016-4437, discovered in 2016, remains exploitable for three reasons:
+
+**Default key.** Shiro ≤1.2.4 hardcodes an AES key in `CookieRememberMeManager`: `kPH+bIxk5D2deZiIxcaaaA==`. Tutorials and scaffold code have been copying this value for years.
+
+**Keys are hard to rotate.** rememberMe requires the same key on client and server. Once embedded in configs, Docker images, and source repos, replacing it requires updating all nodes.
+
+**Low exploitation cost.** GUI clicks for shell access. CLI for scripting. The lower the cost, the larger the attack surface.
+
+## Attack Flow
+
+```
+Detect ── Send rememberMe=yes, check for Set-Cookie: rememberMe=deleteMe
+           Shiro 1.x always returns deleteMe on invalid cookies
+
+Crack ── Serialize SimplePrincipalCollection, encrypt with candidate keys
+          Response without deleteMe = valid key found
+
+Gadget ── Encrypt full payload (gadget chain + TemplatesImpl echo class) with confirmed key
+Exec ── rememberMe cookie carries gadget payload, command embedded in Authorization header
+Memshell ── Inject Filter/Servlet via same gadget chain, no longer needs rememberMe
+Key Replace ── Swap Shiro's AES key via memshell mechanism, old key invalidated
+```
+
+## CLI Mode
+
+Since 5.0, the CLI mode shares the same `AttackService` (1000+ lines) without modification. It works by subclassing `TextArea` to intercept logging output and injecting a mock `MainController` via the `ControllersFactory` registry. CLI initializes JavaFX headlessly with a `JFXPanel` — no window needed.
+
+```bash
+java -cp shiro_attack-<version>.jar com.summersec.attack.CLI.MainCLI <command> [options]
+```
+
+| Command | Purpose |
+|---------|---------|
+| `detect` | Check if target runs Shiro framework |
+| `crack` | Brute-force or verify Shiro AES key |
+| `exec` | Execute system commands (auto gadget detection) |
+| `memshell` | Inject memshell (Godzilla/Behinder/AntSword etc.) |
+| `changekey` | Replace target's Shiro key |
+| `gui` | Launch JavaFX GUI |
+
+With `--json`, output splits into two channels: lines starting with `{` are structured JSON logs (parseable by AI/scripts). Plain text lines are raw command output (grab with `tail -1`).
+
+AES mode: `--cbc` (Shiro ≤1.2.4), `--gcm` (Shiro ≥1.2.5).
+
+Gadget auto-detection prioritizes String/AttrCompare/ObjectToStringComparator variants (no commons-collections dependency), falling back to CB variants requiring `ComparableComparator`.
+
+See [@skills/shiro-attack-cli/SKILL.md](./@skills/shiro-attack-cli/SKILL.md) for detailed CLI usage (structured as an AI Agent skill descriptor).
 
 ## Features
 
-- JavaFX GUI, ready to run out of the box
-- Handles targets with no third-party dependencies on classpath
-- Supports multiple CommonsBeanutils gadget versions (1.8.3 / 1.9.2 / AttrCompare)
-- Memshell injection (Filter / Servlet, supports Godzilla, AntSword, Behinder, NeoreGeorg, reGeorg)
-- Direct command echo (Tomcat / Spring / DFS-AllEcho)
-- Custom rememberMe keyword support
-- Automated gadget + key bruteforce
-- HTTP/HTTPS proxy support with authentication
-- Shiro Key replacement via memshell injection (**may disrupt target service**)
-- DFS-based AllEcho for maximum compatibility
-- Custom request headers: `K1:V1&&&K2:V2`
-- POST-based Shiro detection and exploitation
+- JavaFX GUI + CLI dual mode, shared attack logic
+- Multiple CommonsBeanutils gadget versions (1.8.3 / 1.9.2 / AttrCompare / ObjectToStringComparator)
+- Auto AES mode switching: tries CBC and GCM, locks whichever hits
+- Memshell injection (Filter / Servlet / Interceptor / HandlerMethod / TomcatValve)
+- Echo types: TomcatEcho / SpringEcho / DFS-AllEcho / ReverseEcho / NoEcho
+- Third-party generator integration (jEG for echo, jMG for memshell) with automatic Legacy fallback
+- Shiro Key replacement (6 injection paths, auto verifies old and new keys)
+- Custom headers, Cookie merging, POST-based detection
+- `--json` structured output for scripting and AI
+- HTTP/HTTPS proxy with authentication
 - AES Key generator
 
-## New Features
-
-### Shiro Key Replacement (Enhanced)
-
-Dynamically replaces the target server's Shiro rememberMe AES Key via memshell injection. After injection, the tool automatically verifies that the new key works and the old key is invalidated.
-
-| Variant | Description |
-|---------|-------------|
-| filterConfigs -> shiroFilterFactoryBean | Standard Spring injection path (recommended) |
-| getFilterRegistration -> shiroFilterFactoryBean | Alternative Spring path |
-| filterConfigs -> common Shiro name match | Tries common Shiro Filter names automatically |
-| getFilterRegistration -> common Shiro name match | Same as above, alternative path |
-| filterConfigs -> name scan containing "shiro" | Fuzzy scan for Filters with "shiro" in their name |
-| **High Risk**: full rememberMeManager scan | Replaces all candidate rememberMeManagers (multi-node scenarios) |
-
-Supports history of up to 30 previously used Keys.
-
-### Echo Generator (jEG Module)
-
-Standalone echo payload generator based on [java-echo-generator](https://github.com/c0ny1/java-echo-generator) (`jeg-core`):
-
-- Source: `Legacy` (built-in echo chain) or `jEG` (third-party generator)
-- Freely combine server type, execution model, and output format
-- Automatically falls back to Legacy on failure
-
-### Memshell Generator (jMG Module)
-
-Standalone memshell generator based on [java-memshell-generator](https://github.com/pen4uin/java-memshell-generator) (`jmg-sdk`):
-
-- Source: `Legacy` (built-in memshell) or `jMG` (third-party generator)
-- Supported tools: Godzilla, AntSword, Behinder, NeoreGeorg, reGeorg
-- Supported servers: Tomcat, Spring MVC
-- Supported shell types: Filter, Servlet, Interceptor, HandlerMethod, TomcatValve
-- Automatically falls back to Legacy on failure
-
-### Third-party Dependency Installation
-
-Before building, install the following JARs to your local Maven repository:
+## Build
 
 ```bash
-mvn install:install-file -Dfile=jEG-Core-1.0.0.jar -DgroupId=jeg -DartifactId=jeg-core -Dversion=1.0.0 -Dpackaging=jar
-mvn install:install-file -Dfile=jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg-sdk -Dversion=1.0.9 -Dpackaging=jar
+# Install local JARs (required once)
+mvn install:install-file -Dfile=libs/jEG-Core-1.0.0.jar -DgroupId=jeg -DartifactId=jeg-core -Dversion=1.0.0 -Dpackaging=jar
+mvn install:install-file -Dfile=libs/jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg-sdk -Dversion=1.0.9 -Dpackaging=jar
+
+# Build fat JAR (Java 8)
+mvn clean package -DskipTests
+# Output: target/shiro_attack-5.1.0-all.jar
 ```
 
-See [docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md) for details.
+## Download & Run
+
+Two artifact types per release:
+
+- `shiro_attack-<version>-<jdk>.jar`: standalone executable
+- `shiro_attack-<version>-<jdk>-bundle.zip`: full bundle with `data/` and `lib/`
+
+Runtime directory structure:
+
+```
+./
+├── shiro_attack-{version}-{jdk}.jar
+├── data/
+│   └── shiro_keys.txt   # Key dictionary, one Base64 key per line
+└── lib/                 # CommonsBeanutils JARs
+```
+
+Releases are auto-built by GitHub Actions on tag push (`v*` or `X.Y.Z`). Optional release notes at `docs/releases/<tag>.md`.
 
 ## Documentation
 
@@ -93,101 +120,16 @@ See [docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md) for detai
 |----------|-------------|
 | [docs/USAGE.md](./docs/USAGE.md) | Full feature usage guide |
 | [docs/FAQ.md](./docs/FAQ.md) | Frequently asked questions |
+| [docs/ShiroAttack2-v5-guide.md](./docs/ShiroAttack2-v5-guide.md) | In-depth 5.x feature walkthrough |
 | [docs/memshell.md](./docs/memshell.md) | Memshell notes |
 | [docs/BypassWaf.md](./docs/BypassWaf.md) | WAF bypass |
 | [docs/NoGadget.md](./docs/NoGadget.md) | No-gadget scenarios |
 | [docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md) | jEG/jMG integration guide |
-
-## Usage
-
-Run the fat JAR directly (all dependencies bundled):
-
-```bash
-java -jar shiro_attack-{version}-SNAPSHOT-all.jar
-```
-
-**Directory structure:**
-
-```
-./
-├── shiro_attack-{version}-SNAPSHOT-all.jar
-├── data/
-│   └── shiro_keys.txt   # Key dictionary, one Base64-encoded AES Key per line
-└── lib/                 # Optional: CommonsBeanutils JARs for different gadget versions
-```
-
-Create a `data` folder in the same directory as the JAR, and place your `shiro_keys.txt` Key dictionary inside it.
-
-### CLI Mode (Command Line)
-
-CLI mode enables single-target exploitation without GUI. Suitable for scripting, automation, and AI-driven workflows.
-
-```bash
-# Detect Shiro framework
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI detect -u http://target:8080 [--cbc|--gcm]
-
-# Brute-force / verify Shiro key
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 [--cbc|--gcm]
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 -K <base64_key>
-
-# Execute system command (auto-detect gadget chain)
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> [--cbc|--gcm]
-
-# Specify gadget + echo type, skip auto-detection
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> -g CommonsBeanutilsString_183 -e AllEcho
-
-# JSON output mode (structured logs for AI/script parsing)
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c id --json
-```
-
-With `--json`, log lines are structured JSON; command output remains raw text. Optional flags: `--proxy <url>`, `--timeout <sec>`. AES mode: `--cbc` for Shiro ≤1.2.4, `--gcm` for Shiro ≥1.2.5.
-
-See [skills/shiro-attack-cli/SKILL.md](./skills/shiro-attack-cli/SKILL.md) for detailed CLI usage.
-
-
-## Attack Workflow
-
-```
-1. Enter target URL
-         ↓
-2. Click "Detect Shiro"
-   → Confirm target has Shiro rememberMe
-         ↓
-3. Click "Bruteforce Key"
-   → Uses data/shiro_keys.txt dictionary
-   → Valid key shown in log on success
-         ↓
-4. Select Gadget + Echo type, click "Test Gadget"
-   → Confirm exploit chain is usable
-         ↓
-5. Switch to "Command Exec" tab, run commands
-         ↓
-6. Optionally switch to "Memshell Inject" for persistence
-```
-
-## Build from Source
-
-```bash
-# Requires Java 8 and Maven
-mvn clean package -DskipTests
-# Output: target/shiro_attack-{version}-SNAPSHOT-all.jar
-```
-
-## FAQ
-
-See [docs/FAQ.md](./docs/FAQ.md)
-
----
+| [@skills/shiro-attack-cli/SKILL.md](./@skills/shiro-attack-cli/SKILL.md) | AI Agent skill descriptor |
 
 ## Disclaimer
 
-This tool is intended **solely for authorized internal security assessments**.
-
-The author assumes no responsibility for any direct or indirect consequences arising from the use of this tool. Users bear full responsibility for their actions.
-
-Do not use this tool for any illegal activities. Do not use it for commercial purposes without authorization. Comply with applicable cybersecurity laws and regulations.
-
-This tool is authorized only for internal enterprise security audits.
+This tool is intended **solely for authorized internal security assessments**. The author assumes no responsibility for any consequences arising from its use.
 
 ---
 

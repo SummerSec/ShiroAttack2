@@ -1,9 +1,8 @@
 # 
 
 <h1 align="center" >ShiroAttack2</h1>
-<h3 align="center" >一款针对Shiro550漏洞进行快速漏洞利用</h3>
+<h3 align="center" >一款针对 Shiro-550 漏洞的快速漏洞利用工具</h3>
  <p align="center">
-    <a href="https://github.com/SummerSec/ShiroAttack2"></a>
     <a href="https://github.com/SummerSec/ShiroAttack2"><img alt="ShiroAttack2" src="https://img.shields.io/badge/ShiroAttack2-green"></a>
     <a href="https://github.com/SummerSec/ShiroAttack2"><img alt="Forks" src="https://img.shields.io/github/forks/SummerSec/ShiroAttack2"></a>
      <a href="https://github.com/SummerSec/ShiroAttack2"><img alt="Release" src="https://img.shields.io/github/release/SummerSec/ShiroAttack2.svg"></a>
@@ -11,81 +10,111 @@
      <a href="https://github.com/SummerSec"><img alt="Follower" src="https://img.shields.io/github/followers/SummerSec.svg?style=social&label=Follow"></a>
      <a href="https://github.com/SummerSec"><img alt="Visitor" src="https://visitor-badge.laobi.icu/badge?page_id=SummerSec.ShiroAttack2"></a>
 	<a href="https://twitter.com/SecSummers"><img alt="SecSummers" src="https://img.shields.io/twitter/follow/SecSummers.svg"></a>
-	<a xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://visitor-badge.laobi.icu"><rect fill="rgba(0,0,0,0)" height="20" width="49.6"/></a>
-	<a xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://visitor-badge.laobi.icu"><rect fill="rgba(0,0,0,0)" height="20" width="17.0" x="49.6"/></a>
 	</p>
-
-
-
-## 前言
-
-关于该工具更新内容介绍后续会更新到博客下面**https://shiro.sumsec.me/**
 
 > 语言切换 / Language：**[中文](./README.md)** | [English](./README_EN.md)
 
 完整使用说明：[docs/USAGE.md](./docs/USAGE.md)
 
-## 工具特点
+![ShiroAttack2 5.x](docs/readme.png)
 
-* JavaFX GUI，开箱即用
-* 处理没有第三方依赖的情况
-* 支持多版本 CommonsBeanutils gadget（1.8.3 / 1.9.2 / AttrCompare）
-* 支持内存马注入（Filter / Servlet 型，支持哥斯拉、蚁剑、冰蝎、NeoreGeorg、reGeorg）
-* 采用直接回显执行命令（Tomcat / Spring / DFS-AllEcho）
-* 支持修改 rememberMe 关键词
-* 支持直接爆破利用 gadget 和 key
-* 支持代理（HTTP/HTTPS，支持认证）
-* 支持修改 Shiro Key（内存马方式，**可能导致业务异常**）
-* 添加 DFS 算法回显（AllEcho）
-* 支持自定义请求头，格式：`abc:123&&&test:123`
-* 支持 POST 型 Shiro 探测与利用
-* Key 生成器（随机生成 AES Key）
+---
 
-## 最新功能
+## Shiro-550 为什么还能用
 
-### 修改 Shiro Key（增强版）
+2016 年的洞，到现在还能用。不是漏洞本身多高级，而是三个很现实的原因叠在一起。
 
-通过内存马方式动态替换目标服务器的 Shiro rememberMe AES Key，注入后自动验证新旧 Key 状态：
+**第一，默认 Key。** Shiro 1.2.4 及之前版本在 `CookieRememberMeManager` 里硬写了一个 AES Key：`kPH+bIxk5D2deZiIxcaaaA==`。十几年来的教程和脚手架代码一直在拷贝这个值。
 
-| 变体 | 说明 |
-|------|------|
-| filterConfigs -> shiroFilterFactoryBean | 标准 Spring 注入路径（推荐首选） |
-| getFilterRegistration -> shiroFilterFactoryBean | 备选注入路径 |
-| filterConfigs -> 常见 Shiro 名依次匹配 | 自动匹配常见 Shiro Filter 名称 |
-| getFilterRegistration -> 常见 Shiro 名依次匹配 | 同上，备选路径 |
-| filterConfigs -> 包含 shiro 的名称扫描 | 模糊扫描包含 shiro 字符串的 Filter |
-| **高风险**: 全候选 rememberMeManager 扫描 | 多节点/多 rememberMeManager 场景 |
+**第二，Key 换不掉。** rememberMe 要求客户端和服务端用同一个 Key。一旦 Key 写进了配置文件、Docker 镜像、源码仓库，要替换就得所有节点一起改。
 
-支持历史 Key 记录（最多保存 30 条），注入后自动验证新 Key 可用性与旧 Key 失效状态。
+**第三，利用成本足够低。** GUI 点几下就能拿 shell，CLI 可以直接嵌进脚本。
 
-### Echo Generator（jEG 模块）
+## 攻击流程
 
-基于 [java-echo-generator](https://github.com/c0ny1/java-echo-generator)（`jeg-core`）的回显 Payload 生成器：
+```
+探测 ── 发 rememberMe=yes，看有没有 Set-Cookie: rememberMe=deleteMe
+         Shiro 1.x 遇到非法 Cookie 一定会回 deleteMe
 
-* 选择来源：`Legacy`（原有链路）或 `jEG`（第三方生成器）
-* 支持服务端类型、执行模型、输出格式自由组合
-* 生成失败时自动回退到 Legacy 逻辑
+爆破 ── 用 SimplePrincipalCollection 序列化 + 候选 Key 逐个加密
+         响应里没有 deleteMe 就是 Key 对了
 
-### Memshell Generator（jMG 模块）
-
-基于 [java-memshell-generator](https://github.com/pen4uin/java-memshell-generator)（`jmg-sdk`）的内存马生成器：
-
-* 选择来源：`Legacy`（原有链路）或 `jMG`（第三方生成器）
-* 支持工具：哥斯拉、蚁剑、冰蝎、NeoreGeorg、reGeorg
-* 支持服务端：Tomcat、Spring MVC
-* 支持 Shell 类型：Filter、Servlet、Interceptor、HandlerMethod、TomcatValve
-* 生成失败时自动回退到 Legacy 逻辑
-
-### 依赖安装（本地 Maven 仓库）
-
-在项目构建前，请先安装以下第三方 Jar 到本地 Maven：
-
-```bash
-mvn install:install-file -Dfile=jEG-Core-1.0.0.jar -DgroupId=jeg -DartifactId=jeg-core -Dversion=1.0.0 -Dpackaging=jar
-mvn install:install-file -Dfile=jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg-sdk -Dversion=1.0.9 -Dpackaging=jar
+Gadget ── 用确认的 Key 加密完整 Payload（Gadget 链 + TemplatesImpl 回显类）
+命令执行 ── rememberMe Cookie 带着 Gadget Payload，命令写在 Authorization 头里
+内存马 ── 同样的 Gadget 链注入 Filter/Servlet，不再依赖 rememberMe
+Key 替换 ── 用内存马机制改掉 Shiro 的 AES Key，旧 Key 失效
 ```
 
-更多接入细节：[docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md)
+## CLI 模式
+
+5.0 之后增加了 CLI 模式。核心攻击逻辑 `AttackService`（1000+ 行）一行没改——通过继承 `TextArea` 拦截日志输出，利用 `ControllersFactory` 注册表注入假的 `MainController`，GUI 和 CLI 共用同一套攻击代码。CLI 不需要 JavaFX 窗口，启动时用一个 `JFXPanel` 初始化 JavaFX 线程即可。
+
+```bash
+# 启动 CLI
+java -cp shiro_attack-<version>.jar com.summersec.attack.CLI.MainCLI <command> [options]
+```
+
+| 命令 | 用途 |
+|------|------|
+| `detect` | 探测目标是否为 Shiro 框架 |
+| `crack` | 爆破或验证 Shiro AES Key |
+| `exec` | 执行系统命令（自动探测 Gadget 链） |
+| `memshell` | 注入内存马（哥斯拉/冰蝎/蚁剑等） |
+| `changekey` | 替换目标 Shiro Key |
+| `gui` | 启动 JavaFX 图形界面 |
+
+`--json` 模式下输出分为两个通道：以 `{` 开头的是结构化日志，AI 或脚本可以按行 JSON.parse；不以 `{` 开头的是命令原始输出，`tail -1` 就能拿到结果。
+
+AES 模式：`--cbc`（Shiro ≤1.2.4），`--gcm`（Shiro ≥1.2.5）。
+
+Gadget 自动探测优先尝试 String/AttrCompare/ObjectToStringComparator 变体（无需 commons-collections），回退到依赖 `ComparableComparator` 的 CB 变体。
+
+详细 CLI 用法见 [@skills/shiro-attack-cli/SKILL.md](./@skills/shiro-attack-cli/SKILL.md)（此文件是给 AI Agent 加载的 skill 描述，结构化为命令参数和排错规则）。
+
+## 功能特点
+
+- JavaFX GUI + CLI 双模式，同一套攻击逻辑
+- 多版本 CommonsBeanutils gadget（1.8.3 / 1.9.2 / AttrCompare / ObjectToStringComparator）
+- 自动 AES 模式切换：CBC 和 GCM 各走一遍，哪个命中锁哪个
+- 内存马注入（Filter / Servlet / Interceptor / HandlerMethod / TomcatValve）
+- 回显类型：TomcatEcho / SpringEcho / DFS-AllEcho / ReverseEcho / NoEcho
+- 回显生成器（jEG）和内存马生成器（jMG）第三方集成，失败自动回退 Legacy
+- Shiro Key 替换（6 条注入路径，自动验证新旧 Key）
+- 自定义请求头、Cookie 合并、POST 型探测
+- `--json` 结构化输出，适合脚本化和 AI 调用
+- HTTP/HTTPS 代理（支持认证）
+- Key 生成器
+
+## 构建
+
+```bash
+# 安装本地 JAR（仅首次需要）
+mvn install:install-file -Dfile=libs/jEG-Core-1.0.0.jar -DgroupId=jeg -DartifactId=jeg-core -Dversion=1.0.0 -Dpackaging=jar
+mvn install:install-file -Dfile=libs/jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg-sdk -Dversion=1.0.9 -Dpackaging=jar
+
+# 打包 fat JAR（Java 8）
+mvn clean package -DskipTests
+# 产物: target/shiro_attack-5.1.0-all.jar
+```
+
+## 下载与运行
+
+Release 提供两类产物：
+
+- `shiro_attack-<version>-<jdk>.jar`：单文件可执行版本
+- `shiro_attack-<version>-<jdk>-bundle.zip`：包含 `data/` 和 `lib/` 的完整压缩包
+
+运行目录结构：
+
+```
+./
+├── shiro_attack-{version}-{jdk}.jar
+├── data/
+│   └── shiro_keys.txt   # Key 字典，每行一个 Base64 Key
+└── lib/                 # CommonsBeanutils 各版本 JAR
+```
+
+Release 由 GitHub Actions 在推送 tag（`v*` 或 `X.Y.Z`）时自动构建。可选版本说明放在 `docs/releases/<tag>.md`。
 
 ## 文档
 
@@ -93,100 +122,18 @@ mvn install:install-file -Dfile=jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactId=jmg
 |------|------|
 | [docs/USAGE.md](./docs/USAGE.md) | 完整功能使用说明 |
 | [docs/FAQ.md](./docs/FAQ.md) | 常见问题 |
+| [docs/ShiroAttack2-v5-guide.md](./docs/ShiroAttack2-v5-guide.md) | 5.x 版本功能深度介绍 |
 | [docs/memshell.md](./docs/memshell.md) | 内存马说明 |
 | [docs/BypassWaf.md](./docs/BypassWaf.md) | WAF 绕过 |
 | [docs/NoGadget.md](./docs/NoGadget.md) | 无 Gadget 场景 |
 | [docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md) | jEG/jMG 集成说明 |
+| [AGENTS.md](./AGENTS.md) | OpenCode Agent 指令 |
+| [@skills/shiro-attack-cli/SKILL.md](./@skills/shiro-attack-cli/SKILL.md) | AI Agent Skill 描述 |
 
-## 使用方法
+## 免责声明
 
-当前 Release 默认同时提供两类产物：
-
-- `shiro_attack-<version>-<jdk>.jar`：单文件可执行版本
-- `shiro_attack-<version>-<jdk>-bundle.zip`：包含运行所需目录的完整压缩包
-
-推荐优先下载 `bundle.zip`，解压后直接运行，目录结构更完整。
-
-**目录结构准备：**
-
-```text
-./
-├── shiro_attack-{version}-{jdk}.jar
-├── data/
-│   └── shiro_keys.txt   # Shiro Key 字典，每行一个 Base64 Key
-└── lib/                 # CommonsBeanutils 各版本 JAR
-```
-
-![image-20211130113559530](./docs/readme.png)
-
-如果你下载的是 `bundle.zip`：
-
-- 解压后即可获得 `jar + data + lib` 的完整目录结构
-- 默认更适合直接运行与分发
-
-如果你下载的是单独 `jar`：
-
-- 仍需自行准备 `data/shiro_keys.txt`
-- `lib/` 目录中需包含 CommonsBeanutils 相关依赖
-
-运行方式：
-
-
-### CLI 模式（命令行）
-
-CLI 模式支持单目标快速利用，无需 GUI，适合脚本/自动化/AI 调用场景。
-
-```bash
-# 探测 Shiro 框架
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI detect -u http://target:8080 [--cbc|--gcm]
-
-# 爆破/验证 Shiro Key
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 [--cbc|--gcm]
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI crack  -u http://target:8080 -K <base64_key>
-
-# 执行系统命令（自动探测 Gadget 链）
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> [--cbc|--gcm]
-
-# 指定 Gadget + 回显，跳过自动探测
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c <command> -g CommonsBeanutilsString_183 -e AllEcho
-
-# JSON 输出模式（结构化日志，适合 AI/脚本解析）
-java -cp shiro_attack-<version>-<jdk>.jar com.summersec.attack.CLI.MainCLI exec   -u http://target:8080 -K <key> -c id --json
-```
-
-`--json` 模式下日志为结构化 JSON，命令执行结果仍为原始文本。可选参数：`--proxy <url>`、`--timeout <sec>`。AES 模式：Shiro ≤1.2.4 用 `--cbc`，≥1.2.5 用 `--gcm`。
-
-CLI 使用详情见 [skills/shiro-attack-cli/SKILL.md](./skills/shiro-attack-cli/SKILL.md)。
-```bash
-java -jar shiro_attack-<version>-<jdk>.jar
-```
-
-其中：
-
-- `data/shiro_keys.txt`：Shiro Key 字典，每行一个 Base64 编码的 Key
-- `lib/`：CommonsBeanutils 各版本依赖
-
-GitHub Release 由 Actions 自动构建并上传 jar 与 zip 产物；推送 tag（如 `5.0.1`）后会自动生成 Release。**版本说明**可维护在 [`docs/releases/`](./docs/releases/) 下与 tag 同名的 `*.md` 文件中，并会出现在对应 GitHub Release 正文顶部。
-
-![image-20211130113559530](https://img.sumsec.me//44u5044ec44u5044ec.png)
-
-详细使用说明见 [docs/USAGE.md](./docs/USAGE.md)
-
-
+该工具仅用于企业内部安全自查检测。由于传播、利用此工具所提供的信息而造成的任何直接或者间接的后果及损失，均由使用者本人负责。
 
 ---
 
-## :b:免责声明
-
-该工具仅用于安全自查检测
-
-由于传播、利用此工具所提供的信息而造成的任何直接或者间接的后果及损失，均由使用者本人负责，作者不为此承担任何责任。
-
-本人拥有对此工具的修改和解释权。未经网络安全部门及相关部门允许，不得善自使用本工具进行任何攻击活动，不得以任何方式将其用于商业目的。
-
-该工具只授权于企业内部进行问题排查，请勿用于非法用途，请遵守网络安全法，否则后果作者概不负责
-
-----
-
-![as](https://starchart.cc/SummerSec/ShiroAttack2.svg)
-
+![Star History](https://starchart.cc/SummerSec/ShiroAttack2.svg)
