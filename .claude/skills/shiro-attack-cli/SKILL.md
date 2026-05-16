@@ -16,6 +16,32 @@ CP="com.summersec.attack.CLI.MainCLI"
 java -cp $JAR $CP <命令> [选项]
 ```
 
+## 准备工作
+
+### 下载 JAR
+
+如果本地没有 jar，从 GitHub Releases 下载：
+
+```bash
+# 查看最新版本
+curl -s https://api.github.com/repos/SummerSec/ShiroAttack2/releases/latest \
+  | grep browser_download_url | grep all.jar | cut -d '"' -f 4
+
+# 或用浏览器打开 https://github.com/SummerSec/ShiroAttack2/releases
+# 下载 shiro_attack-*-all.jar 即可
+```
+
+### 准备 Key 字典
+
+`crack` 命令需要 `data/shiro_keys.txt`。如果文件不存在，用默认 Key 创建一个：
+
+```bash
+mkdir -p data
+echo "kPH+bIxk5D2deZiIxcaaaA==" > data/shiro_keys.txt
+```
+
+`data/` 目录需放在运行 jar 的工作目录下。
+
 ## 命令
 
 ### detect — 探测 Shiro
