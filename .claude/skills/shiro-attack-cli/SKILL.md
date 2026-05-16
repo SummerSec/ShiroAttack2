@@ -33,11 +33,12 @@ curl -s https://api.github.com/repos/SummerSec/ShiroAttack2/releases/latest \
 
 ### 准备 Key 字典
 
-`crack` 命令需要 `data/shiro_keys.txt`。如果文件不存在，用默认 Key 创建一个：
+`crack` 命令需要 `data/shiro_keys.txt`。如果文件不存在，从 GitHub 下载：
 
 ```bash
 mkdir -p data
-echo "kPH+bIxk5D2deZiIxcaaaA==" > data/shiro_keys.txt
+curl -L -o data/shiro_keys.txt \
+  https://raw.githubusercontent.com/SummerSec/ShiroAttack2/master/data/shiro_keys.txt
 ```
 
 `data/` 目录需放在运行 jar 的工作目录下。
