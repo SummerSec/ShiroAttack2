@@ -28,12 +28,18 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
             invokeSetter(configClass, config, "setServerType", constantsClass, valueOrDefault(request.getServerType(), "SERVER_TOMCAT"));
             invokeSetter(configClass, config, "setModelType", constantsClass, valueOrDefault(request.getModelType(), "MODEL_CMD"));
             invokeSetter(configClass, config, "setFormatType", constantsClass, valueOrDefault(request.getFormatType(), "FORMAT_BASE64"));
+            invokeSetter(configClass, config, "setGadgetType", constantsClass, valueOrDefault(request.getGadgetType(), "GADGET_JDK_TRANSLET"));
+            if (request.getShiroKey() != null && !request.getShiroKey().trim().isEmpty()) {
+                invokeOptionalSetter(configClass, config, "setKey", request.getShiroKey().trim());
+            }
             applyOptionalTextConfig(configClass, config, request);
             configClass.getMethod("build").invoke(config);
 
             Object generator = generatorClass.getConstructor(configClass).newInstance(config);
             String payload = extractPayload(generatorClass, generator);
-            String headerName = extractHeaderName(configClass, config, request.getRequestHeaderName());
+            String model = valueOrDefault(request.getModelType(), "MODEL_CMD");
+            boolean cmdOrCode = model.contains("CMD") || model.contains("CODE");
+            String headerName = extractHeaderName(configClass, config, request.getRequestHeaderName(), cmdOrCode);
             return EchoGenerateResult.ok("jEG", payload, headerName);
         } catch (Exception e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
@@ -77,10 +83,7 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
         boolean isCode = modelField.contains("CODE") && !isCmd;
 
         if (isCmd) {
-            String cmd = request.getJegCmdText();
-            if (cmd != null && !cmd.trim().isEmpty()) {
-                invokeOptionalSetter(configClass, config, "setReqHeaderName", cmd.trim());
-            }
+            invokeOptionalSetter(configClass, config, "setReqHeaderName", "Authorization");
         } else if (isCode) {
             String code = request.getJegCodeText();
             if (code != null && !code.trim().isEmpty()) {
@@ -135,8 +138,10 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
         throw new NoSuchMethodException("无法从 jEG 生成器中提取 payload");
     }
 
-    private static String extractHeaderName(Class<?> configClass, Object config, String fallback) {
-        String[] methodNames = new String[]{"getRespHeaderName", "getReqHeaderName", "getHeaderName"};
+    private static String extractHeaderName(Class<?> configClass, Object config, String fallback, boolean cmdOrCode) {
+        String[] methodNames = cmdOrCode
+                ? new String[]{"getRespHeaderName", "getHeaderName"}
+                : new String[]{"getRespHeaderName", "getReqHeaderName", "getHeaderName"};
         for (String methodName : methodNames) {
             try {
                 Object value = configClass.getMethod(methodName).invoke(config);
@@ -145,6 +150,9 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
                 }
             } catch (Exception ignored) {
             }
+        }
+        if (cmdOrCode) {
+            return null;
         }
         return valueOrDefault(fallback, "User-Agent");
     }

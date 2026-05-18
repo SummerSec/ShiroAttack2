@@ -10,6 +10,10 @@ public class EchoGenerateRequest {
     private String jegCmdText;
     /** jEG MODEL_CODE：嵌入模板的代码（写入 jEGConfig.setReqParamName） */
     private String jegCodeText;
+    /** 目标 Shiro AES key（Base64），供 jEG 加密 rememberMe */
+    private String shiroKey;
+    /** jEG gadget 类型，默认 GADGET_JDK_TRANSLET */
+    private String gadgetType;
 
     public String getServerType() {
         return serverType;
@@ -65,5 +69,21 @@ public class EchoGenerateRequest {
 
     public void setJegCodeText(String jegCodeText) {
         this.jegCodeText = jegCodeText;
+    }
+
+    public String getShiroKey() {
+        return shiroKey;
+    }
+
+    public void setShiroKey(String shiroKey) {
+        this.shiroKey = shiroKey;
+    }
+
+    public String getGadgetType() {
+        return gadgetType;
+    }
+
+    public void setGadgetType(String gadgetType) {
+        this.gadgetType = gadgetType;
     }
 }

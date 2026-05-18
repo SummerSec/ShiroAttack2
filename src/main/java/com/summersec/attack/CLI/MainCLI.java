@@ -2,6 +2,7 @@ package com.summersec.attack.CLI;
 
 import com.summersec.attack.core.AttackService;
 import com.summersec.attack.UI.MainController;
+import com.summersec.attack.deser.plugins.servlet.MemBytes;
 import com.summersec.attack.entity.ControllersFactory;
 import com.summersec.attack.utils.CliOutputSink;
 import com.summersec.attack.utils.OutputSink;
@@ -178,6 +179,10 @@ public class MainCLI {
         as.url = url;
         AttackService.realShiroKey = key;
 
+        if (cli.hasFlag("--dynamic-memshell")) {
+            MemBytes.setDynamicMode(true);
+        }
+
         String pass = cli.opt("--pass", "passwd");
         String path = cli.opt("--path", "/favicon.ico");
 
@@ -197,6 +202,10 @@ public class MainCLI {
         String newKey = cli.require("--newkey");
         as.url = url;
         AttackService.realShiroKey = key;
+
+        if (cli.hasFlag("--dynamic-memshell")) {
+            MemBytes.setDynamicMode(true);
+        }
 
         String variant = cli.opt("--variant", "filterConfigs -> shiroFilterFactoryBean");
 
@@ -263,6 +272,7 @@ public class MainCLI {
         System.out.println("  -t <type>           Memshell type: 哥斯拉[Filter], 冰蝎[Servlet], ...");
         System.out.println("  --pass <p>          Memshell password (default: passwd)");
         System.out.println("  --path <p>          Memshell URL path (default: /favicon.ico)");
+        System.out.println("  --dynamic-memshell  Use Javassist runtime compile (instead of hardcoded Base64)");
         System.out.println("  --newkey <nk>       New Shiro AES key for changekey");
         System.out.println("  --variant <v>       Key change injection variant");
         System.out.println("  --cbc               AES-CBC mode (Shiro <= 1.2.4)");
