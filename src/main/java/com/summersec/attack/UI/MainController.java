@@ -257,7 +257,11 @@ public class MainController {
     @FXML
     private ComboBox<String> jmgFormatOpt;
     @FXML
-    private ComboBox<String> jmgGadgetOpt;
+    private TextField jmgPassText;
+    @FXML
+    private TextField jmgPathText;
+    @FXML
+    private TextField jmgKeyText;
     @FXML
     private Button genMemshellBtn;
     @FXML
@@ -810,10 +814,11 @@ public class MainController {
         this.jmgShellOpt.setValue("SHELL_LISTENER");
         this.jmgFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64", "FORMAT_BCEL", "FORMAT_BIGINTEGER", "FORMAT_CLASS", "FORMAT_JAR", "FORMAT_JAR_AGENT", "FORMAT_JS", "FORMAT_JSP"}));
         this.jmgFormatOpt.setValue("FORMAT_BASE64");
-        this.jmgGadgetOpt.setItems(FXCollections.observableArrayList(new String[]{"GADGET_NONE"}));
-        this.jmgGadgetOpt.setValue("GADGET_NONE");
         this.jmgServerOpt.valueProperty().addListener((obs, oldVal, newVal) -> this.adjustJmgShellForServer(newVal));
         this.adjustJmgShellForServer(this.jmgServerOpt.getValue());
+        this.jmgPassText.setText("pass1024");
+        this.jmgPathText.setText("/favicondemo.ico");
+        this.jmgKeyText.setText("3c6e0b8a9c15224a");
 
         this.changeKeyVariantOpt.setItems(FXCollections.observableArrayList(
                 "filterConfigs -> shiroFilterFactoryBean",
@@ -1751,7 +1756,7 @@ public class MainController {
             this.initAttack();
         }
         String selectedSource = this.memshellSourceOpt.getValue();
-        AppLogger.info("内存马生成: source=" + selectedSource + ", server=" + this.jmgServerOpt.getValue() + ", tool=" + this.jmgToolOpt.getValue() + ", shell=" + this.jmgShellOpt.getValue() + ", format=" + this.jmgFormatOpt.getValue() + ", gadget=" + this.jmgGadgetOpt.getValue());
+        AppLogger.info("内存马生成: source=" + selectedSource + ", server=" + this.jmgServerOpt.getValue() + ", tool=" + this.jmgToolOpt.getValue() + ", shell=" + this.jmgShellOpt.getValue() + ", format=" + this.jmgFormatOpt.getValue());
         if (selectedSource == null || selectedSource.trim().isEmpty()) {
             selectedSource = "传统模式";
             this.memshellSourceOpt.setValue("传统模式");
@@ -1771,7 +1776,7 @@ public class MainController {
                     selectedServer,
                     selectedShell,
                     this.jmgFormatOpt.getValue(),
-                    this.jmgGadgetOpt.getValue(),
+                    "GADGET_NONE",
                     this.memShellOpt.getValue()
             );
         } catch (Exception ex) {

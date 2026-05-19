@@ -1,0 +1,328 @@
+/* ShiroAttack2 — modern light theme
+ * 目标：信息密度高但层次清晰，主操作有强调，次操作低调，所有控件对齐统一。
+ */
+
+.root {
+    -fx-font-family: "Microsoft YaHei UI", "PingFang SC", "Segoe UI", "Helvetica Neue", sans-serif;
+    -fx-font-size: 12.5px;
+    -fx-background-color: #f4f6fa;
+
+    /* design tokens */
+    -accent: #2563eb;
+    -accent-hover: #1d4ed8;
+    -accent-pressed: #1e40af;
+    -danger: #dc2626;
+    -danger-hover: #b91c1c;
+    -surface: #ffffff;
+    -surface-muted: #eef1f6;
+    -border: #d8dde6;
+    -border-strong: #c0c8d4;
+    -text: #1f2937;
+    -text-muted: #6b7280;
+}
+
+/* ============== MenuBar ============== */
+.menu-bar {
+    -fx-background-color: #ffffff;
+    -fx-padding: 2 8 2 8;
+    -fx-border-color: transparent transparent -border transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.menu-bar .menu .label { -fx-text-fill: -text; }
+.menu-bar .menu:hover, .menu-bar .menu:showing {
+    -fx-background-color: -surface-muted;
+    -fx-background-radius: 4;
+}
+
+/* ============== TitledPane (cards) ============== */
+.titled-pane {
+    -fx-text-fill: -text;
+}
+.titled-pane > .title {
+    -fx-background-color: -surface;
+    -fx-background-radius: 6 6 0 0;
+    -fx-border-color: -border;
+    -fx-border-width: 1 1 0 1;
+    -fx-border-radius: 6 6 0 0;
+    -fx-padding: 6 12 6 12;
+    -fx-font-weight: bold;
+}
+.titled-pane:collapsed > .title {
+    -fx-background-radius: 6;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+.titled-pane > .content {
+    -fx-background-color: -surface;
+    -fx-border-color: -border;
+    -fx-border-width: 0 1 1 1;
+    -fx-background-radius: 0 0 6 6;
+    -fx-border-radius: 0 0 6 6;
+    -fx-padding: 12 14 14 14;
+}
+.titled-pane > .title > .arrow-button .arrow {
+    -fx-background-color: -text-muted;
+}
+
+/* ============== Labels ============== */
+.label {
+    -fx-text-fill: -text;
+}
+.label-muted {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 11.5px;
+}
+.label-field {
+    -fx-text-fill: -text-muted;
+    -fx-min-width: 76;
+    -fx-alignment: CENTER_RIGHT;
+}
+.section-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: -text;
+    -fx-padding: 0 0 4 0;
+}
+
+/* ============== TextField / TextArea / ComboBox ============== */
+.text-field, .text-area, .combo-box {
+    -fx-background-color: -surface;
+    -fx-border-color: -border;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 4 8 4 8;
+    -fx-text-fill: -text;
+    -fx-prompt-text-fill: #9ca3af;
+}
+.text-area {
+    -fx-padding: 0;
+}
+.text-area .content {
+    -fx-background-color: -surface;
+    -fx-padding: 6 8 6 8;
+}
+.text-field:focused, .text-area:focused, .combo-box:focused {
+    -fx-border-color: -accent;
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.18), 6, 0.2, 0, 0);
+}
+.combo-box .list-cell {
+    -fx-text-fill: -text;
+    -fx-padding: 4 8 4 8;
+}
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+.combo-box .arrow {
+    -fx-background-color: -text-muted;
+}
+.combo-box-popup .list-view {
+    -fx-background-color: -surface;
+    -fx-border-color: -border-strong;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+.combo-box-popup .list-view .list-cell:filled:hover,
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: -surface-muted;
+    -fx-text-fill: -text;
+}
+
+/* monospace text areas (logs, payload outputs) */
+.mono-area .content,
+.mono-area {
+    -fx-font-family: "Consolas", "JetBrains Mono", "Courier New", monospace;
+    -fx-font-size: 12px;
+}
+
+/* ============== Buttons ============== */
+.button {
+    -fx-background-color: -surface;
+    -fx-text-fill: -text;
+    -fx-border-color: -border-strong;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 5 14 5 14;
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: -surface-muted;
+}
+.button:pressed {
+    -fx-background-color: #e3e8f0;
+}
+.button:disabled {
+    -fx-opacity: 0.55;
+    -fx-cursor: default;
+}
+
+.button-primary {
+    -fx-background-color: -accent;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-font-weight: bold;
+}
+.button-primary:hover { -fx-background-color: -accent-hover; }
+.button-primary:pressed { -fx-background-color: -accent-pressed; }
+
+.button-danger {
+    -fx-background-color: -surface;
+    -fx-text-fill: -danger;
+    -fx-border-color: #f1c5c5;
+}
+.button-danger:hover {
+    -fx-background-color: #fff1f1;
+    -fx-border-color: -danger;
+}
+
+/* ============== CheckBox ============== */
+.check-box {
+    -fx-text-fill: -text;
+}
+.check-box .box {
+    -fx-background-color: -surface;
+    -fx-border-color: -border-strong;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+.check-box:selected .box {
+    -fx-background-color: -accent;
+    -fx-border-color: -accent;
+}
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+/* ============== ProgressBar ============== */
+.progress-bar {
+    -fx-control-inner-background: -surface-muted;
+}
+.progress-bar > .track {
+    -fx-background-color: -surface-muted;
+    -fx-background-radius: 6;
+}
+.progress-bar > .bar {
+    -fx-background-color: -accent;
+    -fx-background-radius: 6;
+    -fx-padding: 6;
+}
+
+/* ============== TabPane ============== */
+.tab-pane {
+    -fx-tab-min-height: 30;
+    -fx-tab-max-height: 30;
+}
+.tab-pane > .tab-header-area {
+    -fx-padding: 4 4 0 6;
+}
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: -border;
+    -fx-border-width: 0 0 1 0;
+}
+.tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4 4 0 0;
+    -fx-padding: 4 14 4 14;
+    -fx-cursor: hand;
+}
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 12.5px;
+}
+.tab-pane .tab:hover .tab-label {
+    -fx-text-fill: -text;
+}
+.tab-pane .tab:selected {
+    -fx-background-color: -surface;
+    -fx-border-color: -border -border -surface -border;
+    -fx-border-width: 1 1 1 1;
+    -fx-border-radius: 4 4 0 0;
+}
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -accent;
+    -fx-font-weight: bold;
+}
+
+/* tab content area uses card surface */
+.tab-content-area {
+    -fx-background-color: -surface;
+    -fx-padding: 12 14 12 14;
+}
+
+/* ============== Toolbar / divider rows ============== */
+.row-toolbar {
+    -fx-padding: 2 0 2 0;
+}
+.row-actions {
+    -fx-padding: 4 0 0 0;
+}
+.section-divider {
+    -fx-background-color: -border;
+    -fx-pref-height: 1;
+    -fx-min-height: 1;
+    -fx-max-height: 1;
+}
+.action-spacer {
+    -fx-pref-width: 12;
+}
+
+/* ============== Status bar (footer) ============== */
+.status-bar {
+    -fx-background-color: -surface;
+    -fx-border-color: -border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 6 12 6 12;
+}
+.status-bar .label { -fx-text-fill: -text-muted; }
+.status-bar .hyperlink {
+    -fx-text-fill: -accent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-underline: false;
+}
+.status-bar .hyperlink:hover { -fx-underline: true; }
+
+/* ============== Hyperlink ============== */
+.hyperlink {
+    -fx-text-fill: -accent;
+    -fx-border-color: transparent;
+}
+.hyperlink:hover { -fx-underline: true; }
+
+/* ============== Scrollbars ============== */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #c5cdd9;
+    -fx-background-radius: 6;
+}
+.scroll-bar .thumb:hover { -fx-background-color: #a6b1c1; }
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+/* ============== Tooltip ============== */
+.tooltip {
+    -fx-background-color: #1f2937;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 11.5px;
+}
+
+
+/* Separator */
+.separator *.line {
+    -fx-border-color: -border;
+    -fx-border-width: 1 0 0 0;
+    -fx-border-insets: 0;
+}
