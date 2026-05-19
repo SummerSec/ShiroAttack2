@@ -26,7 +26,7 @@ public class JmgMemshellGeneratorAdapter implements MemshellGeneratorAdapter {
             invokeSetter(configClass, config, "setServerType", constantsClass, valueOrDefault(request.getServerType(), "SERVER_TOMCAT"));
             invokeSetter(configClass, config, "setShellType", constantsClass, valueOrDefault(request.getShellType(), "SHELL_LISTENER"));
             invokeSetter(configClass, config, "setOutputFormat", constantsClass, valueOrDefault(request.getFormatType(), "FORMAT_BASE64"));
-            invokeSetter(configClass, config, "setGadgetType", constantsClass, valueOrDefault(request.getGadgetType(), "GADGET_JDK_TRANSLET"));
+            invokeSetter(configClass, config, "setGadgetType", constantsClass, valueOrDefault(request.getGadgetType(), "GADGET_NONE"));
             applyOptionalTextConfig(configClass, config, request);
             configClass.getMethod("build").invoke(config);
 
@@ -65,17 +65,17 @@ public class JmgMemshellGeneratorAdapter implements MemshellGeneratorAdapter {
     }
 
     private static void applyOptionalTextConfig(Class<?> configClass, Object config, MemshellGenerateRequest request) {
-        invokeOptionalSetter(configClass, config, "setPass", defaultIfBlank(request.getPass(), "pass1024"));
-        invokeOptionalSetter(configClass, config, "setPwd", defaultIfBlank(request.getPass(), "pass1024"));
-        invokeOptionalSetter(configClass, config, "setPath", defaultIfBlank(request.getPath(), "/favicondemo.ico"));
-        invokeOptionalSetter(configClass, config, "setRoute", defaultIfBlank(request.getPath(), "/favicondemo.ico"));
+        invokeOptionalSetter(configClass, config, "setPass", defaultIfBlank(request.getOption(), "pass1024"));
+        invokeOptionalSetter(configClass, config, "setPwd", defaultIfBlank(request.getOption(), "pass1024"));
+        invokeOptionalSetter(configClass, config, "setPath", "/favicondemo.ico");
+        invokeOptionalSetter(configClass, config, "setRoute", "/favicondemo.ico");
         invokeOptionalSetter(configClass, config, "setHeaderName", "User-Agent");
         invokeOptionalSetter(configClass, config, "setHeaderValue", "Mozilla/5.0");
-        invokeOptionalSetter(configClass, config, "setUrlPattern", defaultIfBlank(request.getPath(), "/favicondemo.ico"));
-        invokeOptionalSetter(configClass, config, "setInjectPattern", defaultIfBlank(request.getPath(), "/favicondemo.ico"));
+        invokeOptionalSetter(configClass, config, "setUrlPattern", "/favicondemo.ico");
+        invokeOptionalSetter(configClass, config, "setInjectPattern", "/favicondemo.ico");
         invokeOptionalSetter(configClass, config, "setLockHeaderKey", "User-Agent");
         invokeOptionalSetter(configClass, config, "setLockHeaderValue", "Mozilla/5.0");
-        invokeOptionalSetter(configClass, config, "setKey", defaultIfBlank(request.getKey(), "3c6e0b8a9c15224a"));
+        invokeOptionalSetter(configClass, config, "setKey", "3c6e0b8a9c15224a");
         invokeOptionalSetter(configClass, config, "setName", "shell");
     }
 
@@ -101,17 +101,26 @@ public class JmgMemshellGeneratorAdapter implements MemshellGeneratorAdapter {
     }
 
     private static Object extractPayload(Class<?> generatorClass, Object generator) throws Exception {
-        try {
-            return generatorClass.getMethod("formatPayload").invoke(generator);
-        } catch (NoSuchMethodException e) {
+        Exception lastError = null;
+        String[] methodNames = new String[]{"getPayload", "getPayloadString", "formatPayload", "toString"};
+        for (String methodName : methodNames) {
             try {
-                java.lang.reflect.Field field = generatorClass.getDeclaredField("payload");
-                field.setAccessible(true);
-                return field.get(generator);
-            } catch (NoSuchFieldException e2) {
-                throw new NoSuchMethodException("无法从 jMG 生成器中提取 payload");
+                return generatorClass.getMethod(methodName).invoke(generator);
+            } catch (NoSuchMethodException e) {
+                lastError = e;
             }
         }
+        try {
+            java.lang.reflect.Field field = generatorClass.getDeclaredField("payload");
+            field.setAccessible(true);
+            return field.get(generator);
+        } catch (NoSuchFieldException e) {
+            lastError = e;
+        }
+        if (lastError != null) {
+            throw lastError;
+        }
+        throw new NoSuchMethodException("无法从 jMG 生成器中提取 payload");
     }
 
     private static String normalizeConstant(String fieldName) {

