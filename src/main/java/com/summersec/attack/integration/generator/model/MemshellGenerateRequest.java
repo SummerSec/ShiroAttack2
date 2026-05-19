@@ -7,6 +7,9 @@ public class MemshellGenerateRequest {
     private String formatType;
     private String gadgetType;
     private String option;
+    private String pass;
+    private String path;
+    private String key;
 
     public String getToolType() {
         return toolType;
@@ -54,5 +57,29 @@ public class MemshellGenerateRequest {
 
     public void setOption(String option) {
         this.option = option;
+    }
+
+    public String getPass() {
+        return pass;
+    }
+
+    public void setPass(String pass) {
+        this.pass = pass;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 }
