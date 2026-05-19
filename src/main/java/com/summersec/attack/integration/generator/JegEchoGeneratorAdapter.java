@@ -116,26 +116,17 @@ public class JegEchoGeneratorAdapter implements EchoGeneratorAdapter {
     }
 
     private static String extractPayload(Class<?> generatorClass, Object generator) throws Exception {
-        Exception lastError = null;
-        String[] methodNames = new String[]{"getPayload", "getPayloadString", "formatPayload", "toString"};
-        for (String methodName : methodNames) {
+        try {
+            return String.valueOf(generatorClass.getMethod("formatPayload").invoke(generator));
+        } catch (NoSuchMethodException e) {
             try {
-                return String.valueOf(generatorClass.getMethod(methodName).invoke(generator));
-            } catch (NoSuchMethodException e) {
-                lastError = e;
+                java.lang.reflect.Field field = generatorClass.getDeclaredField("payload");
+                field.setAccessible(true);
+                return String.valueOf(field.get(generator));
+            } catch (NoSuchFieldException e2) {
+                throw new NoSuchMethodException("无法从 jEG 生成器中提取 payload");
             }
         }
-        try {
-            java.lang.reflect.Field field = generatorClass.getDeclaredField("payload");
-            field.setAccessible(true);
-            return String.valueOf(field.get(generator));
-        } catch (NoSuchFieldException e) {
-            lastError = e;
-        }
-        if (lastError != null) {
-            throw lastError;
-        }
-        throw new NoSuchMethodException("无法从 jEG 生成器中提取 payload");
     }
 
     private static String extractHeaderName(Class<?> configClass, Object config, String fallback, boolean cmdOrCode) {

