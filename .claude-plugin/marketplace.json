@@ -1,0 +1,20 @@
+{
+  "name": "shiro-attack2",
+  "description": "Apache Shiro rememberMe 反序列化漏洞 (Shiro-550, CVE-2016-4437) 利用工具 — 密钥爆破、Gadget 链探测、命令执行、内存马注入、Key 修改。",
+  "owner": {
+    "name": "SummerSec",
+    "url": "https://github.com/SummerSec"
+  },
+  "plugins": [
+    {
+      "name": "shiro-attack-cli",
+      "description": "Apache Shiro-550 漏洞利用 CLI：单目标探测、密钥爆破、Gadget 链自动检测、命令执行、内存马注入、Key 修改。",
+      "version": "5.1.1",
+      "source": "./skills/shiro-attack-cli",
+      "author": {
+        "name": "SummerSec",
+        "url": "https://github.com/SummerSec"
+      }
+    }
+  ]
+}

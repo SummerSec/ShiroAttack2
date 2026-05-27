@@ -6,3 +6,6 @@ tools/**
 vulhub_shiro/
 .vscode/
 logs
+
+# plugin cache
+.claude/plugins/

@@ -26,6 +26,17 @@ java -jar target/shiro_attack-5.1.1-all.jar
 
 本项目无测试套件；仅有 GitHub Release CI（推送 tag 触发）。
 
+## 插件市场
+
+本项目同时也是 Claude Code 插件市场，通过 `.claude-plugin/marketplace.json` 注册了 `shiro-attack-cli` 技能。
+
+```bash
+# 安装（来源为 GitHub）
+claude plugins add github:SummerSec/ShiroAttack2
+```
+
+支持平台：Claude Code (`.claude-plugin/`)、Codex CLI (`.codex-plugin/`)、Cursor (`.cursor-plugin/`)。skill 源文件在 `skills/shiro-attack-cli/SKILL.md`。
+
 ## 架构概述
 
 ShiroAttack2 是一个利用 Apache Shiro rememberMe AES 反序列化漏洞（Shiro-550）的 JavaFX GUI 工具。

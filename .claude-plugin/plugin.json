@@ -1,0 +1,9 @@
+{
+  "name": "shiro-attack2",
+  "version": "5.1.1",
+  "description": "ShiroAttack2 — Shiro-550 漏洞利用工具：密钥爆破、Gadget 链探测、命令执行、内存马注入、Key 修改。",
+  "author": {
+    "name": "SummerSec",
+    "url": "https://github.com/SummerSec"
+  }
+}
