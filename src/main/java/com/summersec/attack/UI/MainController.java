@@ -1960,7 +1960,7 @@ public class MainController {
             // jMG: 使用 jEG MODEL_CODE 模式 — cookie 带代码执行回显，请求参数带 jMG 字节码
             String srv = this.jegServerOpt != null ? this.jegServerOpt.getValue() : "SERVER_TOMCAT";
             if (srv == null || srv.isEmpty()) srv = "SERVER_TOMCAT";
-            String paramName = "jmgpayload";
+            String paramName = "user";
             EchoGenerateResult jegResult = this.attackService.generateEchoWithThirdParty(
                     "jEG", srv, "MODEL_CODE", "FORMAT_BASE64",
                     AttackService.gadget, null, key.trim(), "", paramName);
