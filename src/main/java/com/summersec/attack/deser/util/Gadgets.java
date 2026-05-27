@@ -99,12 +99,16 @@ public class Gadgets {
 
     public static Object createTemplatesImpl(byte[] classBytes) throws Exception {
         ClassPool pool = ClassPool.getDefault();
+        pool.insertClassPath(new ClassClassPath(AbstractTranslet.class));
         CtClass clazz = pool.makeClass(new java.io.ByteArrayInputStream(classBytes));
         CtClass superClass = pool.get(AbstractTranslet.class.getName());
+        byte[] fixed;
         if (!clazz.subclassOf(superClass)) {
             clazz.setSuperclass(superClass);
+            fixed = clazz.toBytecode();
+        } else {
+            fixed = classBytes;
         }
-        byte[] fixed = clazz.toBytecode();
         clazz.detach();
 
         Object templates = TemplatesImpl.class.newInstance();
