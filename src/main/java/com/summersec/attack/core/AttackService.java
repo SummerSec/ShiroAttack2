@@ -1008,7 +1008,9 @@ public class AttackService {
         TextArea logArea = sink != null ? sink : this.mainController.logTextArea;
         try {
             String result = this.bodyHttpRequest(header, "");
-            appendResponseSummary(logArea, "[Cookie+CMD] 已发送 rememberMe 载荷，", result);
+            if (!plainCmd) {
+                appendResponseSummary(logArea, "[Cookie+CMD] 已发送 rememberMe 载荷，", result);
+            }
             if (plainCmd) {
                 // jEG mode: response is plain text body, no $$$ markers or Base64
                 if (result != null) {

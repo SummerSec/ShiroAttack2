@@ -1296,6 +1296,7 @@ public class MainController {
             if (AttackService.jegMode) {
                 output = this.attackService.sendRememberMeCookieExploitWithCmd(
                         AttackService.attackRememberMe, command.trim(), true, this.execOutputArea);
+                return;
             } else {
                 output = this.attackService.execCmdTask(command.trim());
             }
