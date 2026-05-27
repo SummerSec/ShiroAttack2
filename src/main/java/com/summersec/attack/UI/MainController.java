@@ -1776,11 +1776,13 @@ public class MainController {
             String result = cmd != null
                     ? this.attackService.sendRememberMeCookieExploitWithCmd(coerced, cmd, true, this.echoGeneratorOutput)
                     : this.attackService.sendRememberMeCookieExploit(coerced, this.echoGeneratorOutput);
-            if (result != null) {
-                this.echoGeneratorOutput.appendText("[发送结果] HTTP 已返回，长度=" + result.length() + "\n");
-                this.echoGeneratorOutput.appendText("[发送结果] " + this.attackService.classifyHttpResponse(result) + "\n");
-            } else {
-                this.echoGeneratorOutput.appendText("[发送结果] 未收到有效响应\n");
+            if (cmd == null) {
+                if (result != null) {
+                    this.echoGeneratorOutput.appendText("[发送结果] HTTP 已返回，长度=" + result.length() + "\n");
+                    this.echoGeneratorOutput.appendText("[发送结果] " + this.attackService.classifyHttpResponse(result) + "\n");
+                } else {
+                    this.echoGeneratorOutput.appendText("[发送结果] 未收到有效响应\n");
+                }
             }
         } else if (AttackService.looksLikeRememberMeCookiePayload(this.lastEchoExploitPayload)) {
             String selectedEcho = this.echoOpt != null ? this.echoOpt.getValue() : null;
