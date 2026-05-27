@@ -1012,8 +1012,17 @@ public class AttackService {
             if (plainCmd) {
                 // jEG mode: response is plain text body, no $$$ markers or Base64
                 if (result != null) {
-                    int idx = result.indexOf("\n\n");
-                    String body = idx >= 0 ? result.substring(idx + 2).trim() : result.trim();
+                    String body = result.trim();
+                    // Strip response headers: either "{...}body" or "headers\n\nbody"
+                    int braceEnd = body.indexOf('}');
+                    if (body.startsWith("{") && braceEnd >= 0) {
+                        body = body.substring(braceEnd + 1).trim();
+                    } else {
+                        int idx = body.indexOf("\n\n");
+                        if (idx >= 0) {
+                            body = body.substring(idx + 2).trim();
+                        }
+                    }
                     if (!body.isEmpty()) {
                         logArea.appendText(Utils.log("[命令结果] " + command + "\n" + body));
                         logArea.appendText(Utils.log("-------------------------------------------------"));
