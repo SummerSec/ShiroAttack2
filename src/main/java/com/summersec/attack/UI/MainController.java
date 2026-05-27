@@ -1300,7 +1300,7 @@ public class MainController {
             } else {
                 output = this.attackService.execCmdTask(command.trim());
             }
-            this.execOutputArea.appendText("[command] " + command.trim() + "\n");
+            this.execOutputArea.appendText("[命令结果] " + command.trim() + "\n");
             if (output == null) {
                 this.execOutputArea.appendText("[result] 目标无响应\n");
             } else if (output.isEmpty()) {
@@ -1311,12 +1311,12 @@ public class MainController {
                     this.execOutputArea.appendText("\n");
                 }
             }
-            this.execOutputArea.appendText("-----------------------------------------------------------------------\n");
+            this.execOutputArea.appendText("-------------------------------------------------\n");
         } catch (Exception ex) {
             String msg = ex.getMessage() != null ? ex.getMessage() : ex.toString();
-            this.execOutputArea.appendText("[command] " + command.trim() + "\n");
+            this.execOutputArea.appendText("[命令结果] " + command.trim() + "\n");
             this.execOutputArea.appendText("[error] " + msg + "\n");
-            this.execOutputArea.appendText("-----------------------------------------------------------------------\n");
+            this.execOutputArea.appendText("-------------------------------------------------\n");
             AppLogger.error("命令执行失败", ex);
         }
     }
