@@ -1100,9 +1100,6 @@ public class AttackService {
             }
             if (result.isSuccess() && "jEG".equalsIgnoreCase(source)) {
                 String raw = result.getPayload();
-                String diag = "[jEG] raw length=" + (raw != null ? raw.length() : 0) + ", head=" + (raw != null && raw.length() > 10 ? raw.substring(0, Math.min(20, raw.length())) : "null");
-                this.mainController.logTextArea.appendText(Utils.log(diag));
-                this.mainController.InjOutputArea.appendText(Utils.log(diag));
                 if (raw != null && raw.length() > 80 && raw.startsWith("yv66vg")) {
                     try {
                         byte[] classBytes = Base64.decode(raw.trim());
