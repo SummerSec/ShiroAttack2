@@ -591,7 +591,7 @@ public class MainController {
         if (this.attackService.checkIsShiro()) {
             String spcShiroKey = this.shiroKey.getText();
             if (!spcShiroKey.equals("")) {
-                this.startKeyCrackTask(FXCollections.observableArrayList(new String[]{spcShiroKey}), false);
+                this.startKeyCrackTask(FXCollections.observableArrayList(new String[]{spcShiroKey}), this.attackService.flagCount > 1);
             } else {
                 this.logTextArea.appendText(Utils.log("请输入指定密钥"));
             }
