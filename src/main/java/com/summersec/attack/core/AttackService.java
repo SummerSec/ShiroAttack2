@@ -970,7 +970,11 @@ public class AttackService {
             return p;
         }
         if (p.indexOf('=') >= 0) {
-            return null;
+            // 排除 key=value 格式，但允许 Base64 尾部 padding（仅末尾 1-2 个 =）
+            String noPad = p.endsWith("==") ? p.substring(0, p.length() - 2) : (p.endsWith("=") ? p.substring(0, p.length() - 1) : p);
+            if (noPad.indexOf('=') >= 0) {
+                return null;
+            }
         }
         boolean hintRemember = headerNameHint != null
                 && ("rememberMe".equalsIgnoreCase(headerNameHint.trim())
