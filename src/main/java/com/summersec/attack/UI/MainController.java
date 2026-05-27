@@ -503,6 +503,11 @@ public class MainController {
         AppLogger.info("内存马注入: type=" + memShellType + ", path=" + shellPath + ", dynamic=" + this.dynamicMemShellOpt.isSelected());
         MemBytes.setDynamicMode(this.dynamicMemShellOpt.isSelected());
         if (AttackService.gadget != null ) {
+            if (AttackService.jegMode) {
+                this.InjOutputArea.appendText(Utils.log("[!] 当前为 jEG 回显模式，内存马注入需使用传统利用链（AllEcho/TomcatEcho/SpringEcho）"));
+                this.InjOutputArea.appendText(Utils.log("[!] 请在回显下拉框选择传统回显，重新检测利用链后再注入"));
+                return;
+            }
             this.attackService.injectMem(memShellType, shellPass, shellPath);
         } else {
             this.InjOutputArea.appendText(Utils.log("请先获取密钥和构造链"));
@@ -541,6 +546,11 @@ public class MainController {
         }
         String shellPass = this.getChangeKeyInputText();
         if (AttackService.gadget != null) {
+            if (AttackService.jegMode) {
+                this.changeKeyOutputArea.appendText(Utils.log("[!] 当前为 jEG 回显模式，Key 替换需使用传统利用链"));
+                this.changeKeyOutputArea.appendText(Utils.log("[!] 请切换回显为 AllEcho/TomcatEcho/SpringEcho，重新检测利用链后再操作"));
+                return;
+            }
             this.attackService.injectMem(memShellType, shellPass, "", this.changeKeyOutputArea);
             this.changeKeyOutputArea.appendText(Utils.log("[验证] 开始验证新旧 Key 状态..."));
             boolean newKeyOk = this.attackService.verifyKey(shellPass);
