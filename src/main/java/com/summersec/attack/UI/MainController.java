@@ -1952,7 +1952,7 @@ public class MainController {
         } else {
             memLabel = this.memShellOpt != null ? this.memShellOpt.getValue() : "传统模式内存马";
         }
-        AppLogger.info("内存马 Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path + ", label=" + memLabel);
+        AppLogger.info("内存马 Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path + ", label=" + memLabel + ", source=" + this.lastMemshellExploitSource);
 
         String result;
         if (this.lastMemshellExploitSource != null && "jMG".equalsIgnoreCase(this.lastMemshellExploitSource.trim())) {
