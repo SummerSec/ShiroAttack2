@@ -94,7 +94,7 @@ mvn install:install-file -Dfile=libs/jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactI
 
 # 打包 fat JAR（Java 8）
 mvn clean package -DskipTests
-# 产物: target/shiro_attack-5.1.0-all.jar
+# 产物: target/shiro_attack-5.1.1-all.jar
 ```
 
 ## 下载与运行

@@ -12,16 +12,16 @@ mvn install:install-file -Dfile=libs/jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactI
 # 打包为可执行 fat JAR（含所有依赖）
 mvn clean package -DskipTests
 
-# 产物路径: target/shiro_attack-5.1.0-all.jar
+# 产物路径: target/shiro_attack-5.1.1-all.jar
 
 # 运行 CLI（命令行模式，无需 GUI）
-java -cp target/shiro_attack-5.1.0-all.jar com.summersec.attack.CLI.MainCLI <command> [options]
+java -cp target/shiro_attack-5.1.1-all.jar com.summersec.attack.CLI.MainCLI <command> [options]
 
 # CLI 可用命令: detect | crack | exec | memshell | changekey | gui
 # 详见 .claude/skills/shiro-attack-cli/SKILL.md
 
 # 运行（需要 JavaFX 运行时，Java 8）
-java -jar target/shiro_attack-5.1.0-all.jar
+java -jar target/shiro_attack-5.1.1-all.jar
 ```
 
 本项目无测试套件；仅有 GitHub Release CI（推送 tag 触发）。

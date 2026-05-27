@@ -68,6 +68,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        java.util.logging.Logger.getLogger("com.mchange").setLevel(java.util.logging.Level.OFF);
         launch(args);
     }
 }

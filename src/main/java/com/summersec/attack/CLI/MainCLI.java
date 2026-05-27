@@ -13,6 +13,8 @@ public class MainCLI {
     private static boolean jfxReady;
 
     public static void main(String[] args) {
+        // Suppress MLog (mchange) java.util.logging output
+        java.util.logging.Logger.getLogger("com.mchange").setLevel(java.util.logging.Level.OFF);
         if (args.length == 0 || args[0].equals("help") || args[0].equals("-h") || args[0].equals("--help")) {
             printUsage();
             return;

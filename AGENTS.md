@@ -9,7 +9,7 @@ mvn install:install-file -Dfile=libs/jmg-sdk-1.0.9.jar -DgroupId=jmg -DartifactI
 
 # 打包 fat JAR
 mvn clean package -DskipTests
-# 产物: target/shiro_attack-5.1.0-all.jar
+# 产物: target/shiro_attack-5.1.1-all.jar
 ```
 
 **本地环境**（Windows）：`JAVA_HOME=C:\Program Files\Zulu\zulu-8`，Maven 在 `D:\apache-maven-3.9.9\bin\mvn.cmd`。Java 8 必须带 JavaFX（推荐 Zulu 8+fx）。

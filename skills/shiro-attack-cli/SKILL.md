@@ -11,7 +11,7 @@ Shiro-550 漏洞利用命令行工具，从 fat JAR 直接运行，无需 GUI。
 ## 启动方式
 
 ```bash
-JAR="shiro_attack-5.1.0-all.jar"
+JAR="shiro_attack-5.1.1-all.jar"
 CP="com.summersec.attack.CLI.MainCLI"
 java -cp $JAR $CP <命令> [选项]
 ```
@@ -126,7 +126,7 @@ java -cp $JAR $CP gui
 ## 完整流程示例
 
 ```bash
-JAR="shiro_attack-5.1.0-all.jar"
+JAR="shiro_attack-5.1.1-all.jar"
 CP="com.summersec.attack.CLI.MainCLI"
 T="http://192.168.1.100:8080"
 
