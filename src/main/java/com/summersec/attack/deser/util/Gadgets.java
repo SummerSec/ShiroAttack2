@@ -99,18 +99,19 @@ public class Gadgets {
     }
 
     public static Object createTemplatesImpl(byte[] classBytes) throws Exception {
-        ClassPool pool = ClassPool.getDefault();
-        pool.insertClassPath(new ClassClassPath(AbstractTranslet.class));
-        CtClass clazz = pool.makeClass(new java.io.ByteArrayInputStream(classBytes));
-        CtClass superClass = pool.get(AbstractTranslet.class.getName());
+        // 检查字节码是否已包含 AbstractTranslet（jEG/jMG 已处理），直接使用不经过 Javassist
+        String bytecodeStr = new String(classBytes, "ISO-8859-1");
         byte[] fixed;
-        if (!clazz.subclassOf(superClass)) {
-            clazz.setSuperclass(superClass);
-            fixed = clazz.toBytecode();
-        } else {
+        if (bytecodeStr.contains("AbstractTranslet")) {
             fixed = classBytes;
+        } else {
+            ClassPool pool = ClassPool.getDefault();
+            pool.insertClassPath(new ClassClassPath(AbstractTranslet.class));
+            CtClass clazz = pool.makeClass(new java.io.ByteArrayInputStream(classBytes));
+            clazz.setSuperclass(pool.get(AbstractTranslet.class.getName()));
+            fixed = clazz.toBytecode();
+            clazz.detach();
         }
-        clazz.detach();
 
         Object templates = TemplatesImpl.class.newInstance();
         Field bcField = TemplatesImpl.class.getDeclaredField("_bytecodes");
