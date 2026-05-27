@@ -1943,7 +1943,6 @@ public class MainController {
                     "请在「指定Key」填写 Base64 key，或先爆破密钥成功。");
             return;
         }
-        this.memshellGeneratorOutput.appendText("[发送] InjectMemTool rememberMe Cookie + POST user=生成载荷 Base64\n");
         String pass = this.shellPassText != null ? this.shellPassText.getText() : "";
         String path = this.shellPathText != null ? this.shellPathText.getText() : "";
         String memLabel;
@@ -1957,6 +1956,7 @@ public class MainController {
 
         String result;
         if (this.lastMemshellExploitSource != null && "jMG".equalsIgnoreCase(this.lastMemshellExploitSource.trim())) {
+            this.memshellGeneratorOutput.appendText("[发送] jEG MODEL_CODE + jMG 注入\n");
             // jMG: 使用 jEG MODEL_CODE 模式 — cookie 带代码执行回显，请求参数带 jMG 字节码
             String srv = this.jegServerOpt != null ? this.jegServerOpt.getValue() : "SERVER_TOMCAT";
             if (srv == null || srv.isEmpty()) srv = "SERVER_TOMCAT";
@@ -1977,6 +1977,7 @@ public class MainController {
                 result = null;
             }
         } else {
+            this.memshellGeneratorOutput.appendText("[发送] InjectMemTool rememberMe Cookie + POST user=生成载荷 Base64\n");
             result = this.attackService.sendInjectMemToolExploit(
                     AttackService.gadget,
                     key.trim(),
