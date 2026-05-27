@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 
