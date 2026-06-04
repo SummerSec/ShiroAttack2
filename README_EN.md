@@ -127,9 +127,38 @@ Releases are auto-built by GitHub Actions on tag push (`v*` or `X.Y.Z`). Optiona
 | [docs/THIRD_PARTY_GENERATORS.md](./docs/THIRD_PARTY_GENERATORS.md) | jEG/jMG integration guide |
 | [@skills/shiro-attack-cli/SKILL.md](./@skills/shiro-attack-cli/SKILL.md) | AI Agent skill descriptor |
 
-## Disclaimer
+## ⚠️ Disclaimer
 
-This tool is intended **solely for authorized internal security assessments**. The author assumes no responsibility for any consequences arising from its use.
+**Disclaimer:**
+
+This documentation is intended **solely for authorized security testing** and **academic research**. Any use of this content for illegal activities is **strictly prohibited**.
+
+**Compliance Requirements:**
+- All penetration testing must be conducted only after obtaining **written authorization**
+- Users must comply with applicable laws and regulations, including but not limited to the Computer Fraud and Abuse Act (CFAA), GDPR, and local cybersecurity laws
+- Unauthorized security testing against systems without explicit permission is **illegal**
+- Users assume all legal risks and responsibilities
+
+**Usage Guidelines:**
+- **Do NOT** perform security testing on any system without authorization
+- **Do NOT** use this tool for any form of cybercrime
+- **Do NOT** exploit vulnerability information obtained through this tool without authorization
+- **Do NOT** distribute this tool to unauthorized users
+
+**Liability Notice:**
+- The developers and maintainers of this project (`ShiroAttack2`) assume **no liability** for any consequences arising from the use of this tool
+- This tool is provided for security research and authorized testing purposes only
+- Users must ensure they have obtained **explicit written authorization** before using this tool
+- By using this tool, you agree to abide by all the above terms
+
+**Applicable Laws:**
+- Computer Fraud and Abuse Act (CFAA), 18 U.S.C. § 1030
+- General Data Protection Regulation (GDPR)
+- Cybersecurity Law of the People's Republic of China
+- Data Security Law of the People's Republic of China
+- Personal Information Protection Law of the People's Republic of China
+
+**Reporting Vulnerabilities:** If you discover a security vulnerability, please disclose it responsibly. Do not publicly disclose vulnerability details without coordination.
 
 ---
 
